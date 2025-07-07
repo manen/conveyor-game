@@ -1,7 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["game"]
-exclude = [ "sui" ]
+members = [
+	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
+	"game"
+]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
