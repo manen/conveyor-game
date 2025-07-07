@@ -1,0 +1,61 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: cmake
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: "3.25.1"
+
+    - name: install x11 dev libs
+      run: sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+    - name: install some more dev libs
+      run: sudo apt-get install libgtk-3-dev pkg-config
+    
+    - name: Run tests
+      run: cargo test
+    - name: Build
+      run: cargo build --release
+
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: executable
+        path: target/release/game
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: cmake
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: "3.25.1"
+    - name: Run tests
+      run: cargo test
+    - name: Build
+      run: cargo build --release
+
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: windows executable
+        path: target/release/game.exe
