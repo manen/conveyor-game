@@ -387,6 +387,7 @@ dependencies = [
 name = "game"
 version = "0.1.0"
 dependencies = [
+ "stage_manager",
  "sui",
  "sui_runner",
 ]

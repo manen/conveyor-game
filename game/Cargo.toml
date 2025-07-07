@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 sui_runner.workspace = true
 sui.workspace = true
+
+stage_manager.workspace = true

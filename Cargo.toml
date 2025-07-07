@@ -9,3 +9,4 @@ members = [
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
 asset_provider.path = "./sui/asset_provider"
+stage_manager.path = "./sui/stage_manager"
