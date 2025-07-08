@@ -1,13 +1,34 @@
 use std::{borrow::Cow, fmt::Debug};
-use sui::{Details, Handle};
+use sui::Details;
 
-mod r#dyn;
-pub use r#dyn::DynamicTile;
+pub mod tiletex;
+pub use tiletex::TileTexture;
 
 pub mod tiles;
 pub use tiles::*;
 
 pub trait Tile: Clone + Debug {
 	fn name(&self) -> Cow<'static, str>;
-	fn render(&self, d: &mut Handle, det: Details);
+	fn tile_texture_id(&self) -> TileTexture;
+}
+
+/// small tile
+#[derive(Clone, Debug)]
+pub enum STile {
+	Air(Air),
+	Stone(Stone),
+}
+impl Tile for STile {
+	fn name(&self) -> Cow<'static, str> {
+		match self {
+			STile::Air(a) => a.name(),
+			STile::Stone(a) => a.name(),
+		}
+	}
+	fn tile_texture_id(&self) -> TileTexture {
+		match self {
+			STile::Air(a) => a.tile_texture_id(),
+			STile::Stone(a) => a.tile_texture_id(),
+		}
+	}
 }

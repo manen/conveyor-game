@@ -3,12 +3,12 @@ use std::borrow::Cow;
 use crate::tile::{Tile, TileTexture};
 
 #[derive(Copy, Clone, Debug)]
-pub struct Air;
-impl Tile for Air {
+pub struct Stone;
+impl Tile for Stone {
 	fn name(&self) -> Cow<'static, str> {
-		"air".into()
+		"stone".into()
 	}
 	fn tile_texture_id(&self) -> TileTexture {
-		TileTexture::None
+		TileTexture::Stone
 	}
 }

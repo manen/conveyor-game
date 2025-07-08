@@ -1,5 +1,5 @@
 mod air;
 pub use air::*;
 
-mod wall;
-pub use wall::*;
+mod stone;
+pub use stone::*;
