@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use crate::tile::{Tile, TileTexture};
+use crate::world::tile::{Tile, TileTexture};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Air;
 impl Tile for Air {
 	fn name(&self) -> Cow<'static, str> {

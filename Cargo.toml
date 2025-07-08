@@ -3,10 +3,12 @@ resolver = "3"
 members = [
 	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
 	"game"
-]
+, "sui/asset_provider_image"]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
-asset_provider.path = "./sui/asset_provider"
 stage_manager.path = "./sui/stage_manager"
+
+asset_provider.path = "./sui/asset_provider"
+asset_provider_image.path = "./sui/asset_provider_image"

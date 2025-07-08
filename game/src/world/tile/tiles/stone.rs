@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::tile::{Tile, TileTexture};
+use crate::world::tile::{Tile, TileTexture};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Stone;

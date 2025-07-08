@@ -1,5 +1,4 @@
 use std::{borrow::Cow, fmt::Debug};
-use sui::Details;
 
 pub mod tiletex;
 pub use tiletex::TileTexture;
@@ -30,5 +29,10 @@ impl Tile for STile {
 			STile::Air(a) => a.tile_texture_id(),
 			STile::Stone(a) => a.tile_texture_id(),
 		}
+	}
+}
+impl Default for STile {
+	fn default() -> Self {
+		Self::Air(Air)
 	}
 }
