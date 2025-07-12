@@ -1,10 +1,21 @@
 use std::{borrow::Cow, fmt::Debug};
 
+// sys
+
 pub mod tiletex;
 pub use tiletex::TileTexture;
 
-pub mod tiles;
-pub use tiles::*;
+// tiles
+
+mod air;
+mod stone;
+
+pub mod tiles {
+	use super::*;
+	pub use air::*;
+	pub use stone::*;
+}
+use tiles::*;
 
 pub trait Tile: Clone + Debug {
 	fn name(&self) -> Cow<'static, str>;

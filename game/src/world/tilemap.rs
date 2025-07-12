@@ -7,7 +7,7 @@ use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 
 use crate::world::{
 	STile,
-	tile::{Stone, TileTexture, tiletex::all_textures},
+	tile::{TileTexture, tiles::Stone, tiletex::all_textures},
 };
 
 pub const SIZE: usize = 32;
