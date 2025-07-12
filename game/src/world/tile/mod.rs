@@ -5,6 +5,9 @@ use std::{borrow::Cow, fmt::Debug};
 pub mod tiletex;
 pub use tiletex::TileTexture;
 
+pub mod render;
+use render::WorldRenderer;
+
 // tiles
 
 mod air;

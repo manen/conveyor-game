@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use futures::{StreamExt, stream::FuturesUnordered};
 use sui::{raylib::RaylibThread, tex::Texture};
@@ -24,17 +24,16 @@ impl Tilemap {
 		thread: &RaylibThread,
 	) -> anyhow::Result<Self> {
 		let mut stream = FuturesUnordered::new();
+
+		let textures = all_textures().iter().cloned().filter_map(|a| {
+			let path = a.resource_path()?;
+			Some((a, path))
+		});
+
 		stream.extend(
-			all_textures()
-				.iter()
-				.cloned()
-				.filter_map(|a| {
-					let path = a.resource_path()?;
-					Some((a, path))
-				})
-				.map(async |(tile_tex, path)| {
-					assets.asset_image(&path).await.map(|a| (tile_tex, a))
-				}),
+			textures.map(async |(tile_tex, path)| {
+				assets.asset_image(&path).await.map(|a| (tile_tex, a))
+			}),
 		);
 		let images: Vec<Result<(TileTexture, DynamicImage), _>> = stream.collect().await;
 		let images = images.into_iter().collect::<Result<Vec<_>, _>>()?;
@@ -56,5 +55,18 @@ impl Tilemap {
 				})
 			}),
 		})
+	}
+
+	pub fn at(&self, (x, y): (usize, usize)) -> Option<&STile> {
+		if x > SIZE - 1 {
+			if x > SIZE - 1 {
+				return None;
+			}
+		}
+
+		Some(&self.tiles[x][y])
+	}
+	pub fn texture_for(&self, tiletex: TileTexture) -> Option<&Texture> {
+		self.textures.get(&tiletex)
 	}
 }
