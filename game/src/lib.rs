@@ -24,7 +24,8 @@ pub fn start() {
 		Game::new(&assets, &mut d, &thread).unwrap()
 	};
 
-	let mut ctx = sui_runner::Context::new(game, rl, thread);
+	let stage = stage_manager::Stage::new(game);
+	let mut ctx = sui_runner::Context::new(stage, rl, thread);
 
 	ctx.start();
 }
