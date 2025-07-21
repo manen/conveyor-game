@@ -6,7 +6,6 @@ pub mod tiletex;
 pub use tiletex::TileTexture;
 
 pub mod render;
-use render::WorldRenderer;
 
 // tiles
 

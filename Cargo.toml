@@ -2,8 +2,9 @@
 resolver = "3"
 members = [
 	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
-	"game"
-, "sui/asset_provider_image"]
+	"game",
+	"sui/asset_provider_image"
+]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
@@ -12,3 +13,8 @@ stage_manager.path = "./sui/stage_manager"
 
 asset_provider.path = "./sui/asset_provider"
 asset_provider_image.path = "./sui/asset_provider_image"
+
+game.path = "./game"
+
+tokio = "1.46.1"
+futures = "0.3.31"

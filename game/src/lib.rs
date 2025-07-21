@@ -1,43 +1,25 @@
+use crate::{assets::GameAssets, game::Game};
+
+pub mod assets;
+pub mod game;
 pub mod world;
 
 pub fn start() {
 	println!("Hello, world!");
 
-	let game = game::game();
-	sui_runner::ctx(game).start();
-}
+	let (mut rl, thread) = sui_runner::rl();
 
-mod game {
-	use stage_manager::{Stage, StageChange};
-	use std::fmt::Debug;
-	use sui::{Layable, LayableExt, Text};
+	let assets = GameAssets::default();
 
-	pub fn game() -> impl Layable {
-		Stage::new(page1())
-	}
+	let game = {
+		let d = rl.begin_drawing(&thread);
+		let fh = sui::core::Store::new(sui::form::UniqueId::null());
+		let mut d = sui::Handle::new(d, &fh);
 
-	pub fn page1() -> impl Layable + Debug + Clone {
-		sui::div([
-			sui::custom(Text::new("hello bello", 24)),
-			sui::custom(
-				Text::new("click here to go to the moon", 18)
-					.margin(4)
-					.clickable(|_| StageChange::new(page2())),
-			),
-		])
-	}
+		Game::new(&assets, &mut d, &thread).unwrap()
+	};
 
-	pub fn page2() -> impl Layable + Debug + Clone {
-		sui::div([
-			sui::custom(Text::new(
-				"oh well we didn't quite make it to the moon but whatever",
-				18,
-			)),
-			sui::custom(
-				Text::new("click here to go back", 32)
-					.margin(4)
-					.clickable(|_| StageChange::new(page1())),
-			),
-		])
-	}
+	let mut ctx = sui_runner::Context::new(game, rl, thread);
+
+	ctx.start();
 }

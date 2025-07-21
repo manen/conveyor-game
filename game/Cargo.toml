@@ -8,6 +8,9 @@ sui.workspace = true
 sui_runner.workspace = true
 asset_provider.workspace = true
 stage_manager.workspace = true
-futures = "0.3.31"
 asset_provider_image.workspace = true
+
+tokio.workspace = true
+futures.workspace = true
 anyhow = "1.0.98"
+reqwest = "0.12.22"

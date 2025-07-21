@@ -1,8 +1,7 @@
 use sui::{Color, Layable, raylib::prelude::RaylibDraw};
 
 use crate::world::{
-	STile, Tile,
-	tile::TileTexture,
+	Tile,
 	tilemap::{SIZE, Tilemap},
 };
 
@@ -45,6 +44,10 @@ pub fn draw_tilemap(
 			let tile = tilemap
 				.at((x, y))
 				.expect("we tried rendering a tile that doesn't exist");
+
+			let name = tile.name();
+			d.draw_text(&name, draw_x, draw_y, 11, sui::Color::WHITE);
+
 			let tiletex = tile.tile_texture_id();
 
 			let tex = tilemap.texture_for(tiletex);
