@@ -60,20 +60,25 @@ impl Tilemap {
 	) -> impl Stream<Item = anyhow::Result<(TileTexture, DynamicImage)>> {
 		let mut stream = FuturesUnordered::new();
 
-		let textures = all_textures().iter().cloned().filter_map(|a| {
-			let path = a.resource_path()?;
-			Some((a, path))
+		let resources = all_textures().iter().cloned().map(|a| {
+			let resource = a.resource_path();
+			(a, resource)
 		});
-
-		stream.extend(textures.map(async |(tile_tex, path)| {
+		let images = resources.map(async |(tile_tex, path)| {
 			assets
 				.asset_image(&path)
 				.await
 				.map(|a| (tile_tex, a))
 				.with_context(|| format!("while loading {path}"))
-		}));
+		});
+
+		stream.extend(images);
 
 		stream
+	}
+
+	pub fn gen_tiles() -> [[STile; SIZE]; SIZE] {
+		core::array::from_fn(|x| core::array::from_fn(|y| STile::Stone(Stone)))
 	}
 	/// fetch textures with [Self::load_textures] \
 	/// [Self::load_textures] needs to be run on the main thread!
@@ -81,16 +86,7 @@ impl Tilemap {
 		// from [Self::load_textures]
 		textures: HashMap<TileTexture, Texture>,
 	) -> anyhow::Result<Self> {
-		let tiles = core::array::from_fn(|x| {
-			core::array::from_fn(|y| {
-				if (y + x) % 2 == 0 {
-					STile::Stone(Stone)
-				} else {
-					Default::default()
-				}
-			})
-		});
-
+		let tiles = Self::gen_tiles();
 		Ok(Self { textures, tiles })
 	}
 
