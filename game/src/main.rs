@@ -1,4 +1,3 @@
-#[tokio::main]
-async fn main() {
-	game::start()
+fn main() {
+	game::start_with_rt();
 }

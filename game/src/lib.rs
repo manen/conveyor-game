@@ -4,6 +4,11 @@ pub mod assets;
 pub mod game;
 pub mod world;
 
+#[tokio::main]
+pub async fn start_with_rt() {
+	start();
+}
+
 pub fn start() {
 	println!("Hello, world!");
 
