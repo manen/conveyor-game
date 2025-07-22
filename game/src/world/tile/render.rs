@@ -1,4 +1,4 @@
-use sui::{Color, Layable, raylib::prelude::RaylibDraw};
+use sui::{Color, Details, Layable, raylib::prelude::RaylibDraw};
 
 use crate::world::{
 	Tile,
@@ -62,7 +62,10 @@ pub fn draw_tilemap(
 					);
 				}
 				Some(tex) => {
-					d.draw_texture(tex.as_ref(), draw_x, draw_y, sui::color(255, 255, 255, 200));
+					tex.render(
+						d,
+						Details::new(draw_x, draw_y, render_size_i32, render_size_i32),
+					);
 				}
 			}
 		}
