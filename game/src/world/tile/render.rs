@@ -1,28 +1,9 @@
-use sui::{Color, Details, Layable, raylib::prelude::RaylibDraw};
+use sui::{Color, Details, raylib::prelude::RaylibDraw};
 
 use crate::world::{
 	Tile,
 	tilemap::{SIZE, Tilemap},
 };
-
-#[derive(Debug, Clone)]
-pub struct WorldRenderer {}
-
-impl Layable for WorldRenderer {
-	fn size(&self) -> (i32, i32) {
-		(0, 0)
-	}
-	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {}
-
-	fn pass_event(
-		&self,
-		event: sui::core::Event,
-		det: sui::Details,
-		scale: f32,
-	) -> Option<sui::core::ReturnEvent> {
-		todo!()
-	}
-}
 
 pub const TILE_RENDER_SIZE: i32 = 32;
 
@@ -45,8 +26,8 @@ pub fn draw_tilemap(
 				.at((x, y))
 				.expect("we tried rendering a tile that doesn't exist");
 
-			let name = tile.name();
-			d.draw_text(&name, draw_x, draw_y, 11, sui::Color::WHITE);
+			// let name = tile.name();
+			// d.draw_text(&name, draw_x, draw_y, 11, sui::Color::WHITE);
 
 			let tiletex = tile.tile_texture_id();
 

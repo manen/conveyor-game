@@ -12,6 +12,7 @@ use crate::world::{
 	tile::{TileTexture, tiles::Stone, tiletex::all_textures},
 };
 
+/// world size in tiles
 pub const SIZE: usize = 32;
 pub type TileTextures = HashMap<TileTexture, Texture>;
 
