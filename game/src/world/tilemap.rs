@@ -9,8 +9,8 @@ use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 
 use crate::world::{
 	STile,
-	tile::{TileTexture, tiles::Stone, tiletex::all_textures},
-	tiles, worldgen,
+	tile::{TileTexture, tiletex::all_textures},
+	worldgen,
 };
 
 /// world size in tiles
@@ -79,17 +79,13 @@ impl Tilemap {
 		stream
 	}
 
-	pub fn gen_tiles() -> [[STile; SIZE]; SIZE] {
-		worldgen::gen_tiles()
-	}
-
 	/// fetch textures with [Self::load_textures] \
 	/// [Self::load_textures] needs to be run on the main thread!
 	pub fn from_textures(
 		// from [Self::load_textures]
 		textures: HashMap<TileTexture, Texture>,
 	) -> anyhow::Result<Self> {
-		let tiles = Self::gen_tiles();
+		let tiles = worldgen::gen_tiles();
 		Ok(Self { textures, tiles })
 	}
 
