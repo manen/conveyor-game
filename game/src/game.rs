@@ -73,6 +73,7 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+		println!("{}", self.scale);
 		let real_scale = (1.1 as f32).powf(self.scale);
 
 		let comp = WorldRenderer::new(&self.tilemap)
@@ -83,7 +84,9 @@ impl Layable for Game {
 	}
 
 	fn tick(&mut self) {
-		self.scale = (self.scale + self.scale_velocity).max(0.0);
+		self.scale = self.scale + self.scale_velocity;
+		self.scale = self.scale.max(0.1).min(60.0);
+
 		self.scale_velocity *= 0.95;
 	}
 
