@@ -1,7 +1,7 @@
 use asset_provider::Assets;
 use sui::{
 	Layable, LayableExt,
-	core::{Event, MouseEvent},
+	core::{Event, KeyboardEvent, MouseEvent},
 };
 
 use crate::world::{
@@ -44,9 +44,9 @@ pub struct Game {
 	tilemap: Tilemap,
 
 	/// camera center position in world coordinates
-	// camera_at: (f32, f32),
+	// camera_at: (f32, f32), // TODO: wrap the worldrenderer in a view and make moving possible
 	scale: f32,
-	// scale_velocity: f32, // TODO next: tick function with a dummy default implementation
+	scale_velocity: f32,
 }
 impl Game {
 	pub fn new<A: Assets + Send + Sync>(
@@ -60,6 +60,7 @@ impl Game {
 			tilemap,
 			// camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
 			scale: 1.0,
+			scale_velocity: 0.0,
 		})
 	}
 }
@@ -72,11 +73,18 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+		let real_scale = (1.1 as f32).powf(self.scale);
+
 		let comp = WorldRenderer::new(&self.tilemap)
-			.scale(self.scale)
+			.scale(real_scale)
 			.centered();
 
 		comp.render(d, det, scale);
+	}
+
+	fn tick(&mut self) {
+		self.scale = (self.scale + self.scale_velocity).max(0.0);
+		self.scale_velocity *= 0.95;
 	}
 
 	fn pass_event(
@@ -87,7 +95,10 @@ impl Layable for Game {
 	) -> Option<sui::core::ReturnEvent> {
 		println!("{event:?}");
 		match event {
-			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => self.scale += amount / 6.0,
+			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
+				self.scale_velocity += amount / 6.0
+			}
+			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('w')) => todo!(),
 			_ => {}
 		};
 		None
