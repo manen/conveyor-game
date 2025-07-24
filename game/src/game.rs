@@ -85,9 +85,12 @@ impl Layable for Game {
 
 	fn tick(&mut self) {
 		self.scale = self.scale + self.scale_velocity;
-		self.scale = self.scale.max(0.1).min(60.0);
+		self.scale = self.scale.max(-40.0).min(60.0);
 
 		self.scale_velocity *= 0.95;
+		if self.scale_velocity.abs() < 0.005 {
+			self.scale_velocity = 0.0;
+		}
 	}
 
 	fn pass_event(
