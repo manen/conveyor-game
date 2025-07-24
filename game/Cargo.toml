@@ -14,3 +14,4 @@ tokio.workspace = true
 futures.workspace = true
 anyhow = "1.0.98"
 reqwest = "0.12.22"
+perlin2d = "0.2.6"

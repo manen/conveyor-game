@@ -562,6 +562,7 @@ dependencies = [
  "asset_provider",
  "asset_provider_image",
  "futures",
+ "perlin2d",
  "reqwest",
  "stage_manager",
  "sui",
@@ -1290,6 +1291,12 @@ name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
+
+[[package]]
+name = "perlin2d"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb6c71cfd92099c43062f059494786cdcbd9cb4dab61389098362b241071cde0"
 
 [[package]]
 name = "pin-project-lite"

@@ -10,7 +10,7 @@ use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 use crate::world::{
 	STile,
 	tile::{TileTexture, tiles::Stone, tiletex::all_textures},
-	tiles,
+	tiles, worldgen,
 };
 
 /// world size in tiles
@@ -80,15 +80,9 @@ impl Tilemap {
 	}
 
 	pub fn gen_tiles() -> [[STile; SIZE]; SIZE] {
-		let mut rep = std::iter::repeat([
-			STile::Stone(tiles::Stone),
-			STile::IronOre(tiles::IronOre),
-			STile::CoalOre(tiles::CoalOre),
-		])
-		.flatten();
-
-		core::array::from_fn(|x| core::array::from_fn(|y| rep.next().unwrap()))
+		worldgen::gen_tiles()
 	}
+
 	/// fetch textures with [Self::load_textures] \
 	/// [Self::load_textures] needs to be run on the main thread!
 	pub fn from_textures(
@@ -97,6 +91,13 @@ impl Tilemap {
 	) -> anyhow::Result<Self> {
 		let tiles = Self::gen_tiles();
 		Ok(Self { textures, tiles })
+	}
+
+	pub fn tiles(&self) -> &[[STile; SIZE]; SIZE] {
+		&self.tiles
+	}
+	pub fn tiles_mut(&mut self) -> &mut [[STile; SIZE]; SIZE] {
+		&mut self.tiles
 	}
 
 	pub fn at(&self, (x, y): (usize, usize)) -> Option<&STile> {

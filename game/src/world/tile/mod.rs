@@ -33,6 +33,17 @@ pub enum STile {
 	IronOre(IronOre),
 	CoalOre(CoalOre),
 }
+impl STile {
+	pub fn stone() -> Self {
+		Self::Stone(Stone)
+	}
+	pub fn iron_ore() -> Self {
+		Self::IronOre(IronOre)
+	}
+	pub fn coal_ore() -> Self {
+		Self::CoalOre(CoalOre)
+	}
+}
 impl Tile for STile {
 	fn name(&self) -> Cow<'static, str> {
 		match self {

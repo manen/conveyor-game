@@ -7,6 +7,7 @@ use sui::{
 use crate::world::{
 	tile::render::{self, TILE_RENDER_SIZE},
 	tilemap::{SIZE, Tilemap},
+	worldgen,
 };
 
 #[derive(Debug, Clone)]
@@ -73,7 +74,6 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		println!("{}", self.scale);
 		let real_scale = (1.1 as f32).powf(self.scale);
 
 		let comp = WorldRenderer::new(&self.tilemap)
@@ -104,7 +104,9 @@ impl Layable for Game {
 			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
 				self.scale_velocity += amount / 6.0
 			}
-			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('w')) => todo!(),
+			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
+				*self.tilemap.tiles_mut() = worldgen::gen_tiles();
+			}
 			_ => {}
 		};
 		None
