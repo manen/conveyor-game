@@ -10,6 +10,7 @@ use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 use crate::world::{
 	STile,
 	tile::{TileTexture, tiles::Stone, tiletex::all_textures},
+	tiles,
 };
 
 /// world size in tiles
@@ -79,7 +80,14 @@ impl Tilemap {
 	}
 
 	pub fn gen_tiles() -> [[STile; SIZE]; SIZE] {
-		core::array::from_fn(|x| core::array::from_fn(|y| STile::Stone(Stone)))
+		let mut rep = std::iter::repeat([
+			STile::Stone(tiles::Stone),
+			STile::IronOre(tiles::IronOre),
+			STile::CoalOre(tiles::CoalOre),
+		])
+		.flatten();
+
+		core::array::from_fn(|x| core::array::from_fn(|y| rep.next().unwrap()))
 	}
 	/// fetch textures with [Self::load_textures] \
 	/// [Self::load_textures] needs to be run on the main thread!
