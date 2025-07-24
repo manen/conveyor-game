@@ -22,6 +22,9 @@ pub fn draw_tilemap(
 			let draw_x = draw_x_base + (x as f32 * render_size) as i32;
 			let draw_y = draw_y_base + (y as f32 * render_size) as i32;
 
+			let (draw_x, draw_y) = (draw_x - 1, draw_y - 1);
+			let render_size_i32 = render_size_i32 + 1;
+
 			let tile = tilemap
 				.at((x, y))
 				.expect("we tried rendering a tile that doesn't exist");
