@@ -1,8 +1,11 @@
 use sui::{Color, Details, raylib::prelude::RaylibDraw};
 
-use crate::world::{
-	Tile,
-	tilemap::{SIZE, Tilemap},
+use crate::{
+	textures::Textures,
+	world::{
+		Tile,
+		tilemap::{SIZE, Tilemap},
+	},
 };
 
 pub const TILE_RENDER_SIZE: i32 = 32;
@@ -10,6 +13,7 @@ pub const TILE_RENDER_SIZE: i32 = 32;
 pub fn draw_tilemap(
 	d: &mut sui::Handle,
 	tilemap: &Tilemap,
+	textures: &Textures,
 	draw_x_base: i32,
 	draw_y_base: i32,
 	scale: f32,
@@ -32,9 +36,9 @@ pub fn draw_tilemap(
 			// let name = tile.name();
 			// d.draw_text(&name, draw_x, draw_y, 11, sui::Color::WHITE);
 
-			let tiletex = tile.tile_texture_id();
+			let tiletex = tile.texture_id();
 
-			let tex = tilemap.texture_for(tiletex);
+			let tex = textures.texture_for(tiletex);
 			match tex {
 				None => {
 					d.draw_rectangle(

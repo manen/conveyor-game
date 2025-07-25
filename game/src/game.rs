@@ -4,44 +4,20 @@ use sui::{
 	core::{Event, KeyboardEvent, MouseEvent},
 };
 
-use crate::world::{
-	tile::render::{self, TILE_RENDER_SIZE},
-	tilemap::{SIZE, Tilemap},
-	worldgen,
+use crate::{
+	textures::Textures,
+	world::{
+		tile::render::{self, TILE_RENDER_SIZE},
+		tilemap::{SIZE, Tilemap},
+		worldgen,
+	},
 };
 
-#[derive(Debug, Clone)]
-/// world rendering as a component
-pub struct WorldRenderer<'a> {
-	tilemap: &'a Tilemap,
-}
-impl<'a> WorldRenderer<'a> {
-	pub fn new(tilemap: &'a Tilemap) -> Self {
-		Self { tilemap }
-	}
-}
-impl<'a> Layable for WorldRenderer<'a> {
-	fn size(&self) -> (i32, i32) {
-		let size = SIZE as i32 * TILE_RENDER_SIZE;
-		(size, size)
-	}
-	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		render::draw_tilemap(d, &self.tilemap, det.x, det.y, scale);
-	}
-
-	fn pass_event(
-		&mut self,
-		_event: sui::core::Event,
-		_det: sui::Details,
-		_scale: f32,
-	) -> Option<sui::core::ReturnEvent> {
-		None
-	}
-}
-
 /// Singleplayer, self-contained game renderer
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Game {
+	textures: Textures,
+
 	tilemap: Tilemap,
 
 	/// camera center position in world coordinates
@@ -55,9 +31,11 @@ impl Game {
 		d: &mut sui::Handle,
 		thread: &sui::raylib::RaylibThread,
 	) -> anyhow::Result<Self> {
-		let tilemap = Tilemap::new(assets, d, thread)?;
+		let textures = Textures::new(assets, d, thread)?;
+		let tilemap = Tilemap::new();
 
 		Ok(Self {
+			textures,
 			tilemap,
 			// camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
 			scale: 1.0,
@@ -76,7 +54,9 @@ impl Layable for Game {
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
 		let real_scale = (1.1 as f32).powf(self.scale);
 
-		let comp = WorldRenderer::new(&self.tilemap)
+		let comp = self
+			.tilemap
+			.render(&self.textures)
 			.scale(real_scale)
 			.centered();
 

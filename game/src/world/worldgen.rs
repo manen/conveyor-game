@@ -2,9 +2,9 @@ use std::time::{Duration, SystemTime};
 
 use perlin2d::PerlinNoise2D;
 
-use crate::world::{STile, tilemap::SIZE};
+use crate::world::{ETile, tilemap::SIZE};
 
-pub fn gen_tiles_from_seed(seed: i32) -> [[STile; SIZE]; SIZE] {
+pub fn gen_tiles_from_seed(seed: i32) -> [[ETile; SIZE]; SIZE] {
 	let perlin = PerlinNoise2D::new(6, 10.0, 0.5, 1.0, 2.0, (20.0, 20.0), 0.5, seed);
 
 	core::array::from_fn(|x| {
@@ -13,15 +13,15 @@ pub fn gen_tiles_from_seed(seed: i32) -> [[STile; SIZE]; SIZE] {
 
 			let noise_adj = noise % 8.0;
 			match noise_adj {
-				1.0..2.0 => STile::coal_ore(),
-				3.0..5.0 => STile::iron_ore(),
-				_ => STile::stone(),
+				1.0..2.0 => ETile::coal_ore(),
+				3.0..5.0 => ETile::iron_ore(),
+				_ => ETile::stone(),
 			}
 		})
 	})
 }
 
-pub fn gen_tiles() -> [[STile; SIZE]; SIZE] {
+pub fn gen_tiles() -> [[ETile; SIZE]; SIZE] {
 	// let mut rep = std::iter::repeat([
 	// 	STile::Stone(tiles::Stone),
 	// 	STile::IronOre(tiles::IronOre),

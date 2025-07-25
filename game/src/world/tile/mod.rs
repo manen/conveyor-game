@@ -1,10 +1,5 @@
 use std::{borrow::Cow, fmt::Debug};
 
-// sys
-
-pub mod tiletex;
-pub use tiletex::TileTexture;
-
 pub mod render;
 
 // tiles
@@ -21,19 +16,21 @@ pub mod tiles {
 }
 use tiles::*;
 
+use crate::textures::TextureID;
+
 pub trait Tile: Clone + Debug {
 	fn name(&self) -> Cow<'static, str>;
-	fn tile_texture_id(&self) -> TileTexture;
+	fn texture_id(&self) -> TextureID;
 }
 
-/// small tile
+/// tile enum contains the vanilla tiles for performance and ease of use
 #[derive(Clone, Debug)]
-pub enum STile {
+pub enum ETile {
 	Stone(Stone),
 	IronOre(IronOre),
 	CoalOre(CoalOre),
 }
-impl STile {
+impl ETile {
 	pub fn stone() -> Self {
 		Self::Stone(Stone)
 	}
@@ -44,19 +41,19 @@ impl STile {
 		Self::CoalOre(CoalOre)
 	}
 }
-impl Tile for STile {
+impl Tile for ETile {
 	fn name(&self) -> Cow<'static, str> {
 		match self {
-			STile::Stone(a) => a.name(),
-			STile::CoalOre(a) => a.name(),
-			STile::IronOre(a) => a.name(),
+			ETile::Stone(a) => a.name(),
+			ETile::CoalOre(a) => a.name(),
+			ETile::IronOre(a) => a.name(),
 		}
 	}
-	fn tile_texture_id(&self) -> TileTexture {
+	fn texture_id(&self) -> TextureID {
 		match self {
-			STile::Stone(a) => a.tile_texture_id(),
-			STile::IronOre(a) => a.tile_texture_id(),
-			STile::CoalOre(a) => a.tile_texture_id(),
+			ETile::Stone(a) => a.texture_id(),
+			ETile::IronOre(a) => a.texture_id(),
+			ETile::CoalOre(a) => a.texture_id(),
 		}
 	}
 }

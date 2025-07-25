@@ -1,102 +1,36 @@
-use std::collections::HashMap;
+use sui::Layable;
 
-use anyhow::Context;
-use asset_provider::Assets;
-use futures::{Stream, stream::FuturesUnordered};
-use sui::tex::Texture;
-
-use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
-
-use crate::world::{
-	STile,
-	tile::{TileTexture, tiletex::all_textures},
-	worldgen,
+use crate::{
+	textures::Textures,
+	world::{ETile, tile::render::TILE_RENDER_SIZE, worldgen},
 };
 
 /// world size in tiles
 pub const SIZE: usize = 32;
-pub type TileTextures = HashMap<TileTexture, Texture>;
 
 #[derive(Clone, Debug)]
 pub struct Tilemap {
-	textures: TileTextures,
-	tiles: [[STile; SIZE]; SIZE],
+	tiles: [[ETile; SIZE]; SIZE],
 }
 impl Tilemap {
-	pub fn new<A: Assets + Send + Sync>(
-		assets: &A,
-		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
-	) -> anyhow::Result<Self> {
-		let stream = Self::stream_images(assets);
-		let textures = Self::load_textures_from_stream(stream, d, thread)?;
-
-		let game = Self::from_textures(textures)?;
-		Ok(game)
-	}
-
-	/// load images into textures \
-	/// this has to be run on the main thread:
-	pub fn load_textures_from_stream<
-		S: Stream<Item = anyhow::Result<(TileTexture, DynamicImage)>> + Unpin,
-	>(
-		stream: S,
-		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
-	) -> anyhow::Result<TileTextures> {
-		let mut map = HashMap::with_capacity(stream.size_hint().0);
-
-		let iter = futures::executor::block_on_stream(stream);
-		for result in iter {
-			let (tex, img) = result?;
-
-			let texture = img.texture(d, thread)?;
-			map.insert(tex, texture);
+	pub fn new() -> Self {
+		Self {
+			tiles: worldgen::gen_tiles(),
 		}
-		Ok(map)
 	}
 
-	/// loads the images in parallel, and synchronously converts the images into textures as they come
-	pub fn stream_images<A: asset_provider::Assets + Sync>(
-		assets: &A,
-	) -> impl Stream<Item = anyhow::Result<(TileTexture, DynamicImage)>> {
-		let mut stream = FuturesUnordered::new();
-
-		let resources = all_textures().iter().cloned().map(|a| {
-			let resource = a.resource_path();
-			(a, resource)
-		});
-		let images = resources.map(async |(tile_tex, path)| {
-			assets
-				.asset_image(&path)
-				.await
-				.map(|a| (tile_tex, a))
-				.with_context(|| format!("while loading {path}"))
-		});
-
-		stream.extend(images);
-
-		stream
-	}
-
-	/// fetch textures with [Self::load_textures] \
-	/// [Self::load_textures] needs to be run on the main thread!
-	pub fn from_textures(
-		// from [Self::load_textures]
-		textures: HashMap<TileTexture, Texture>,
-	) -> anyhow::Result<Self> {
-		let tiles = worldgen::gen_tiles();
-		Ok(Self { textures, tiles })
-	}
-
-	pub fn tiles(&self) -> &[[STile; SIZE]; SIZE] {
+	pub fn tiles(&self) -> &[[ETile; SIZE]; SIZE] {
 		&self.tiles
 	}
-	pub fn tiles_mut(&mut self) -> &mut [[STile; SIZE]; SIZE] {
+	pub fn tiles_mut(&mut self) -> &mut [[ETile; SIZE]; SIZE] {
 		&mut self.tiles
 	}
 
-	pub fn at(&self, (x, y): (usize, usize)) -> Option<&STile> {
+	pub fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> TilemapRenderer<'a> {
+		TilemapRenderer::new(self, textures)
+	}
+
+	pub fn at(&self, (x, y): (usize, usize)) -> Option<&ETile> {
 		if x > SIZE - 1 {
 			if x > SIZE - 1 {
 				return None;
@@ -105,7 +39,41 @@ impl Tilemap {
 
 		Some(&self.tiles[x][y])
 	}
-	pub fn texture_for(&self, tiletex: TileTexture) -> Option<&Texture> {
-		self.textures.get(&tiletex)
+}
+
+#[derive(Clone, Debug)]
+/// world rendering as a component
+pub struct TilemapRenderer<'a> {
+	textures: &'a Textures,
+	tilemap: &'a Tilemap,
+}
+impl<'a> TilemapRenderer<'a> {
+	pub fn new(tilemap: &'a Tilemap, textures: &'a Textures) -> Self {
+		Self { tilemap, textures }
+	}
+}
+impl<'a> Layable for TilemapRenderer<'a> {
+	fn size(&self) -> (i32, i32) {
+		let size = SIZE as i32 * TILE_RENDER_SIZE;
+		(size, size)
+	}
+	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+		crate::world::tile::render::draw_tilemap(
+			d,
+			&self.tilemap,
+			&self.textures,
+			det.x,
+			det.y,
+			scale,
+		);
+	}
+
+	fn pass_event(
+		&mut self,
+		_event: sui::core::Event,
+		_det: sui::Details,
+		_scale: f32,
+	) -> Option<sui::core::ReturnEvent> {
+		None
 	}
 }

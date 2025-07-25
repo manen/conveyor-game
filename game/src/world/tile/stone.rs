@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::world::tile::{Tile, TileTexture};
+use crate::{textures::TextureID, world::tile::Tile};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Stone;
@@ -8,7 +8,7 @@ impl Tile for Stone {
 	fn name(&self) -> Cow<'static, str> {
 		"stone".into()
 	}
-	fn tile_texture_id(&self) -> TileTexture {
-		TileTexture::Stone
+	fn texture_id(&self) -> TextureID {
+		TextureID::Stone
 	}
 }
