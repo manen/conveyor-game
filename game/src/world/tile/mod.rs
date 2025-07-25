@@ -16,11 +16,16 @@ pub mod tiles {
 }
 use tiles::*;
 
-use crate::textures::TextureID;
+use crate::{textures::TextureID, world::EResource};
 
 pub trait Tile: Clone + Debug {
 	fn name(&self) -> Cow<'static, str>;
 	fn texture_id(&self) -> TextureID;
+
+	/// returns the resource that pops out when mined or extracted or whatever it's called
+	fn generate_resource(&self) -> Option<EResource> {
+		None
+	}
 }
 
 /// tile enum contains the vanilla tiles for performance and ease of use

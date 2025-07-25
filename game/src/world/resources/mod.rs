@@ -13,4 +13,15 @@ pub trait Resource {
 }
 
 #[derive(Clone, Debug)]
-pub enum EResource {}
+pub enum EResource {
+	Coal(Coal),
+	RawIron(RawIron),
+}
+impl EResource {
+	pub fn coal() -> Self {
+		Self::Coal(Coal)
+	}
+	pub fn raw_iron() -> Self {
+		Self::RawIron(RawIron)
+	}
+}

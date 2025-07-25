@@ -2,9 +2,10 @@ use std::borrow::Cow;
 
 use crate::{
 	textures::TextureID,
-	world::{Resource, tile::Tile},
+	world::{EResource, Resource, tile::Tile},
 };
 
+#[derive(Copy, Clone, Debug)]
 pub struct Coal;
 impl Resource for Coal {
 	fn name(&self) -> Cow<'static, str> {
@@ -23,5 +24,9 @@ impl Tile for CoalOre {
 	}
 	fn texture_id(&self) -> TextureID {
 		TextureID::CoalOre
+	}
+
+	fn generate_resource(&self) -> Option<super::EResource> {
+		Some(EResource::coal())
 	}
 }

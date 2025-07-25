@@ -1,8 +1,9 @@
 use crate::{
 	textures::TextureID,
-	world::{Resource, Tile},
+	world::{EResource, Resource, Tile},
 };
 
+#[derive(Copy, Clone, Debug)]
 pub struct RawIron;
 impl Resource for RawIron {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
@@ -23,5 +24,9 @@ impl Tile for IronOre {
 	}
 	fn texture_id(&self) -> TextureID {
 		TextureID::IronOre
+	}
+
+	fn generate_resource(&self) -> Option<super::EResource> {
+		Some(EResource::raw_iron())
 	}
 }
