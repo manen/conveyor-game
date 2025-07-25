@@ -8,8 +8,10 @@ use sui::{
 use crate::{
 	textures::Textures,
 	world::{
-		tile::render::TILE_RENDER_SIZE,
+		buildings::BuildingsMap,
+		render::TILE_RENDER_SIZE,
 		tilemap::{SIZE, Tilemap},
+		tool::Tool,
 		worldgen,
 	},
 };
@@ -19,7 +21,10 @@ use crate::{
 pub struct Game {
 	textures: Textures,
 
-	tilemap: Tilemap,
+	pub tilemap: Tilemap,
+	pub buildings: BuildingsMap,
+
+	tool: Tool,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -35,10 +40,13 @@ impl Game {
 	) -> anyhow::Result<Self> {
 		let textures = Textures::new(assets, d, thread)?;
 		let tilemap = Tilemap::new();
+		let buildings = BuildingsMap::default();
 
 		Ok(Self {
 			textures,
 			tilemap,
+			buildings,
+			tool: Default::default(),
 			camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
@@ -61,10 +69,15 @@ impl Layable for Game {
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
 		let real_scale = self.real_scale();
 
-		let comp = self.tilemap.render(&self.textures).scale(real_scale).view(
-			(self.camera_at.0 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.aw / 2,
-			(self.camera_at.1 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.ah / 2,
-		);
+		let comp = self
+			.tilemap
+			.render(&self.textures)
+			.overlay(self.buildings.render(&self.textures))
+			.scale(real_scale)
+			.view(
+				(self.camera_at.0 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.aw / 2,
+				(self.camera_at.1 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.ah / 2,
+			);
 
 		comp.render(d, det, scale);
 	}
@@ -119,6 +132,11 @@ impl Layable for Game {
 			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
 				self.scale_velocity += amount / 6.0
 			}
+			Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+				let tool = std::mem::take(&mut self.tool);
+				tool.r#use(self, (x, y));
+				self.tool = tool
+			}
 
 			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_W)) => {
 				self.camera_velocity.1 -= move_amount;
@@ -136,6 +154,10 @@ impl Layable for Game {
 			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
 				*self.tilemap.tiles_mut() = worldgen::gen_tiles();
 			}
+			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('t')) => {
+				self.tool.cycle();
+			}
+
 			_ => {}
 		};
 		None

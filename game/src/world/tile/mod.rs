@@ -1,7 +1,5 @@
 use std::{borrow::Cow, fmt::Debug};
 
-pub mod render;
-
 // tiles
 
 mod stone;

@@ -2,7 +2,7 @@ use sui::Layable;
 
 use crate::{
 	textures::Textures,
-	world::{ETile, tile::render::TILE_RENDER_SIZE, worldgen},
+	world::{ETile, render::TILE_RENDER_SIZE, worldgen},
 };
 
 /// world size in tiles
@@ -58,14 +58,7 @@ impl<'a> Layable for TilemapRenderer<'a> {
 		(size, size)
 	}
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		crate::world::tile::render::draw_tilemap(
-			d,
-			&self.tilemap,
-			&self.textures,
-			det.x,
-			det.y,
-			scale,
-		);
+		crate::world::render::draw_tilemap(d, &self.tilemap, &self.textures, det.x, det.y, scale);
 	}
 
 	fn pass_event(

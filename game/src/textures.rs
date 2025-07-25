@@ -13,6 +13,8 @@ use sui::tex::Texture;
 /// this id is used a lot in every tick
 #[derive(Clone, Debug, PartialEq, Eq, Hash, EnumIter)]
 pub enum TextureID {
+	Transparent,
+
 	Stone,
 	IronOre,
 	CoalOre,
@@ -24,6 +26,7 @@ impl TextureID {
 	/// none just becomes transparent
 	pub const fn resource_path(&self) -> Cow<'static, str> {
 		match self {
+			TextureID::Transparent => Cow::Borrowed("textures/transparent.png"),
 			TextureID::Stone => Cow::Borrowed("https://pbs.twimg.com/media/DOvSaYKX4AERSq2.jpg"),
 			TextureID::IronOre => Cow::Borrowed(
 				"https://cdn.modrinth.com/data/GaB6rnEA/images/b9f180ff26fc858341cf326197f3798cd8fb6bac.png",

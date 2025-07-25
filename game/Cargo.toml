@@ -16,3 +16,4 @@ anyhow = "1.0.98"
 reqwest = "0.12.22"
 perlin2d = "0.2.6"
 strum = { version = "0.27.2", features = ["derive"] }
+glissade = "0.2.6"
