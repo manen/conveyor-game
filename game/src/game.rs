@@ -1,13 +1,17 @@
+use anyhow::{Context, anyhow};
 use asset_provider::Assets;
+use std::fmt::Debug;
 use sui::{
-	Layable, LayableExt,
+	Details, Layable, LayableExt,
 	core::{Event, KeyboardEvent, MouseEvent},
 	raylib::ffi::KeyboardKey,
 };
 
 use crate::{
 	textures::Textures,
+	utils::ReturnEvents,
 	world::{
+		Tile,
 		buildings::BuildingsMap,
 		render::TILE_RENDER_SIZE,
 		tilemap::{SIZE, Tilemap},
@@ -54,6 +58,18 @@ impl Game {
 		})
 	}
 
+	fn wrap_as_world<L: Layable + Debug + Clone>(
+		&self,
+		layable: L,
+		det: Details,
+	) -> impl Layable + Debug + Clone {
+		let real_scale = self.real_scale();
+		layable.scale(real_scale).view(
+			(self.camera_at.0 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.aw / 2,
+			(self.camera_at.1 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.ah / 2,
+		)
+	}
+
 	fn real_scale(&self) -> f32 {
 		(1.1 as f32).powf(self.scale)
 	}
@@ -73,11 +89,8 @@ impl Layable for Game {
 			.tilemap
 			.render(&self.textures)
 			.overlay(self.buildings.render(&self.textures))
-			.scale(real_scale)
-			.view(
-				(self.camera_at.0 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.aw / 2,
-				(self.camera_at.1 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.ah / 2,
-			);
+			.overlay(sui::Text::new(format!("{:?}", self.tool), 16));
+		let comp = self.wrap_as_world(comp, det);
 
 		comp.render(d, det, scale);
 	}
@@ -117,13 +130,16 @@ impl Layable for Game {
 		if self.scale_velocity.abs() < 0.005 {
 			self.scale_velocity = 0.0;
 		}
+
+		self.buildings
+			.tick(|pos| self.tilemap.at(pos).map(Tile::generate_resource).flatten());
 	}
 
 	fn pass_event(
 		&mut self,
 		event: Event,
-		_det: sui::Details,
-		_scale: f32,
+		det: sui::Details,
+		scale: f32,
 	) -> Option<sui::core::ReturnEvent> {
 		let move_amount = 0.1;
 
@@ -133,8 +149,33 @@ impl Layable for Game {
 				self.scale_velocity += amount / 6.0
 			}
 			Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+				let world_pos = (|| {
+					let mut world = self.wrap_as_world(ReturnEvents, det);
+
+					let ret = world.pass_event(event, det, scale).ok_or_else(|| anyhow!(
+							"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
+
+					let ret: Event = ret.take().ok_or_else(|| {
+						anyhow!(
+							"ReturnEvents didn't return a sui::core::Event"
+						)
+					})?;
+
+					match ret {
+						Event::MouseEvent(MouseEvent::MouseClick { x, y }) => Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE)),
+						_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
+					}
+				})().with_context(|| format!("while handling {self:?} use action at screen (x,y) ({x}, {y})"));
+				let world_pos = match world_pos {
+					Ok(a) => a,
+					Err(err) => {
+						eprintln!("{err}");
+						return None;
+					}
+				};
+
 				let tool = std::mem::take(&mut self.tool);
-				tool.r#use(self, (x, y));
+				tool.r#use(self, world_pos);
 				self.tool = tool
 			}
 

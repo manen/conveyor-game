@@ -7,8 +7,18 @@ use sui::Layable;
 
 use crate::{
 	textures::{TextureID, Textures},
-	world::{EResource, render, render::TILE_RENDER_SIZE, tilemap::SIZE},
+	world::{
+		EResource,
+		render::{self, TILE_RENDER_SIZE},
+		tile,
+		tilemap::SIZE,
+	},
 };
+
+mod small_extractor;
+pub use small_extractor::*;
+mod debug_consumer;
+pub use debug_consumer::*;
 
 pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
@@ -24,7 +34,7 @@ pub trait Building {
 	fn needs_poll(&self) -> bool {
 		false
 	}
-	fn poll_resource(&mut self) -> Option<EResource> {
+	fn poll_resource(&mut self, _tile_resource: Option<EResource>) -> Option<EResource> {
 		None
 	}
 
@@ -36,6 +46,19 @@ pub trait Building {
 #[derive(Clone, Debug)]
 pub enum EBuilding {
 	Nothing(Nothing),
+	SmallExtractor(SmallExtractor),
+	DebugConsumer(DebugConsumer),
+}
+impl EBuilding {
+	pub fn nothing() -> Self {
+		Self::Nothing(Nothing)
+	}
+	pub fn small_extractor() -> Self {
+		Self::SmallExtractor(SmallExtractor::new())
+	}
+	pub fn debug_consumer() -> Self {
+		Self::DebugConsumer(DebugConsumer)
+	}
 }
 impl Default for EBuilding {
 	fn default() -> Self {
@@ -46,39 +69,53 @@ impl Building for EBuilding {
 	fn name(&self) -> Cow<'static, str> {
 		match self {
 			Self::Nothing(a) => a.name(),
+			Self::SmallExtractor(a) => a.name(),
+			Self::DebugConsumer(a) => a.name(),
 		}
 	}
 	fn texture_id(&self) -> TextureID {
 		match self {
 			Self::Nothing(a) => a.texture_id(),
+			Self::SmallExtractor(a) => a.texture_id(),
+			Self::DebugConsumer(a) => a.texture_id(),
 		}
 	}
 
 	fn can_receive(&self, resource: &EResource) -> bool {
 		match self {
 			Self::Nothing(a) => a.can_receive(resource),
+			Self::SmallExtractor(a) => a.can_receive(resource),
+			Self::DebugConsumer(a) => a.can_receive(resource),
 		}
 	}
 	fn receive(&mut self, resource: EResource) {
 		match self {
 			Self::Nothing(a) => a.receive(resource),
+			Self::SmallExtractor(a) => a.receive(resource),
+			Self::DebugConsumer(a) => a.receive(resource),
 		}
 	}
 
 	fn needs_poll(&self) -> bool {
 		match self {
 			Self::Nothing(a) => a.needs_poll(),
+			Self::SmallExtractor(a) => a.needs_poll(),
+			Self::DebugConsumer(a) => a.needs_poll(),
 		}
 	}
-	fn poll_resource(&mut self) -> Option<EResource> {
+	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
 		match self {
-			Self::Nothing(a) => a.poll_resource(),
+			Self::Nothing(a) => a.poll_resource(tile_resource),
+			Self::SmallExtractor(a) => a.poll_resource(tile_resource),
+			Self::DebugConsumer(a) => a.poll_resource(tile_resource),
 		}
 	}
 
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		match self {
 			Self::Nothing(a) => a.pass_relatives(),
+			Self::SmallExtractor(a) => a.pass_relatives(),
+			Self::DebugConsumer(a) => a.pass_relatives(),
 		}
 	}
 }
@@ -101,7 +138,7 @@ pub struct BuildingsMap {
 	moves_queue: VecDeque<((i32, i32), EResource)>,
 }
 impl BuildingsMap {
-	pub fn tick(&mut self) {
+	pub fn tick(&mut self, mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>) {
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 		for (pos, resource) in moves_queue.drain(..) {
 			let directions = match self.at_mut(pos) {
@@ -136,7 +173,7 @@ impl BuildingsMap {
 			.filter(|(_, b)| b.needs_poll());
 		let to_tick = to_tick.filter_map(|((x, y), building)| {
 			building
-				.poll_resource()
+				.poll_resource(tile_resource_at((x as _, y as _)))
 				.map(|res| ((x as i32, y as i32), res))
 		});
 

@@ -15,6 +15,8 @@ use sui::tex::Texture;
 pub enum TextureID {
 	Transparent,
 
+	SmallExtractor,
+
 	Stone,
 	IronOre,
 	CoalOre,
@@ -27,6 +29,11 @@ impl TextureID {
 	pub const fn resource_path(&self) -> Cow<'static, str> {
 		match self {
 			TextureID::Transparent => Cow::Borrowed("textures/transparent.png"),
+
+			TextureID::SmallExtractor => Cow::Borrowed(
+				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e7/Diamond_Pickaxe_JE3_BE3.png/revision/latest/scale-to-width/360?cb=20250628224016",
+			),
+
 			TextureID::Stone => Cow::Borrowed("https://pbs.twimg.com/media/DOvSaYKX4AERSq2.jpg"),
 			TextureID::IronOre => Cow::Borrowed(
 				"https://cdn.modrinth.com/data/GaB6rnEA/images/b9f180ff26fc858341cf326197f3798cd8fb6bac.png",

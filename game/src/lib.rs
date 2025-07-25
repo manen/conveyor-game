@@ -7,6 +7,7 @@ use crate::{assets::GameAssets, game::Game};
 pub mod assets;
 pub mod game;
 pub mod textures;
+pub mod utils;
 pub mod world;
 
 #[tokio::main]
