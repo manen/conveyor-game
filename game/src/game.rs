@@ -2,6 +2,7 @@ use asset_provider::Assets;
 use sui::{
 	Layable, LayableExt,
 	core::{Event, KeyboardEvent, MouseEvent},
+	raylib::ffi::KeyboardKey,
 };
 
 use crate::{
@@ -44,6 +45,10 @@ impl Game {
 			scale_velocity: 0.0,
 		})
 	}
+
+	fn real_scale(&self) -> f32 {
+		(1.1 as f32).powf(self.scale)
+	}
 }
 
 impl Layable for Game {
@@ -54,7 +59,7 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		let real_scale = (1.1 as f32).powf(self.scale);
+		let real_scale = self.real_scale();
 
 		let comp = self.tilemap.render(&self.textures).scale(real_scale).view(
 			(self.camera_at.0 * TILE_RENDER_SIZE as f32 * real_scale) as i32 - det.aw / 2,
@@ -65,11 +70,29 @@ impl Layable for Game {
 	}
 
 	fn tick(&mut self) {
-		self.camera_at.0 += self.camera_velocity.0;
-		self.camera_at.1 += self.camera_velocity.1;
+		let tile_render_size = TILE_RENDER_SIZE as f32 * self.real_scale();
 
-		self.camera_velocity.0 *= 0.95;
-		self.camera_velocity.1 *= 0.95;
+		// world coords
+		// move amounts are calculated based on the zoom, the point is that every move will move the same number of pixels
+		// no matter the scale...
+		let move_amount_x = 1.0 / tile_render_size * TILE_RENDER_SIZE as f32;
+		let move_amount_y = 1.0 / tile_render_size * TILE_RENDER_SIZE as f32;
+
+		let move_amount_x = self.camera_velocity.0 * 0.85 * move_amount_x;
+		let move_amount_y = self.camera_velocity.1 * 0.85 * move_amount_y;
+
+		// ...except if it'd move too many tiles away
+		let move_limit = 0.2;
+		let (move_amount_x, move_amount_y) = (
+			move_amount_x.min(move_limit).max(-move_limit),
+			move_amount_y.min(move_limit).max(-move_limit),
+		);
+
+		self.camera_at.0 += move_amount_x;
+		self.camera_at.1 += move_amount_y;
+
+		self.camera_velocity.0 *= 0.85;
+		self.camera_velocity.1 *= 0.85;
 		if self.camera_velocity.0.abs() < 0.005 && self.camera_velocity.1.abs() < 0.005 {
 			self.camera_velocity = (0.0, 0.0);
 		}
@@ -97,16 +120,16 @@ impl Layable for Game {
 				self.scale_velocity += amount / 6.0
 			}
 
-			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('w')) => {
+			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_W)) => {
 				self.camera_velocity.1 -= move_amount;
 			}
-			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('s')) => {
+			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_S)) => {
 				self.camera_velocity.1 += move_amount;
 			}
-			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('a')) => {
+			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_A)) => {
 				self.camera_velocity.0 -= move_amount;
 			}
-			Event::KeyboardEvent(_, KeyboardEvent::CharPressed('d')) => {
+			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_D)) => {
 				self.camera_velocity.0 += move_amount;
 			}
 
