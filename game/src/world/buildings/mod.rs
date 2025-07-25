@@ -139,13 +139,16 @@ pub struct BuildingsMap {
 }
 impl BuildingsMap {
 	pub fn tick(&mut self, mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>) {
+		//! warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
+
 		for (pos, resource) in moves_queue.drain(..) {
 			let directions = match self.at_mut(pos) {
 				Some(a) => a.pass_relatives(),
 				None => continue,
 			};
-			for pos in directions.iter().copied() {
+			for pos_rel in directions.iter().copied() {
+				let pos = (pos.0 + pos_rel.0, pos.1 + pos_rel.1);
 				let block = if let Some(at) = self.at(pos) {
 					at
 				} else {
@@ -162,24 +165,34 @@ impl BuildingsMap {
 				}
 			}
 		}
-		self.moves_queue = moves_queue;
 
-		let to_tick = self
-			.buildings
-			.iter_mut()
-			.enumerate()
-			.map(|(x, a)| a.iter_mut().enumerate().map(move |(y, a)| ((x, y), a)))
-			.flatten()
-			.filter(|(_, b)| b.needs_poll());
-		let to_tick = to_tick.filter_map(|((x, y), building)| {
-			building
-				.poll_resource(tile_resource_at((x as _, y as _)))
-				.map(|res| ((x as i32, y as i32), res))
-		});
+		// let to_tick = self
+		// 	.buildings
+		// 	.iter_mut()
+		// 	.enumerate()
+		// 	.map(|(x, a)| a.iter_mut().enumerate().map(move |(y, a)| ((x, y), a)))
+		// 	.flatten()
+		// 	.filter(|(_, b)| b.needs_poll());
+		// let to_tick = to_tick.filter_map(|((x, y), building)| {
+		// 	building
+		// 		.poll_resource(tile_resource_at((x, y)))
+		// 		.map(|res| ((x as i32, y as i32), res))
+		// });
 
 		// one hell of an iterator huh
 
-		self.moves_queue.extend(to_tick);
+		for (pos, building) in self.iter_mut() {
+			if !building.needs_poll() {
+				continue;
+			}
+			let tile_resource = tile_resource_at((pos.0 as _, pos.1 as _));
+			let polled_resource = building.poll_resource(tile_resource);
+
+			if let Some(polled_resource) = polled_resource {
+				moves_queue.push_back((pos, polled_resource));
+			}
+		}
+		self.moves_queue = moves_queue;
 	}
 
 	pub fn at(&self, pos: (i32, i32)) -> Option<&EBuilding> {

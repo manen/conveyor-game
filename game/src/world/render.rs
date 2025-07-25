@@ -1,11 +1,10 @@
 use sui::{Color, Details, raylib::prelude::RaylibDraw};
 
 use crate::{
-	textures::Textures,
+	textures::{TextureID, Textures},
 	world::{
 		Tile,
-		buildings::Building,
-		buildings::BuildingsMap,
+		buildings::{Building, BuildingsMap},
 		tilemap::{SIZE, Tilemap},
 	},
 };
@@ -73,6 +72,8 @@ pub fn draw_buildings(
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
+	const DEBUG: bool = true;
+
 	for x in 0..SIZE {
 		for y in 0..SIZE {
 			let draw_x = draw_x_base + (x as f32 * render_size) as i32;
@@ -85,10 +86,20 @@ pub fn draw_buildings(
 				.at((x as _, y as _))
 				.expect("we tried rendering a tile that doesn't exist");
 
-			// let name = tile.name();
-			// d.draw_text(&name, draw_x, draw_y, 11, sui::Color::WHITE);
+			if DEBUG && building.name().as_ref() != "nothing" {
+				d.draw_text(
+					&format!("{building:?}"),
+					draw_x,
+					draw_y,
+					11,
+					sui::Color::WHITE,
+				);
+			}
 
 			let tiletex = building.texture_id();
+			if tiletex == TextureID::Transparent {
+				continue;
+			}
 
 			let tex = textures.texture_for(tiletex);
 			match tex {

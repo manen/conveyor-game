@@ -59,4 +59,12 @@ impl Tile for ETile {
 			ETile::CoalOre(a) => a.texture_id(),
 		}
 	}
+
+	fn generate_resource(&self) -> Option<EResource> {
+		match self {
+			ETile::Stone(a) => a.generate_resource(),
+			ETile::IronOre(a) => a.generate_resource(),
+			ETile::CoalOre(a) => a.generate_resource(),
+		}
+	}
 }

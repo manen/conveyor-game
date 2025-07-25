@@ -83,14 +83,13 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		let real_scale = self.real_scale();
-
 		let comp = self
 			.tilemap
 			.render(&self.textures)
-			.overlay(self.buildings.render(&self.textures))
+			.overlay(self.buildings.render(&self.textures));
+		let comp = self
+			.wrap_as_world(comp, det)
 			.overlay(sui::Text::new(format!("{:?}", self.tool), 16));
-		let comp = self.wrap_as_world(comp, det);
 
 		comp.render(d, det, scale);
 	}
@@ -131,8 +130,12 @@ impl Layable for Game {
 			self.scale_velocity = 0.0;
 		}
 
-		self.buildings
-			.tick(|pos| self.tilemap.at(pos).map(Tile::generate_resource).flatten());
+		let tile_resource_at = |pos| {
+			let tile = self.tilemap.at(pos)?;
+			let resource = tile.generate_resource();
+			resource
+		};
+		self.buildings.tick(tile_resource_at);
 	}
 
 	fn pass_event(
