@@ -4,17 +4,21 @@ use anyhow::Context;
 use asset_provider::Assets;
 use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 use futures::{Stream, stream::FuturesUnordered};
+use strum::{EnumIter, IntoEnumIterator};
 use sui::tex::Texture;
 
 /// an enum for every texture we can use \
 /// extensible in the future by adding an Other(u64) and have some sort of setup that hashes their
 /// resource_path, just so it's faster \
 /// this id is used a lot in every tick
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, EnumIter)]
 pub enum TextureID {
 	Stone,
 	IronOre,
 	CoalOre,
+
+	Coal,
+	RawIron,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -27,12 +31,24 @@ impl TextureID {
 			TextureID::CoalOre => Cow::Borrowed(
 				"https://d31sxl6qgne2yj.cloudfront.net/wordpress/wp-content/uploads/20190102094854/Minecraft-Coal-Ore.jpg",
 			),
+			TextureID::Coal => Cow::Borrowed(
+				"https://static.wikia.nocookie.net/minecraft/images/a/a7/Coal.png/revision/latest/scale-to-width/360?cb=20200814153155",
+			),
+			TextureID::RawIron => Cow::Borrowed(
+				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d2/Raw_Iron_JE3_BE2.png/revision/latest?cb=20210421181435",
+			),
 		}
 	}
 }
 
-pub const fn all_textures() -> &'static [TextureID] {
-	&[TextureID::Stone, TextureID::IronOre, TextureID::CoalOre]
+pub fn all_textures() -> impl Iterator<Item = TextureID> {
+	// &[
+	// 	TextureID::Stone,
+	// 	TextureID::IronOre,
+	// 	TextureID::CoalOre,
+	// 	TextureID::RawIron,
+	// ]
+	TextureID::iter()
 }
 
 /// contains all the logic for storing textures
@@ -58,7 +74,7 @@ impl Textures {
 	) -> impl Stream<Item = anyhow::Result<(TextureID, DynamicImage)>> {
 		let mut stream = FuturesUnordered::new();
 
-		let resources = all_textures().iter().cloned().map(|a| {
+		let resources = all_textures().map(|a| {
 			let resource = a.resource_path();
 			(a, resource)
 		});

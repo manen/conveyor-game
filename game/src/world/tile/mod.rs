@@ -4,14 +4,14 @@ pub mod render;
 
 // tiles
 
-mod coal_ore;
-mod iron_ore;
 mod stone;
 
 pub mod tiles {
 	use super::*;
-	pub use coal_ore::*;
-	pub use iron_ore::*;
+	use crate::world::resources;
+
+	pub use resources::CoalOre;
+	pub use resources::IronOre;
 	pub use stone::*;
 }
 use tiles::*;
