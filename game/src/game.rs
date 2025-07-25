@@ -1,6 +1,9 @@
 use anyhow::{Context, anyhow};
 use asset_provider::Assets;
-use std::fmt::Debug;
+use std::{
+	fmt::Debug,
+	time::{Duration, Instant},
+};
 use sui::{
 	Details, Layable, LayableExt,
 	core::{Event, KeyboardEvent, MouseEvent},
@@ -20,6 +23,8 @@ use crate::{
 	},
 };
 
+pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
+
 /// Singleplayer, self-contained game renderer
 #[derive(Debug)]
 pub struct Game {
@@ -35,6 +40,8 @@ pub struct Game {
 	camera_velocity: (f32, f32),
 	scale: f32,
 	scale_velocity: f32,
+
+	last_tick: Instant,
 }
 impl Game {
 	pub fn new<A: Assets + Send + Sync>(
@@ -55,6 +62,7 @@ impl Game {
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
+			last_tick: Instant::now(),
 		})
 	}
 
@@ -130,12 +138,16 @@ impl Layable for Game {
 			self.scale_velocity = 0.0;
 		}
 
-		let tile_resource_at = |pos| {
-			let tile = self.tilemap.at(pos)?;
-			let resource = tile.generate_resource();
-			resource
-		};
-		self.buildings.tick(tile_resource_at);
+		if self.last_tick.elapsed() > GAME_TICK_FREQUENCY {
+			let tile_resource_at = |pos| {
+				let tile = self.tilemap.at(pos)?;
+				let resource = tile.generate_resource();
+				resource
+			};
+			self.buildings.tick(tile_resource_at);
+
+			self.last_tick = Instant::now();
+		}
 	}
 
 	fn pass_event(
