@@ -41,7 +41,7 @@ pub struct Game {
 	scale: f32,
 	scale_velocity: f32,
 
-	last_tick: Instant,
+	last_game_tick: Instant,
 }
 impl Game {
 	pub fn new<A: Assets + Send + Sync>(
@@ -62,7 +62,7 @@ impl Game {
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
-			last_tick: Instant::now(),
+			last_game_tick: Instant::now(),
 		})
 	}
 
@@ -138,7 +138,7 @@ impl Layable for Game {
 			self.scale_velocity = 0.0;
 		}
 
-		if self.last_tick.elapsed() > GAME_TICK_FREQUENCY {
+		if self.last_game_tick.elapsed() > GAME_TICK_FREQUENCY {
 			let tile_resource_at = |pos| {
 				let tile = self.tilemap.at(pos)?;
 				let resource = tile.generate_resource();
@@ -146,7 +146,7 @@ impl Layable for Game {
 			};
 			self.buildings.tick(tile_resource_at);
 
-			self.last_tick = Instant::now();
+			self.last_game_tick = Instant::now();
 		}
 	}
 
