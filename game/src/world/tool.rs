@@ -1,6 +1,7 @@
 use crate::{
 	game::Game,
-	world::buildings::{EBuilding, Nothing, SmallExtractor},
+	utils::Direction,
+	world::buildings::{Conveyor, EBuilding, Nothing, SmallExtractor},
 };
 
 #[derive(Clone, Debug)]
@@ -23,7 +24,15 @@ impl Tool {
 				*self = Tool::PlaceBuilding(EBuilding::debug_consumer())
 			}
 			Tool::PlaceBuilding(EBuilding::DebugConsumer(_)) => {
-				*self = Tool::PlaceBuilding(EBuilding::nothing())
+				*self = Tool::PlaceBuilding(EBuilding::conveyor(Direction::Top))
+			}
+
+			Tool::PlaceBuilding(EBuilding::Conveyor(Conveyor { dir, .. })) => {
+				let to_place = match dir {
+					Direction::Left => EBuilding::nothing(),
+					_ => EBuilding::conveyor(dir.rotate_r()),
+				};
+				*self = Tool::PlaceBuilding(to_place);
 			}
 		}
 	}

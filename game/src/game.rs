@@ -138,7 +138,7 @@ impl Layable for Game {
 			self.scale_velocity = 0.0;
 		}
 
-		if self.last_game_tick.elapsed() > GAME_TICK_FREQUENCY {
+		if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
 			let tile_resource_at = |pos| {
 				let tile = self.tilemap.at(pos)?;
 				let resource = tile.generate_resource();
@@ -158,7 +158,6 @@ impl Layable for Game {
 	) -> Option<sui::core::ReturnEvent> {
 		let move_amount = 0.1;
 
-		println!("{event:?}");
 		match event {
 			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
 				self.scale_velocity += amount / 6.0
@@ -214,7 +213,7 @@ impl Layable for Game {
 				self.tool.cycle();
 			}
 
-			_ => {}
+			_ => println!("{event:?}"),
 		};
 		None
 	}

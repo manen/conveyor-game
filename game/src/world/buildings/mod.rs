@@ -7,6 +7,7 @@ use sui::Layable;
 
 use crate::{
 	textures::{TextureID, Textures},
+	utils::Direction,
 	world::{
 		EResource,
 		render::{self, TILE_RENDER_SIZE},
@@ -19,6 +20,8 @@ mod small_extractor;
 pub use small_extractor::*;
 mod debug_consumer;
 pub use debug_consumer::*;
+mod conveyor;
+pub use conveyor::*;
 
 pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
@@ -48,6 +51,7 @@ pub enum EBuilding {
 	Nothing(Nothing),
 	SmallExtractor(SmallExtractor),
 	DebugConsumer(DebugConsumer),
+	Conveyor(Conveyor),
 }
 impl EBuilding {
 	pub fn nothing() -> Self {
@@ -58,6 +62,9 @@ impl EBuilding {
 	}
 	pub fn debug_consumer() -> Self {
 		Self::DebugConsumer(DebugConsumer)
+	}
+	pub fn conveyor(dir: Direction) -> Self {
+		Self::Conveyor(Conveyor::new(dir))
 	}
 }
 impl Default for EBuilding {
@@ -71,6 +78,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.name(),
 			Self::SmallExtractor(a) => a.name(),
 			Self::DebugConsumer(a) => a.name(),
+			Self::Conveyor(a) => a.name(),
 		}
 	}
 	fn texture_id(&self) -> TextureID {
@@ -78,6 +86,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.texture_id(),
 			Self::SmallExtractor(a) => a.texture_id(),
 			Self::DebugConsumer(a) => a.texture_id(),
+			Self::Conveyor(a) => a.texture_id(),
 		}
 	}
 
@@ -86,6 +95,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.can_receive(resource),
 			Self::SmallExtractor(a) => a.can_receive(resource),
 			Self::DebugConsumer(a) => a.can_receive(resource),
+			Self::Conveyor(a) => a.can_receive(resource),
 		}
 	}
 	fn receive(&mut self, resource: EResource) {
@@ -93,6 +103,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.receive(resource),
 			Self::SmallExtractor(a) => a.receive(resource),
 			Self::DebugConsumer(a) => a.receive(resource),
+			Self::Conveyor(a) => a.receive(resource),
 		}
 	}
 
@@ -101,6 +112,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.needs_poll(),
 			Self::SmallExtractor(a) => a.needs_poll(),
 			Self::DebugConsumer(a) => a.needs_poll(),
+			Self::Conveyor(a) => a.needs_poll(),
 		}
 	}
 	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
@@ -108,6 +120,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.poll_resource(tile_resource),
 			Self::SmallExtractor(a) => a.poll_resource(tile_resource),
 			Self::DebugConsumer(a) => a.poll_resource(tile_resource),
+			Self::Conveyor(a) => a.poll_resource(tile_resource),
 		}
 	}
 
@@ -116,6 +129,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.pass_relatives(),
 			Self::SmallExtractor(a) => a.pass_relatives(),
 			Self::DebugConsumer(a) => a.pass_relatives(),
+			Self::Conveyor(a) => a.pass_relatives(),
 		}
 	}
 }
