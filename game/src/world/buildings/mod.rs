@@ -11,7 +11,6 @@ use crate::{
 	world::{
 		EResource,
 		render::{self, TILE_RENDER_SIZE},
-		tile,
 		tilemap::SIZE,
 	},
 };
@@ -188,13 +187,19 @@ impl BuildingsMap {
 			let resource_sample = building.resource_sample(tile_resource);
 
 			if let Some(resource_sample) = &resource_sample {
-				let mut pass_candidates = pass_candidates
+				let pass_candidates = pass_candidates
 					.filter(|(_, b)| b.can_receive(resource_sample))
 					.map(|a| a.0);
-				let pass_target_pos = pass_candidates.next();
 
-				if let Some(pass_target_pos) = pass_target_pos {
-					moves_queue.push_back((pos, pass_target_pos));
+				for pass_target in pass_candidates {
+					if moves_queue
+						.iter()
+						.filter(|(_src, dst)| pass_target == *dst)
+						.count() == 0
+					{
+						moves_queue.push_back((pos, pass_target));
+						break;
+					}
 				}
 			}
 		}
