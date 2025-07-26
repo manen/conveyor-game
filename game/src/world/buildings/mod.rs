@@ -225,13 +225,13 @@ impl BuildingsMap {
 	}
 
 	pub fn at(&self, pos: (i32, i32)) -> Option<&EBuilding> {
-		if pos.0 < 0 || pos.1 < 0 || pos.0 > SIZE as _ || pos.1 > SIZE as _ {
+		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
 			return None;
 		}
 		Some(&self.buildings[pos.0 as usize][pos.1 as usize])
 	}
 	pub fn at_mut(&mut self, pos: (i32, i32)) -> Option<&mut EBuilding> {
-		if pos.0 < 0 || pos.1 < 0 || pos.0 > SIZE as _ || pos.1 > SIZE as _ {
+		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
 			return None;
 		}
 		Some(&mut self.buildings[pos.0 as usize][pos.1 as usize])

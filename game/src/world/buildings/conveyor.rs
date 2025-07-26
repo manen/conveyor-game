@@ -46,7 +46,3 @@ impl Building for Conveyor {
 		self.dir.rel_array()
 	}
 }
-
-// TODO:
-// - conveyor timing
-// - only call poll_resource if we're sure we can pass the item somewhere (to avoid items straightup disappearing if they can't go anywhere)
