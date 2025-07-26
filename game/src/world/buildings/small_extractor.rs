@@ -27,10 +27,13 @@ impl Building for SmallExtractor {
 	fn needs_poll(&self) -> bool {
 		self.last_extract.elapsed() > Duration::from_millis(750)
 	}
+	fn resource_sample(&self, tile_resource: Option<EResource>) -> Option<EResource> {
+		tile_resource
+	}
 	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
 		if self.needs_poll() {
 			self.last_extract = Instant::now();
-			tile_resource
+			self.resource_sample(tile_resource)
 		} else {
 			None
 		}

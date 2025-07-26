@@ -35,6 +35,9 @@ impl Building for Conveyor {
 	fn needs_poll(&self) -> bool {
 		self.holding.is_some()
 	}
+	fn resource_sample(&self, _tile_resource: Option<EResource>) -> Option<EResource> {
+		self.holding.clone()
+	}
 	fn poll_resource(&mut self, _tile_resource: Option<EResource>) -> Option<EResource> {
 		self.holding.take()
 	}
@@ -43,3 +46,7 @@ impl Building for Conveyor {
 		self.dir.rel_array()
 	}
 }
+
+// TODO:
+// - conveyor timing
+// - only call poll_resource if we're sure we can pass the item somewhere (to avoid items straightup disappearing if they can't go anywhere)

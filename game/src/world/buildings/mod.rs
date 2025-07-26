@@ -33,6 +33,10 @@ pub trait Building {
 	}
 	fn receive(&mut self, _resource: EResource) {}
 
+	/// [Self::poll_resource], without advancing any internal timers or anything
+	fn resource_sample(&self, _tile_resource: Option<EResource>) -> Option<EResource> {
+		None
+	}
 	// polling is how you generate new shit
 	fn needs_poll(&self) -> bool {
 		false
@@ -115,6 +119,14 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.needs_poll(),
 		}
 	}
+	fn resource_sample(&self, tile_resource: Option<EResource>) -> Option<EResource> {
+		match self {
+			Self::Nothing(a) => a.resource_sample(tile_resource),
+			Self::SmallExtractor(a) => a.resource_sample(tile_resource),
+			Self::DebugConsumer(a) => a.resource_sample(tile_resource),
+			Self::Conveyor(a) => a.resource_sample(tile_resource),
+		}
+	}
 	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
 		match self {
 			Self::Nothing(a) => a.poll_resource(tile_resource),
@@ -148,64 +160,67 @@ impl Building for Nothing {
 #[derive(Clone, Debug, Default)]
 pub struct BuildingsMap {
 	buildings: [[EBuilding; SIZE]; SIZE],
-	/// syntax: (source_position, resource)
-	moves_queue: VecDeque<((i32, i32), EResource)>,
+	/// syntax: (source_position we poll the resource from, target building that'll receive the polled event) \
+	/// this is only used internally while ticking and between ticks it's empty
+	moves_queue: VecDeque<((i32, i32), (i32, i32))>,
 }
 impl BuildingsMap {
-	pub fn tick(&mut self, mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>) {
-		//! warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
+	pub fn tick(
+		&mut self,
+		mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>,
+	) -> () {
+		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
-		for (pos, resource) in moves_queue.drain(..) {
-			let directions = match self.at_mut(pos) {
-				Some(a) => a.pass_relatives(),
-				None => continue,
-			};
-			for pos_rel in directions.iter().copied() {
-				let pos = (pos.0 + pos_rel.0, pos.1 + pos_rel.1);
-				let block = if let Some(at) = self.at(pos) {
-					at
-				} else {
-					continue;
-				};
+		for (pos, building) in self.iter() {
+			if !building.needs_poll() {
+				continue;
+			}
 
-				// the very first block in the building's requested pass directions that'll take the resource
-				// will get the resource
-				if block.can_receive(&resource) {
-					self.at_mut(pos)
-						.expect("could take building as immutable, can't as mutable")
-						.receive(resource);
-					break;
+			let dirs = building.pass_relatives();
+			let pass_candidates = dirs
+				.iter()
+				.copied()
+				.map(|(rx, ry)| (pos.0 + rx, pos.1 + ry));
+			let pass_candidates = pass_candidates.filter_map(|pos| self.at(pos).map(|b| (pos, b)));
+
+			let tile_resource = tile_resource_at((pos.0 as _, pos.1 as _));
+			let resource_sample = building.resource_sample(tile_resource);
+
+			if let Some(resource_sample) = &resource_sample {
+				let mut pass_candidates = pass_candidates
+					.filter(|(_, b)| b.can_receive(resource_sample))
+					.map(|a| a.0);
+				let pass_target_pos = pass_candidates.next();
+
+				if let Some(pass_target_pos) = pass_target_pos {
+					moves_queue.push_back((pos, pass_target_pos));
 				}
 			}
 		}
 
-		// let to_tick = self
-		// 	.buildings
-		// 	.iter_mut()
-		// 	.enumerate()
-		// 	.map(|(x, a)| a.iter_mut().enumerate().map(move |(y, a)| ((x, y), a)))
-		// 	.flatten()
-		// 	.filter(|(_, b)| b.needs_poll());
-		// let to_tick = to_tick.filter_map(|((x, y), building)| {
-		// 	building
-		// 		.poll_resource(tile_resource_at((x, y)))
-		// 		.map(|res| ((x as i32, y as i32), res))
-		// });
+		for (source_pos, target_pos) in moves_queue.drain(..) {
+			let resource = {
+				let source = match self.at_mut(source_pos) {
+					Some(a) => a,
+					None => continue,
+				};
 
-		// one hell of an iterator huh
+				let tile_resource = tile_resource_at((source_pos.0 as _, source_pos.1 as _));
+				let resource = match source.poll_resource(tile_resource) {
+					Some(a) => a,
+					None => continue,
+				};
+				resource
+			};
 
-		for (pos, building) in self.iter_mut() {
-			if !building.needs_poll() {
-				continue;
-			}
-			let tile_resource = tile_resource_at((pos.0 as _, pos.1 as _));
-			let polled_resource = building.poll_resource(tile_resource);
-
-			if let Some(polled_resource) = polled_resource {
-				moves_queue.push_back((pos, polled_resource));
-			}
+			let target = match self.at_mut(target_pos) {
+				Some(a) => a,
+				None => continue,
+			};
+			target.receive(resource);
 		}
+
 		self.moves_queue = moves_queue;
 	}
 
