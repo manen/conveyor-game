@@ -26,6 +26,8 @@ pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
 	fn texture_id(&self) -> TextureID;
 
+	/// the scale in the returned Layable should be ignored as it's always 1.0 \
+	/// det.aw and det.ah is the tile width&height, go off that
 	fn render<'a>(&'a self, textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
 		#[derive(Clone, Debug)]
 		struct DefaultBuildingRender<'a> {

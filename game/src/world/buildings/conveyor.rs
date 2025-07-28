@@ -43,7 +43,7 @@ impl Building for Conveyor {
 				(TILE_RENDER_SIZE, TILE_RENDER_SIZE)
 			}
 			/// det.aw is trusted to be TILE_RENDER_SIZE scaled properly
-			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, _scale: f32) {
 				let top_texture = self.textures.texture_for(TextureID::ConveyorTop);
 				if let Some(top_texture) = top_texture {
 					// draws the top facing texture rotated the right way
@@ -64,6 +64,17 @@ impl Building for Conveyor {
 					top_texture.render_with_rotation(d, tex_det, self.dir.degrees());
 				} else {
 					d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
+				}
+
+				if let Some(holding) = &self.holding {
+					let aw = det.aw / 2;
+					let ah = det.ah / 2;
+					let x = det.x + aw / 2;
+					let y = det.y + ah / 2;
+
+					let holding_det = sui::Details { x, y, aw, ah };
+
+					self.textures.render(d, holding_det, holding);
 				}
 			}
 		}
