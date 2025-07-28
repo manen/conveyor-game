@@ -1,6 +1,10 @@
 use std::path::PathBuf;
 
+use anyhow::{Context, anyhow};
 use asset_provider::{Asset, Assets};
+
+use include_dir::{Dir, include_dir};
+static ASSETS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../assets");
 
 pub struct GameAssets {
 	client: reqwest::Client,
@@ -17,23 +21,47 @@ impl Default for GameAssets {
 	}
 }
 impl Assets for GameAssets {
-	async fn asset(&self, key: &str) -> Result<Asset, asset_provider::Error> {
+	async fn asset(&self, key: &str) -> anyhow::Result<Asset> {
+		let baked_in = || {
+			let res = ASSETS
+				.get_file(key)
+				.ok_or_else(|| anyhow!("couldn't retreive {key} from baked-in asset storage"))?;
+
+			anyhow::Ok(Asset::new(res.contents()))
+		};
 		let web = async || {
 			let res = self.client.get(key).send().await?;
 			let bytes = res.bytes().await?;
-			return Result::<Asset, asset_provider::Error>::Ok(Asset::new(Vec::from(bytes)));
+
+			anyhow::Ok(Asset::new(Vec::from(bytes)))
 		};
 		let fs = async || {
 			let path = self.run_dir.join(key);
 			let bytes = std::fs::read(&path)?;
 
-			Result::<Asset, asset_provider::Error>::Ok(Asset::new(bytes))
+			anyhow::Ok(Asset::new(bytes))
 		};
 
 		let is_url = match key.strip_prefix("http") {
 			Some(a) if a.starts_with("://") || a.starts_with("s://") => true,
 			_ => false,
 		};
-		if is_url { web().await } else { fs().await }
+		if is_url {
+			Ok(web()
+				.await
+				.with_context(|| format!("while resolving asset {key}"))?)
+		} else {
+			match fs().await {
+				Ok(a) => Ok(a),
+				Err(fs_err) => match baked_in() {
+					Ok(a) => Ok(a),
+					Err(baked_in_err) => {
+						return Err(anyhow!(
+							"couldn't retreive asset {key}\nfilesystem error: {fs_err}\nbaked-in storage error: {baked_in_err}"
+						));
+					}
+				},
+			}
+		}
 	}
 }
