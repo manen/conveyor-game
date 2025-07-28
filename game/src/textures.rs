@@ -23,6 +23,12 @@ pub enum TextureID {
 
 	Coal,
 	RawIron,
+
+	// TODO these should absolutely be a single texture this is quite a shame
+	ConveyorTop,
+	ConveyorRight,
+	ConveyorBottom,
+	ConveyorLeft,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -43,6 +49,10 @@ impl TextureID {
 			TextureID::RawIron => Cow::Borrowed(
 				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d2/Raw_Iron_JE3_BE2.png/revision/latest?cb=20210421181435",
 			),
+			TextureID::ConveyorTop => Cow::Borrowed("textures/conveyor-top.png"),
+			TextureID::ConveyorRight => Cow::Borrowed("textures/conveyor-right.png"),
+			TextureID::ConveyorBottom => Cow::Borrowed("textures/conveyor-bottom.png"),
+			TextureID::ConveyorLeft => Cow::Borrowed("textures/conveyor-left.png"),
 		}
 	}
 }

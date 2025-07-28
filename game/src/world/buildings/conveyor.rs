@@ -20,7 +20,12 @@ impl Building for Conveyor {
 		"conveyor".into()
 	}
 	fn texture_id(&self) -> TextureID {
-		TextureID::Coal
+		match self.dir {
+			Direction::Right => TextureID::ConveyorRight,
+			Direction::Bottom => TextureID::ConveyorBottom,
+			Direction::Left => TextureID::ConveyorLeft,
+			Direction::Top => TextureID::ConveyorTop,
+		}
 	}
 
 	fn can_receive(&self, _resource: &EResource) -> bool {
