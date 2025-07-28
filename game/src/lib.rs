@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use sui::DynamicLayable;
 
 use crate::{assets::GameAssets, game::Game};
