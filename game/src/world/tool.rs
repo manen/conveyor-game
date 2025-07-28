@@ -1,7 +1,9 @@
+use std::borrow::Cow;
+
 use crate::{
 	game::Game,
 	utils::Direction,
-	world::buildings::{Conveyor, EBuilding, Nothing, SmallExtractor},
+	world::buildings::{Building, Conveyor, EBuilding, Nothing, SmallExtractor},
 };
 
 #[derive(Clone, Debug)]
@@ -14,6 +16,13 @@ impl Default for Tool {
 	}
 }
 impl Tool {
+	pub fn name(&self) -> Cow<'static, str> {
+		match self {
+			Tool::PlaceBuilding(EBuilding::Nothing(_)) => "remove buildings".into(),
+			Tool::PlaceBuilding(building) => format!("place {}", building.name()).into(),
+		}
+	}
+
 	/// temporary tool switch
 	pub fn cycle(&mut self) {
 		match self {

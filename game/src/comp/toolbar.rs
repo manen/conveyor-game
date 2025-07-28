@@ -1,0 +1,39 @@
+use std::{borrow::Cow, fmt::Debug};
+
+use sui::{Layable, LayableExt};
+
+use crate::{
+	utils::Direction,
+	world::{buildings::EBuilding, tool::Tool},
+};
+
+#[derive(Clone, Debug)]
+/// the ReturnEvent sent back by the component
+pub struct SelectTool(pub Tool);
+
+fn tools() -> impl Iterator<Item = Tool> {
+	use std::iter;
+
+	iter::once(Tool::PlaceBuilding(EBuilding::nothing()))
+		.chain(Direction::all().map(|dir| Tool::PlaceBuilding(EBuilding::conveyor(dir))))
+		.chain([
+			Tool::PlaceBuilding(EBuilding::small_extractor()),
+			Tool::PlaceBuilding(EBuilding::debug_consumer()),
+		])
+}
+
+/// creates the toolbar layout. listen to [SelectTool] in your component to have it working
+pub fn toolbar() -> impl Layable + Clone + Debug {
+	toolbar_from_tools(tools())
+}
+pub fn toolbar_from_tools(tools: impl Iterator<Item = Tool>) -> impl Layable + Clone + Debug {
+	let toolbar = tools.map(|tool| {
+		sui::Text::new(tool.name(), 24)
+			.margin(4)
+			.clickable(move |_| SelectTool(tool.clone()))
+	});
+
+	let toolbar = sui::comp::div::SpaceBetween::new_horizontal(toolbar.collect::<Vec<_>>());
+
+	toolbar
+}

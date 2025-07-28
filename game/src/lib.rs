@@ -5,6 +5,7 @@ use sui::DynamicLayable;
 use crate::{assets::GameAssets, game::Game};
 
 pub mod assets;
+pub mod comp;
 pub mod game;
 pub mod textures;
 pub mod utils;

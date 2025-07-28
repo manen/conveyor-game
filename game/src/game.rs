@@ -5,12 +5,13 @@ use std::{
 	time::{Duration, Instant},
 };
 use sui::{
-	Details, Layable, LayableExt,
+	Compatible, Details, DynamicLayable, Layable, LayableExt,
 	core::{Event, KeyboardEvent, MouseEvent},
 	raylib::ffi::KeyboardKey,
 };
 
 use crate::{
+	comp::{SelectTool, toolbar},
 	textures::Textures,
 	utils::ReturnEvents,
 	world::{
@@ -29,6 +30,7 @@ pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 #[derive(Debug)]
 pub struct Game {
 	textures: Textures,
+	toolbar: DynamicLayable<'static>,
 
 	pub tilemap: Tilemap,
 	pub buildings: BuildingsMap,
@@ -55,6 +57,7 @@ impl Game {
 
 		Ok(Self {
 			textures,
+			toolbar: Self::gen_toolbar(),
 			tilemap,
 			buildings,
 			tool: Default::default(),
@@ -66,6 +69,9 @@ impl Game {
 		})
 	}
 
+	fn gen_toolbar() -> DynamicLayable<'static> {
+		DynamicLayable::new(toolbar())
+	}
 	fn wrap_as_world<L: Layable + Debug + Clone>(
 		&self,
 		layable: L,
@@ -97,7 +103,7 @@ impl Layable for Game {
 			.overlay(self.buildings.render(&self.textures));
 		let comp = self
 			.wrap_as_world(comp, det)
-			.overlay(sui::Text::new(format!("{:?}", self.tool), 16));
+			.overlay(self.toolbar.immutable_wrap());
 
 		comp.render(d, det, scale);
 	}
@@ -163,23 +169,46 @@ impl Layable for Game {
 				self.scale_velocity += amount / 6.0
 			}
 			Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-				let world_pos = (|| {
+				if det.is_inside_tuple(self.toolbar.size()) {
+					match self.toolbar.pass_event(event, det, scale) {
+						Some(toolbar_resp) => {
+							println!("{toolbar_resp:?}");
+							if let Some(SelectTool(tool)) = toolbar_resp.take() {
+								self.tool = tool;
+								return None;
+							}
+						}
+						None => {}
+					}
+				}
+
+				// use the tool on the block
+				// yes the code for that is this large
+
+				// okay something doesn't work idk what
+				// toolbar isn't responding to the ReturnEvent so it might be the new SpaceBetween or anything else basically
+
+				let world_pos = || {
 					let mut world = self.wrap_as_world(ReturnEvents, det);
 
 					let ret = world.pass_event(event, det, scale).ok_or_else(|| anyhow!(
-							"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
+								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
-					let ret: Event = ret.take().ok_or_else(|| {
-						anyhow!(
-							"ReturnEvents didn't return a sui::core::Event"
-						)
-					})?;
+					let ret: Event = ret
+						.take()
+						.ok_or_else(|| anyhow!("ReturnEvents didn't return a sui::core::Event"))?;
 
 					match ret {
-						Event::MouseEvent(MouseEvent::MouseClick { x, y }) => Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE)),
+						Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+							Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+						}
 						_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
 					}
-				})().with_context(|| format!("while handling {self:?} use action at screen (x,y) ({x}, {y})"));
+				};
+				let world_pos = world_pos().with_context(|| {
+					format!("while handling {self:?} use action at screen (x,y) ({x}, {y})")
+				});
+
 				let world_pos = match world_pos {
 					Ok(a) => a,
 					Err(err) => {

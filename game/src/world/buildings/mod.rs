@@ -57,13 +57,13 @@ pub enum EBuilding {
 	Conveyor(Conveyor),
 }
 impl EBuilding {
-	pub fn nothing() -> Self {
+	pub const fn nothing() -> Self {
 		Self::Nothing(Nothing)
 	}
 	pub fn small_extractor() -> Self {
 		Self::SmallExtractor(SmallExtractor::new())
 	}
-	pub fn debug_consumer() -> Self {
+	pub const fn debug_consumer() -> Self {
 		Self::DebugConsumer(DebugConsumer)
 	}
 	pub fn conveyor(dir: Direction) -> Self {
