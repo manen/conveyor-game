@@ -103,7 +103,7 @@ impl Layable for Game {
 			.overlay(self.buildings.render(&self.textures));
 		let comp = self
 			.wrap_as_world(comp, det)
-			.overlay(self.toolbar.immutable_wrap());
+			.overlay(sui::div([self.toolbar.immutable_wrap()]));
 
 		comp.render(d, det, scale);
 	}
@@ -169,14 +169,19 @@ impl Layable for Game {
 				self.scale_velocity += amount / 6.0
 			}
 			Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-				if det.is_inside_tuple(self.toolbar.size()) {
+				let (_, toolbar_h) = self.toolbar.size();
+
+				if y <= toolbar_h {
 					match self.toolbar.pass_event(event, det, scale) {
-						Some(toolbar_resp) => {
-							println!("{toolbar_resp:?}");
+						Some(toolbar_resp) if toolbar_resp.can_take::<SelectTool>() => {
 							if let Some(SelectTool(tool)) = toolbar_resp.take() {
+								println!("selected {tool:?}");
 								self.tool = tool;
 								return None;
 							}
+						}
+						Some(other_event) => {
+							println!("non-SelectTool ui return event: {other_event:?}")
 						}
 						None => {}
 					}
@@ -242,7 +247,9 @@ impl Layable for Game {
 				self.tool.cycle();
 			}
 
-			_ => println!("{event:?}"),
+			_ => {
+				// println!("{event:?}")
+			}
 		};
 		None
 	}
