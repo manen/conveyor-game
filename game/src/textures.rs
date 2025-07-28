@@ -129,4 +129,7 @@ impl Textures {
 	pub fn texture_for(&self, tiletex: TextureID) -> Option<&Texture> {
 		self.textures.get(&tiletex)
 	}
+	pub fn texture_for_b(&self, tiletex: &TextureID) -> Option<&Texture> {
+		self.textures.get(tiletex)
+	}
 }

@@ -1,4 +1,4 @@
-use sui::{Color, Details, raylib::prelude::RaylibDraw};
+use sui::{Color, Details, Layable, raylib::prelude::RaylibDraw};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -72,7 +72,7 @@ pub fn draw_buildings(
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
-	const DEBUG: bool = true;
+	const DEBUG: bool = false;
 
 	for x in 0..SIZE {
 		for y in 0..SIZE {
@@ -96,29 +96,14 @@ pub fn draw_buildings(
 				);
 			}
 
-			let tiletex = building.texture_id();
-			if tiletex == TextureID::Transparent {
-				continue;
-			}
-
-			let tex = textures.texture_for(tiletex);
-			match tex {
-				None => {
-					d.draw_rectangle(
-						draw_x,
-						draw_y,
-						render_size_i32,
-						render_size_i32,
-						Color::PURPLE,
-					);
-				}
-				Some(tex) => {
-					tex.render(
-						d,
-						Details::new(draw_x, draw_y, render_size_i32, render_size_i32),
-					);
-				}
-			}
+			let render = building.render(textures);
+			let l_det = Details {
+				x: draw_x,
+				y: draw_y,
+				aw: render_size_i32,
+				ah: render_size_i32,
+			};
+			render.render(d, l_det, 1.0);
 		}
 	}
 }

@@ -1,9 +1,9 @@
 // pub mod small_extractor;
 // pub use small_extractor::*;
 
-use std::{borrow::Cow, collections::VecDeque};
+use std::{borrow::Cow, collections::VecDeque, fmt::Debug};
 
-use sui::Layable;
+use sui::{Layable, raylib::prelude::RaylibDraw};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -25,6 +25,36 @@ pub use conveyor::*;
 pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
 	fn texture_id(&self) -> TextureID;
+
+	fn render<'a>(&'a self, textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
+		#[derive(Clone, Debug)]
+		struct DefaultBuildingRender<'a> {
+			texture_id: TextureID,
+			textures: &'a Textures,
+		}
+		impl<'a> Layable for DefaultBuildingRender<'a> {
+			fn size(&self) -> (i32, i32) {
+				(TILE_RENDER_SIZE, TILE_RENDER_SIZE)
+			}
+			/// scale is ignored; send properly sized det
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, _scale: f32) {
+				let tex = self.textures.texture_for_b(&self.texture_id);
+				match tex {
+					None => {
+						d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
+					}
+					Some(tex) => {
+						tex.render(d, det);
+					}
+				}
+			}
+		}
+
+		DefaultBuildingRender {
+			texture_id: self.texture_id(),
+			textures,
+		}
+	}
 
 	// receiving is how shit gets passed
 	fn can_receive(&self, _resource: &EResource) -> bool {
@@ -93,6 +123,15 @@ impl Building for EBuilding {
 		}
 	}
 
+	fn render<'a>(&'a self, textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
+		match self {
+			Self::Nothing(a) => sui::custom(a.render(textures)),
+			Self::SmallExtractor(a) => sui::custom(a.render(textures)),
+			Self::DebugConsumer(a) => sui::custom(a.render(textures)),
+			Self::Conveyor(a) => sui::custom(a.render(textures)),
+		}
+	}
+
 	fn can_receive(&self, resource: &EResource) -> bool {
 		match self {
 			Self::Nothing(a) => a.can_receive(resource),
@@ -151,6 +190,10 @@ impl Building for Nothing {
 	fn name(&self) -> Cow<'static, str> {
 		"nothing".into()
 	}
+	fn render<'a>(&'a self, _textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
+		sui::comp::Space::new(0, 0)
+	}
+
 	fn texture_id(&self) -> TextureID {
 		TextureID::Transparent
 	}
