@@ -38,15 +38,7 @@ pub trait Building {
 			}
 			/// scale is ignored; send properly sized det
 			fn render(&self, d: &mut sui::Handle, det: sui::Details, _scale: f32) {
-				let tex = self.textures.texture_for_b(&self.texture_id);
-				match tex {
-					None => {
-						d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
-					}
-					Some(tex) => {
-						tex.render(d, det);
-					}
-				}
+				self.textures.render(d, det, &self.texture_id);
 			}
 		}
 

@@ -5,7 +5,7 @@ use asset_provider::Assets;
 use asset_provider_image::{AssetsExt, ImageExt, image::DynamicImage};
 use futures::{Stream, stream::FuturesUnordered};
 use strum::{EnumIter, IntoEnumIterator};
-use sui::tex::Texture;
+use sui::{Color, Details, raylib::prelude::RaylibDraw, tex::Texture};
 
 /// an enum for every texture we can use \
 /// extensible in the future by adding an Other(u64) and have some sort of setup that hashes their
@@ -24,11 +24,7 @@ pub enum TextureID {
 	Coal,
 	RawIron,
 
-	// TODO these should absolutely be a single texture this is quite a shame
 	ConveyorTop,
-	ConveyorRight,
-	ConveyorBottom,
-	ConveyorLeft,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -50,9 +46,6 @@ impl TextureID {
 				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d2/Raw_Iron_JE3_BE2.png/revision/latest?cb=20210421181435",
 			),
 			TextureID::ConveyorTop => Cow::Borrowed("textures/conveyor-top.png"),
-			TextureID::ConveyorRight => Cow::Borrowed("textures/conveyor-right.png"),
-			TextureID::ConveyorBottom => Cow::Borrowed("textures/conveyor-bottom.png"),
-			TextureID::ConveyorLeft => Cow::Borrowed("textures/conveyor-left.png"),
 		}
 	}
 }
@@ -131,5 +124,19 @@ impl Textures {
 	}
 	pub fn texture_for_b(&self, tiletex: &TextureID) -> Option<&Texture> {
 		self.textures.get(tiletex)
+	}
+
+	pub fn render(&self, d: &mut sui::Handle, det: Details, id: &TextureID) {
+		const NO_TEXTURE_COLOR: Color = Color::PURPLE;
+
+		let tex = self.texture_for_b(id);
+		match tex {
+			None => {
+				d.draw_rectangle(det.x, det.y, det.aw, det.ah, NO_TEXTURE_COLOR);
+			}
+			Some(tex) => {
+				tex.render(d, det);
+			}
+		}
 	}
 }

@@ -1,7 +1,12 @@
+use sui::{
+	Layable,
+	raylib::{math::Vector2, prelude::RaylibDraw},
+};
+
 use crate::{
-	textures::TextureID,
+	textures::{TextureID, Textures},
 	utils::Direction,
-	world::{EResource, buildings::Building},
+	world::{EResource, Resource, buildings::Building, render::TILE_RENDER_SIZE},
 };
 
 #[derive(Clone, Debug)]
@@ -20,11 +25,53 @@ impl Building for Conveyor {
 		"conveyor".into()
 	}
 	fn texture_id(&self) -> TextureID {
-		match self.dir {
-			Direction::Right => TextureID::ConveyorRight,
-			Direction::Bottom => TextureID::ConveyorBottom,
-			Direction::Left => TextureID::ConveyorLeft,
-			Direction::Top => TextureID::ConveyorTop,
+		TextureID::ConveyorTop
+	}
+
+	fn render<'a>(
+		&'a self,
+		textures: &'a Textures,
+	) -> impl sui::Layable + Clone + std::fmt::Debug + 'a {
+		#[derive(Clone, Debug)]
+		struct ConveyorRenderer<'a> {
+			textures: &'a Textures,
+			dir: Direction,
+			holding: Option<TextureID>,
+		}
+		impl<'a> Layable for ConveyorRenderer<'a> {
+			fn size(&self) -> (i32, i32) {
+				(TILE_RENDER_SIZE, TILE_RENDER_SIZE)
+			}
+			/// det.aw is trusted to be TILE_RENDER_SIZE scaled properly
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+				let top_texture = self.textures.texture_for(TextureID::ConveyorTop);
+				if let Some(top_texture) = top_texture {
+					// draws the top facing texture rotated the right way
+
+					let (x_offset, y_offset) = match self.dir {
+						Direction::Top => (0, 0),
+						Direction::Right => (1, 0),
+						Direction::Bottom => (1, 1),
+						Direction::Left => (0, 1),
+					};
+					let (x_offset, y_offset) = (x_offset * det.aw, y_offset * det.aw);
+
+					let tex_det = sui::Details {
+						x: det.x + x_offset,
+						y: det.y + y_offset,
+						..det
+					};
+					top_texture.render_with_rotation(d, tex_det, self.dir.degrees());
+				} else {
+					d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
+				}
+			}
+		}
+
+		ConveyorRenderer {
+			textures,
+			dir: self.dir,
+			holding: self.holding.as_ref().map(|a| a.texture_id()),
 		}
 	}
 

@@ -57,6 +57,18 @@ impl Direction {
 		b == self || b == &self.reverse()
 	}
 
+	pub const fn degrees_i32(self) -> i32 {
+		match self {
+			Direction::Top => 0,
+			Direction::Right => 90,
+			Direction::Bottom => 180,
+			Direction::Left => 270,
+		}
+	}
+	pub const fn degrees(self) -> f32 {
+		self.degrees_i32() as f32
+	}
+
 	pub const fn rel(self) -> (i32, i32) {
 		self.rel_mul(1)
 	}

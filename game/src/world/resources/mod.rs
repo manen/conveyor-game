@@ -25,3 +25,17 @@ impl EResource {
 		Self::RawIron(RawIron)
 	}
 }
+impl Resource for EResource {
+	fn name(&self) -> Cow<'static, str> {
+		match self {
+			Self::Coal(a) => a.name(),
+			Self::RawIron(a) => a.name(),
+		}
+	}
+	fn texture_id(&self) -> TextureID {
+		match self {
+			Self::Coal(a) => a.texture_id(),
+			Self::RawIron(a) => a.texture_id(),
+		}
+	}
+}
