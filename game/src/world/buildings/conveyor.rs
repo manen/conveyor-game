@@ -1,5 +1,5 @@
 use sui::{
-	Layable,
+	Layable, LayableExt,
 	raylib::{math::Vector2, prelude::RaylibDraw},
 };
 
@@ -9,14 +9,20 @@ use crate::{
 	world::{EResource, Resource, buildings::Building, render::TILE_RENDER_SIZE},
 };
 
+const CONVEYOR_CAPACITY: usize = 3;
+
 #[derive(Clone, Debug)]
 pub struct Conveyor {
 	pub dir: Direction,
-	holding: Option<EResource>,
+
+	holding: heapless::Deque<EResource, CONVEYOR_CAPACITY>,
 }
 impl Conveyor {
 	pub fn new(dir: Direction) -> Self {
-		Self { dir, holding: None }
+		Self {
+			dir,
+			holding: heapless::Deque::default(),
+		}
 	}
 }
 
@@ -36,7 +42,7 @@ impl Building for Conveyor {
 		struct ConveyorRenderer<'a> {
 			textures: &'a Textures,
 			dir: Direction,
-			holding: Option<TextureID>,
+			holding: &'a heapless::Deque<EResource, CONVEYOR_CAPACITY>,
 		}
 		impl<'a> Layable for ConveyorRenderer<'a> {
 			fn size(&self) -> (i32, i32) {
@@ -66,15 +72,38 @@ impl Building for Conveyor {
 					d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
 				}
 
-				if let Some(holding) = &self.holding {
-					let aw = det.aw / 2;
-					let ah = det.ah / 2;
-					let x = det.x + aw / 2;
-					let y = det.y + ah / 2;
+				// holding
+				{
+					let holding_textures = self
+						.holding
+						.iter()
+						.map(|a| self.textures.texture_for(a.texture_id()));
 
-					let holding_det = sui::Details { x, y, aw, ah };
+					let new = if self.dir.is_axis_same(&Direction::Right) {
+						sui::comp::div::SpaceBetween::new_horizontal
+					} else {
+						sui::comp::div::SpaceBetween::new
+					};
+					let mut content = holding_textures
+						.map(|tex| {
+							match tex {
+								Some(tex) => sui::custom(tex.immutable_wrap()),
+								None => sui::custom(sui::comp::Space::new(0, 0)),
+							}
+							.fix_wh_square(det.aw / 2)
+						})
+						.collect::<Vec<_>>();
 
-					self.textures.render(d, holding_det, holding);
+					let should_reverse = match self.dir {
+						Direction::Top | Direction::Left => false,
+						Direction::Bottom | Direction::Right => true,
+					};
+					if should_reverse {
+						content.reverse();
+					}
+
+					let holding_full = new(content).centered().margin(4);
+					holding_full.render(d, det, 1.0);
 				}
 			}
 		}
@@ -82,27 +111,27 @@ impl Building for Conveyor {
 		ConveyorRenderer {
 			textures,
 			dir: self.dir,
-			holding: self.holding.as_ref().map(|a| a.texture_id()),
+			holding: &self.holding,
 		}
 	}
 
 	fn can_receive(&self, _resource: &EResource) -> bool {
-		self.holding.is_none()
+		!self.holding.is_full()
 	}
 	fn receive(&mut self, resource: EResource) {
 		if self.can_receive(&resource) {
-			self.holding = Some(resource)
+			let _ = self.holding.push_back(resource);
 		}
 	}
 
 	fn needs_poll(&self) -> bool {
-		self.holding.is_some()
+		!self.holding.is_empty()
 	}
 	fn resource_sample(&self, _tile_resource: Option<EResource>) -> Option<EResource> {
-		self.holding.clone()
+		self.holding.iter().next().cloned()
 	}
 	fn poll_resource(&mut self, _tile_resource: Option<EResource>) -> Option<EResource> {
-		self.holding.take()
+		self.holding.pop_front()
 	}
 
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
