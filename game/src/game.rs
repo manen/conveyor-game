@@ -101,9 +101,10 @@ impl Layable for Game {
 			.tilemap
 			.render(&self.textures)
 			.overlay(self.buildings.render(&self.textures));
-		let comp = self
-			.wrap_as_world(comp, det)
-			.overlay(sui::div([self.toolbar.immutable_wrap()]));
+		let comp = self.wrap_as_world(comp, det).overlay(sui::div([
+			sui::custom(self.toolbar.immutable_wrap()).into_comp(),
+			sui::text(format!("tool: {:?}", self.tool), 24),
+		]));
 
 		comp.render(d, det, scale);
 	}
