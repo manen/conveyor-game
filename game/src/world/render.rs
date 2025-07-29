@@ -86,16 +86,6 @@ pub fn draw_buildings(
 				.at((x as _, y as _))
 				.expect("we tried rendering a tile that doesn't exist");
 
-			if DEBUG && building.name().as_ref() != "nothing" {
-				d.draw_text(
-					&format!("{building:?}"),
-					draw_x,
-					draw_y,
-					11,
-					sui::Color::WHITE,
-				);
-			}
-
 			if building.texture_id() != TextureID::Transparent {
 				let render = building.render(textures);
 				let l_det = Details {
@@ -105,6 +95,23 @@ pub fn draw_buildings(
 					ah: render_size_i32,
 				};
 				render.render(d, l_det, 1.0);
+
+				let cursor_inside = Details {
+					x: draw_x,
+					y: draw_y,
+					aw: render_size_i32,
+					ah: render_size_i32,
+				}
+				.is_inside(d.get_mouse_x(), d.get_mouse_y());
+				if DEBUG || cursor_inside {
+					d.draw_text(
+						&format!("{building:?}\n{}", building.needs_poll()),
+						draw_x,
+						draw_y,
+						11,
+						sui::Color::WHITE,
+					);
+				}
 			}
 		}
 	}
