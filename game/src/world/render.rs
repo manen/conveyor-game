@@ -96,14 +96,16 @@ pub fn draw_buildings(
 				);
 			}
 
-			let render = building.render(textures);
-			let l_det = Details {
-				x: draw_x,
-				y: draw_y,
-				aw: render_size_i32,
-				ah: render_size_i32,
-			};
-			render.render(d, l_det, 1.0);
+			if building.texture_id() != TextureID::Transparent {
+				let render = building.render(textures);
+				let l_det = Details {
+					x: draw_x,
+					y: draw_y,
+					aw: render_size_i32,
+					ah: render_size_i32,
+				};
+				render.render(d, l_det, 1.0);
+			}
 		}
 	}
 }

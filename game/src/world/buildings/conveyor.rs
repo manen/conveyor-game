@@ -1,7 +1,4 @@
-use sui::{
-	Layable, LayableExt,
-	raylib::{math::Vector2, prelude::RaylibDraw},
-};
+use sui::{Layable, LayableExt, raylib::prelude::RaylibDraw};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -136,5 +133,15 @@ impl Building for Conveyor {
 
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		self.dir.rel_array()
+	}
+	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
+		let from_dir = match Direction::from_rel(relative_pos) {
+			Some(a) => a,
+			None => return 0,
+		};
+		match (self.dir, from_dir) {
+			(a, b) if a.reverse() == b => 10, // same direction
+			_ => 5,
+		}
 	}
 }

@@ -1,5 +1,8 @@
 use sui::{Layable, core::ReturnEvent};
 
+mod multimap;
+pub use multimap::MultiMap;
+
 /// a layable that'll indiscriminantly return every event it's passed
 #[derive(Clone, Debug)]
 pub struct ReturnEvents;

@@ -1,13 +1,13 @@
 // pub mod small_extractor;
 // pub use small_extractor::*;
 
-use std::{borrow::Cow, collections::VecDeque, fmt::Debug};
+use std::{borrow::Cow, collections::HashMap, fmt::Debug};
 
-use sui::{Layable, raylib::prelude::RaylibDraw};
+use sui::Layable;
 
 use crate::{
 	textures::{TextureID, Textures},
-	utils::Direction,
+	utils::{Direction, MultiMap},
 	world::{
 		EResource,
 		render::{self, TILE_RENDER_SIZE},
@@ -22,6 +22,7 @@ pub use debug_consumer::*;
 mod conveyor;
 pub use conveyor::*;
 
+#[allow(unused)]
 pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
 	fn texture_id(&self) -> TextureID;
@@ -51,21 +52,26 @@ pub trait Building {
 	}
 
 	// receiving is how shit gets passed
-	fn can_receive(&self, _resource: &EResource) -> bool {
+	fn can_receive(&self, resource: &EResource) -> bool {
 		false
 	}
-	fn receive(&mut self, _resource: EResource) {}
+	fn receive(&mut self, resource: EResource) {}
 
 	/// [Self::poll_resource], without advancing any internal timers or anything
-	fn resource_sample(&self, _tile_resource: Option<EResource>) -> Option<EResource> {
+	fn resource_sample(&self, tile_resource: Option<EResource>) -> Option<EResource> {
 		None
 	}
 	// polling is how you generate new shit
 	fn needs_poll(&self) -> bool {
 		false
 	}
-	fn poll_resource(&mut self, _tile_resource: Option<EResource>) -> Option<EResource> {
+	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
 		None
+	}
+
+	/// higher is better/more favorable
+	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
+		1
 	}
 
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
@@ -176,6 +182,14 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.pass_relatives(),
 		}
 	}
+	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
+		match self {
+			Self::Nothing(a) => a.rank_pass_source(relative_pos),
+			Self::SmallExtractor(a) => a.rank_pass_source(relative_pos),
+			Self::DebugConsumer(a) => a.rank_pass_source(relative_pos),
+			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
+		}
+	}
 }
 
 #[derive(Clone, Debug, Default)]
@@ -196,9 +210,8 @@ impl Building for Nothing {
 #[derive(Clone, Debug, Default)]
 pub struct BuildingsMap {
 	buildings: [[EBuilding; SIZE]; SIZE],
-	/// syntax: (source_position we poll the resource from, target building that'll receive the polled event) \
-	/// this is only used internally while ticking and between ticks it's empty
-	moves_queue: VecDeque<((i32, i32), (i32, i32))>,
+	/// HashMap<target_position, Vec<source positions>>
+	moves_queue: HashMap<(i32, i32), Vec<(i32, i32)>>,
 }
 impl BuildingsMap {
 	pub fn tick(
@@ -208,6 +221,7 @@ impl BuildingsMap {
 		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
+		// check for buildings that need polling and list
 		for (pos, building) in self.iter() {
 			if !building.needs_poll() {
 				continue;
@@ -229,19 +243,30 @@ impl BuildingsMap {
 					.map(|a| a.0);
 
 				for pass_target in pass_candidates {
-					if moves_queue
-						.iter()
-						.filter(|(_src, dst)| pass_target == *dst)
-						.count() == 0
-					{
-						moves_queue.push_back((pos, pass_target));
-						break;
-					}
+					moves_queue.multimap_insert(pass_target, pos);
 				}
 			}
 		}
 
-		for (source_pos, target_pos) in moves_queue.drain(..) {
+		// sort incoming resources by the target building's preferences
+		for (target_pos, source_poss) in moves_queue.iter_mut().filter(|(_, v)| !v.is_empty()) {
+			let mut f = || {
+				let target = self.at(*target_pos)?;
+				source_poss.sort_by_key(|source_pos| {
+					let rel_pos = (source_pos.0 - target_pos.0, source_pos.1 - target_pos.1);
+					-target.rank_pass_source(rel_pos)
+				});
+				Some(1)
+			};
+			match f() {
+				Some(_) => (),
+				None => source_poss.clear(),
+			}
+		}
+
+		// poll the resources from the source and push them into the target block
+		let moves_total = moves_queue.multimap_drain_total();
+		for (target_pos, source_pos) in moves_total {
 			let resource = {
 				let source = match self.at_mut(source_pos) {
 					Some(a) => a,
@@ -256,7 +281,7 @@ impl BuildingsMap {
 				resource
 			};
 
-			let target = match self.at_mut(target_pos) {
+			let target = match self.at_mut(*target_pos) {
 				Some(a) => a,
 				None => continue,
 			};
