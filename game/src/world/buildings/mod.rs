@@ -255,44 +255,6 @@ impl BuildingsMap {
 			let mut f = || {
 				let target = self.at(*target_pos)?;
 
-				// let mut cap_by_resource = HashMap::new();
-
-				// let mut len = source_poss.len();
-				// let mut i = 0;
-				// while i < len {
-				// 	let mut f = || {
-				// 		let source_pos = source_poss[i];
-				// 		let source_b = match self.at(source_pos) {
-				// 			Some(a) => a,
-				// 			None => return None,
-				// 		};
-				// 		let resource_sample = match source_b.resource_sample(tile_resource_at((
-				// 			source_pos.0 as _,
-				// 			source_pos.1 as _,
-				// 		))) {
-				// 			Some(a) => a,
-				// 			None => return None,
-				// 		};
-
-				// 		let capacity = target.capacity_for(&resource_sample);
-				// 		if capacity == 0 {
-				// 			return None;
-				// 		}
-				// 		cap_by_resource.insert(resource_sample, capacity);
-				// 		Some(capacity)
-				// 	};
-				// 	match f() {
-				// 		Some(_) => {
-				// 			i += 1;
-				// 		}
-				// 		None => {
-				// 			source_poss.swap_remove(i);
-				// 			len -= 1;
-				// 			// not incrementing i
-				// 		}
-				// 	}
-				// }
-
 				source_poss.sort_by_key(|source_pos| {
 					let rel_pos = (source_pos.0 - target_pos.0, source_pos.1 - target_pos.1);
 					-target.rank_pass_source(rel_pos)
@@ -330,26 +292,6 @@ impl BuildingsMap {
 				Some(_) => {}
 				None => {}
 			}
-
-			// let resource = {
-			// 	let source = match self.at_mut(source_pos) {
-			// 		Some(a) => a,
-			// 		None => continue,
-			// 	};
-
-			// 	let tile_resource = tile_resource_at((source_pos.0 as _, source_pos.1 as _));
-			// 	let resource = match source.poll_resource(tile_resource) {
-			// 		Some(a) => a,
-			// 		None => continue,
-			// 	};
-			// 	resource
-			// };
-
-			// let target = match self.at_mut(*target_pos) {
-			// 	Some(a) => a,
-			// 	None => continue,
-			// };
-			// target.receive(resource);
 		}
 
 		self.moves_queue = moves_queue;
