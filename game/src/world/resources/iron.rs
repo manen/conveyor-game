@@ -3,7 +3,7 @@ use crate::{
 	world::{EResource, Resource, Tile},
 };
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct RawIron;
 impl Resource for RawIron {
 	fn name(&self) -> std::borrow::Cow<'static, str> {

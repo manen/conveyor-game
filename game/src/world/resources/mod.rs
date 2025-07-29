@@ -12,7 +12,7 @@ pub trait Resource {
 	fn texture_id(&self) -> TextureID;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum EResource {
 	Coal(Coal),
 	RawIron(RawIron),

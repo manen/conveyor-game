@@ -10,8 +10,8 @@ impl Building for DebugConsumer {
 		TextureID::RawIron
 	}
 
-	fn can_receive(&self, _resource: &crate::world::EResource) -> bool {
-		true
+	fn capacity_for(&self, _resource: &crate::world::EResource) -> i32 {
+		10
 	}
 	fn receive(&mut self, resource: crate::world::EResource) {
 		println!("debug consumer dropped {resource:?}")

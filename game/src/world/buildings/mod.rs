@@ -51,9 +51,9 @@ pub trait Building {
 		}
 	}
 
-	// receiving is how shit gets passed
-	fn can_receive(&self, resource: &EResource) -> bool {
-		false
+	// returns how many of the given resource it can receive right now
+	fn capacity_for(&self, resource: &EResource) -> i32 {
+		0
 	}
 	fn receive(&mut self, resource: EResource) {}
 
@@ -132,12 +132,12 @@ impl Building for EBuilding {
 		}
 	}
 
-	fn can_receive(&self, resource: &EResource) -> bool {
+	fn capacity_for(&self, resource: &EResource) -> i32 {
 		match self {
-			Self::Nothing(a) => a.can_receive(resource),
-			Self::SmallExtractor(a) => a.can_receive(resource),
-			Self::DebugConsumer(a) => a.can_receive(resource),
-			Self::Conveyor(a) => a.can_receive(resource),
+			Self::Nothing(a) => a.capacity_for(resource),
+			Self::SmallExtractor(a) => a.capacity_for(resource),
+			Self::DebugConsumer(a) => a.capacity_for(resource),
+			Self::Conveyor(a) => a.capacity_for(resource),
 		}
 	}
 	fn receive(&mut self, resource: EResource) {
@@ -218,6 +218,8 @@ impl BuildingsMap {
 		&mut self,
 		mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>,
 	) -> () {
+		let mut tile_resource_at = |(x, y)| tile_resource_at((x as _, y as _));
+
 		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
@@ -239,7 +241,7 @@ impl BuildingsMap {
 
 			if let Some(resource_sample) = &resource_sample {
 				let pass_candidates = pass_candidates
-					.filter(|(_, b)| b.can_receive(resource_sample))
+					.filter(|(_, b)| b.capacity_for(resource_sample) > 0)
 					.map(|a| a.0);
 
 				for pass_target in pass_candidates {
@@ -252,6 +254,45 @@ impl BuildingsMap {
 		for (target_pos, source_poss) in moves_queue.iter_mut().filter(|(_, v)| !v.is_empty()) {
 			let mut f = || {
 				let target = self.at(*target_pos)?;
+
+				// let mut cap_by_resource = HashMap::new();
+
+				// let mut len = source_poss.len();
+				// let mut i = 0;
+				// while i < len {
+				// 	let mut f = || {
+				// 		let source_pos = source_poss[i];
+				// 		let source_b = match self.at(source_pos) {
+				// 			Some(a) => a,
+				// 			None => return None,
+				// 		};
+				// 		let resource_sample = match source_b.resource_sample(tile_resource_at((
+				// 			source_pos.0 as _,
+				// 			source_pos.1 as _,
+				// 		))) {
+				// 			Some(a) => a,
+				// 			None => return None,
+				// 		};
+
+				// 		let capacity = target.capacity_for(&resource_sample);
+				// 		if capacity == 0 {
+				// 			return None;
+				// 		}
+				// 		cap_by_resource.insert(resource_sample, capacity);
+				// 		Some(capacity)
+				// 	};
+				// 	match f() {
+				// 		Some(_) => {
+				// 			i += 1;
+				// 		}
+				// 		None => {
+				// 			source_poss.swap_remove(i);
+				// 			len -= 1;
+				// 			// not incrementing i
+				// 		}
+				// 	}
+				// }
+
 				source_poss.sort_by_key(|source_pos| {
 					let rel_pos = (source_pos.0 - target_pos.0, source_pos.1 - target_pos.1);
 					-target.rank_pass_source(rel_pos)
@@ -267,25 +308,48 @@ impl BuildingsMap {
 		// poll the resources from the source and push them into the target block
 		let moves_total = moves_queue.multimap_drain_total();
 		for (target_pos, source_pos) in moves_total {
-			let resource = {
-				let source = match self.at_mut(source_pos) {
-					Some(a) => a,
-					None => continue,
-				};
+			let mut f = || {
+				let target = self.at(*target_pos)?;
+				let source = self.at(source_pos)?;
 
-				let tile_resource = tile_resource_at((source_pos.0 as _, source_pos.1 as _));
-				let resource = match source.poll_resource(tile_resource) {
-					Some(a) => a,
-					None => continue,
-				};
-				resource
-			};
+				let tile_resource = tile_resource_at(*target_pos);
+				let sample = source.resource_sample(tile_resource.clone())?;
+				let capacity = target.capacity_for(&sample);
 
-			let target = match self.at_mut(*target_pos) {
-				Some(a) => a,
-				None => continue,
+				if capacity > 0 {
+					let source = self.at_mut(source_pos)?;
+					let resource = source.poll_resource(tile_resource)?;
+
+					let target = self.at_mut(*target_pos)?;
+					target.receive(resource);
+				}
+
+				Some(0)
 			};
-			target.receive(resource);
+			match f() {
+				Some(_) => {}
+				None => {}
+			}
+
+			// let resource = {
+			// 	let source = match self.at_mut(source_pos) {
+			// 		Some(a) => a,
+			// 		None => continue,
+			// 	};
+
+			// 	let tile_resource = tile_resource_at((source_pos.0 as _, source_pos.1 as _));
+			// 	let resource = match source.poll_resource(tile_resource) {
+			// 		Some(a) => a,
+			// 		None => continue,
+			// 	};
+			// 	resource
+			// };
+
+			// let target = match self.at_mut(*target_pos) {
+			// 	Some(a) => a,
+			// 	None => continue,
+			// };
+			// target.receive(resource);
 		}
 
 		self.moves_queue = moves_queue;
