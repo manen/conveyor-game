@@ -1,0 +1,13 @@
+[package]
+name = "level_editor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+asset_provider.workspace = true
+game.workspace = true
+sui.workspace = true
+sui_runner.workspace = true
+tokio.workspace = true
+strum.workspace = true

@@ -16,7 +16,7 @@ impl Resource for RawIron {
 
 use std::borrow::Cow;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct IronOre;
 impl Tile for IronOre {
 	fn name(&self) -> Cow<'static, str> {

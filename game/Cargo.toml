@@ -2,6 +2,7 @@
 name = "game"
 version = "0.1.0"
 edition = "2024"
+default-run = "game"
 
 [dependencies]
 sui.workspace = true
@@ -12,10 +13,11 @@ asset_provider_image.workspace = true
 
 tokio.workspace = true
 futures.workspace = true
-anyhow = "1.0.98"
+anyhow.workspace = true
+strum.workspace = true
+
 reqwest = "0.12.22"
 perlin2d = "0.2.6"
-strum = { version = "0.27.2", features = ["derive"] }
 glissade = "0.2.6"
 include_dir = "0.7.4"
 heapless.git = "https://github.com/rust-embedded/heapless"

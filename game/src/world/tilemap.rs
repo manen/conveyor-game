@@ -32,12 +32,21 @@ impl Tilemap {
 
 	pub fn at(&self, (x, y): (usize, usize)) -> Option<&ETile> {
 		if x > SIZE - 1 {
-			if x > SIZE - 1 {
+			if y > SIZE - 1 {
 				return None;
 			}
 		}
 
 		Some(&self.tiles[x][y])
+	}
+	pub fn at_mut(&mut self, (x, y): (i32, i32)) -> Option<&mut ETile> {
+		if x > SIZE as i32 - 1 && x >= 0 {
+			if y > SIZE as i32 - 1 && y >= 0 {
+				return None;
+			}
+		}
+
+		Some(&mut self.tiles[x as usize][y as usize])
 	}
 }
 

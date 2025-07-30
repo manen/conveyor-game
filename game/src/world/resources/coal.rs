@@ -16,7 +16,7 @@ impl Resource for Coal {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct CoalOre;
 impl Tile for CoalOre {
 	fn name(&self) -> Cow<'static, str> {
