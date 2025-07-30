@@ -18,6 +18,11 @@ impl Tilemap {
 			tiles: worldgen::gen_tiles(),
 		}
 	}
+	pub fn stone() -> Self {
+		let tiles = core::array::from_fn(|_| core::array::from_fn(|_| ETile::stone()));
+
+		Self { tiles }
+	}
 
 	pub fn tiles(&self) -> &[[ETile; SIZE]; SIZE] {
 		&self.tiles
@@ -30,23 +35,17 @@ impl Tilemap {
 		TilemapRenderer::new(self, textures)
 	}
 
-	pub fn at(&self, (x, y): (usize, usize)) -> Option<&ETile> {
-		if x > SIZE - 1 {
-			if y > SIZE - 1 {
-				return None;
-			}
+	pub fn at(&self, pos: (i32, i32)) -> Option<&ETile> {
+		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
+			return None;
 		}
-
-		Some(&self.tiles[x][y])
+		Some(&self.tiles[pos.0 as usize][pos.1 as usize])
 	}
-	pub fn at_mut(&mut self, (x, y): (i32, i32)) -> Option<&mut ETile> {
-		if x > SIZE as i32 - 1 && x >= 0 {
-			if y > SIZE as i32 - 1 && y >= 0 {
-				return None;
-			}
+	pub fn at_mut(&mut self, pos: (i32, i32)) -> Option<&mut ETile> {
+		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
+			return None;
 		}
-
-		Some(&mut self.tiles[x as usize][y as usize])
+		Some(&mut self.tiles[pos.0 as usize][pos.1 as usize])
 	}
 }
 

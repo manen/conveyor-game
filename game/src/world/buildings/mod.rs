@@ -227,7 +227,7 @@ pub struct BuildingsMap {
 impl BuildingsMap {
 	pub fn tick(
 		&mut self,
-		mut tile_resource_at: impl FnMut((usize, usize)) -> Option<EResource>,
+		mut tile_resource_at: impl FnMut((i32, i32)) -> Option<EResource>,
 	) -> () {
 		let mut tile_resource_at = |(x, y)| tile_resource_at((x as _, y as _));
 

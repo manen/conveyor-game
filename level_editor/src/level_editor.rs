@@ -39,7 +39,7 @@ impl LevelEditor {
 		thread: &sui::raylib::RaylibThread,
 	) -> anyhow::Result<Self> {
 		let textures = Textures::new(assets, d, thread)?;
-		let tilemap = Tilemap::new();
+		let tilemap = Tilemap::stone();
 
 		Ok(Self {
 			textures,
@@ -127,7 +127,7 @@ impl Layable for LevelEditor {
 			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
 				self.scale_velocity += amount / 6.0
 			}
-			Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+			Event::MouseEvent(MouseEvent::MouseClick { y, .. }) => {
 				let (_, toolbar_h) = self.toolbar.size();
 
 				if y <= toolbar_h {
