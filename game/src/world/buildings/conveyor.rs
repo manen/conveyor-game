@@ -112,6 +112,9 @@ impl Building for Conveyor {
 		}
 	}
 
+	fn can_receive(&self) -> bool {
+		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32 > 0
+	}
 	fn capacity_for(&self, _resource: &EResource) -> i32 {
 		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32
 	}
@@ -140,6 +143,7 @@ impl Building for Conveyor {
 			None => return 0,
 		};
 		match (self.dir, from_dir) {
+			(a, b) if a == b => 15,
 			(a, b) if a.reverse() == b => 10, // same direction
 			_ => 5,
 		}

@@ -151,7 +151,11 @@ impl Layable for Game {
 				let resource = tile.generate_resource();
 				resource
 			};
-			self.buildings.tick(tile_resource_at);
+			self.buildings.tick(|pos| {
+				let tile_resource = tile_resource_at(pos);
+				println!("tile resource at {pos:?}: {tile_resource:?}");
+				tile_resource
+			});
 
 			self.last_game_tick = Instant::now();
 		}

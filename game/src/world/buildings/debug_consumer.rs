@@ -10,6 +10,9 @@ impl Building for DebugConsumer {
 		TextureID::RawIron
 	}
 
+	fn can_receive(&self) -> bool {
+		true
+	}
 	fn capacity_for(&self, _resource: &crate::world::EResource) -> i32 {
 		10
 	}

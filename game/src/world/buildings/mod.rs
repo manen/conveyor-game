@@ -52,6 +52,9 @@ pub trait Building {
 	}
 
 	// returns how many of the given resource it can receive right now
+	fn can_receive(&self) -> bool {
+		false
+	}
 	fn capacity_for(&self, resource: &EResource) -> i32 {
 		0
 	}
@@ -132,6 +135,14 @@ impl Building for EBuilding {
 		}
 	}
 
+	fn can_receive(&self) -> bool {
+		match self {
+			Self::Nothing(a) => a.can_receive(),
+			Self::SmallExtractor(a) => a.can_receive(),
+			Self::DebugConsumer(a) => a.can_receive(),
+			Self::Conveyor(a) => a.can_receive(),
+		}
+	}
 	fn capacity_for(&self, resource: &EResource) -> i32 {
 		match self {
 			Self::Nothing(a) => a.capacity_for(resource),
@@ -223,49 +234,14 @@ impl BuildingsMap {
 		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
-		// check for buildings that need polling and list
-		for (pos, building) in self.iter() {
-			if !building.needs_poll() {
-				continue;
-			}
-
-			let dirs = building.pass_relatives();
-			let pass_candidates = dirs
-				.iter()
-				.copied()
-				.map(|(rx, ry)| (pos.0 + rx, pos.1 + ry));
-			let pass_candidates = pass_candidates.filter_map(|pos| self.at(pos).map(|b| (pos, b)));
-
-			let tile_resource = tile_resource_at((pos.0 as _, pos.1 as _));
-			let resource_sample = building.resource_sample(tile_resource);
-
-			if let Some(resource_sample) = &resource_sample {
-				let pass_candidates = pass_candidates
-					.filter(|(_, b)| b.capacity_for(resource_sample) > 0)
-					.map(|a| a.0);
-
-				for pass_target in pass_candidates {
-					moves_queue.multimap_insert(pass_target, pos);
-				}
-			}
-		}
-
-		// sort incoming resources by the target building's preferences
-		for (target_pos, source_poss) in moves_queue.iter_mut().filter(|(_, v)| !v.is_empty()) {
-			let mut f = || {
-				let target = self.at(*target_pos)?;
-
-				source_poss.sort_by_key(|source_pos| {
-					let rel_pos = (source_pos.0 - target_pos.0, source_pos.1 - target_pos.1);
-					-target.rank_pass_source(rel_pos)
-				});
-				Some(1)
-			};
-			match f() {
-				Some(_) => (),
-				None => source_poss.clear(),
-			}
-		}
+		// imma leave it at that but in this order some generators just randomly don't work?
+		// only generators it seems like
+		//
+		// gl
+		//
+		// okay so it looks like it's not even the order it's broken with the sorting turned off and with the rewritten poller too
+		// szoval kizarasos alapon csak maga a mover lehet de itt semmilyen indok nincs h ne mukodjon
+		// logolas mint az allat mar mutatja a building debug info a koordikat szoval printelni ha extractort pollolunk meg ilyenek byeee
 
 		// poll the resources from the source and push them into the target block
 		let moves_total = moves_queue.multimap_drain_total();
@@ -274,7 +250,7 @@ impl BuildingsMap {
 				let target = self.at(*target_pos)?;
 				let source = self.at(source_pos)?;
 
-				let tile_resource = tile_resource_at(*target_pos);
+				let tile_resource = tile_resource_at(source_pos);
 				let sample = source.resource_sample(tile_resource.clone())?;
 				let capacity = target.capacity_for(&sample);
 
@@ -294,6 +270,45 @@ impl BuildingsMap {
 			}
 		}
 
+		// check for buildings that need polling and list
+		for (source_pos, building) in self.iter() {
+			if !building.needs_poll() {
+				continue;
+			}
+
+			let relatives = building.pass_relatives();
+			let target_poss = relatives
+				.iter()
+				.cloned()
+				.map(|(rx, ry)| (source_pos.0 + rx, source_pos.1 + ry));
+
+			for target_pos in target_poss {
+				if self
+					.at(target_pos)
+					.map(|target| target.can_receive())
+					.unwrap_or(false)
+				{
+					moves_queue.multimap_insert(target_pos, source_pos);
+				}
+			}
+		}
+
+		// sort incoming resources by the target building's preferences
+		for (target_pos, source_poss) in moves_queue.iter_mut().filter(|(_, v)| !v.is_empty()) {
+			let mut f = || {
+				let target = self.at(*target_pos)?;
+
+				source_poss.sort_by_key(|source_pos| {
+					let rel_pos = (target_pos.0 - source_pos.0, target_pos.1 - source_pos.1);
+					-target.rank_pass_source(rel_pos)
+				});
+				Some(1)
+			};
+			match f() {
+				Some(_) => (),
+				None => source_poss.clear(),
+			}
+		}
 		self.moves_queue = moves_queue;
 	}
 

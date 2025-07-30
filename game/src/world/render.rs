@@ -105,7 +105,7 @@ pub fn draw_buildings(
 				.is_inside(d.get_mouse_x(), d.get_mouse_y());
 				if DEBUG || cursor_inside {
 					d.draw_text(
-						&format!("{building:?}\n{}", building.needs_poll()),
+						&format!("({x}, {y})\n{building:?}\n{}", building.needs_poll()),
 						draw_x,
 						draw_y,
 						11,
