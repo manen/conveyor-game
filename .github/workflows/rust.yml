@@ -17,6 +17,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
+        lfs: true
     - name: cmake
       uses: lukka/get-cmake@latest
       with:
@@ -45,6 +46,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
+        lfs: true
     - name: cmake
       uses: lukka/get-cmake@latest
       with:
