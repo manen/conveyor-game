@@ -27,7 +27,7 @@ impl Level {
 			.open(path)
 			.await
 			.with_context(|| format!("while loading Level from {}", path.display()))?;
-		let mut file = tokio_util::io::SyncIoBridge::new(file);
+		let mut file = file.into_std().await;
 
 		let decoded: Self = bincode::decode_from_std_read(&mut file, bincode::config::standard())?;
 		Ok(decoded)
@@ -40,7 +40,7 @@ impl Level {
 			.open(path)
 			.await
 			.with_context(|| format!("while saving level to {}", path.display()))?;
-		let mut file = tokio_util::io::SyncIoBridge::new(file);
+		let mut file = file.into_std().await;
 
 		bincode::encode_into_std_write(self, &mut file, bincode::config::standard())?;
 		Ok(())

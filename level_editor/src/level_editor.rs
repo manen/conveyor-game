@@ -11,6 +11,7 @@ use game::{
 	},
 };
 use nfde::{FilterableDialogBuilder, Nfd, SingleFileDialogBuilder};
+use rfd::{AsyncFileDialog, FileDialog};
 use std::{fmt::Debug, path::PathBuf};
 use sui::{
 	Details, DynamicLayable, Layable, LayableExt,
@@ -24,6 +25,8 @@ use crate::tools::{self, TileChange};
 pub struct LevelEditor {
 	textures: Textures,
 	pub tilemap: Tilemap,
+
+	saving_handle: Option<tokio::task::JoinHandle<anyhow::Result<()>>>,
 
 	toolbar: DynamicLayable<'static>,
 	placing: ETile,
@@ -46,6 +49,7 @@ impl LevelEditor {
 		Ok(Self {
 			textures,
 			tilemap,
+			saving_handle: None,
 			toolbar: DynamicLayable::new(tools::toolbar()),
 			placing: ETile::iron_ore(),
 			camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
@@ -114,6 +118,13 @@ impl Layable for LevelEditor {
 		self.scale_velocity *= 0.95;
 		if self.scale_velocity.abs() < 0.005 {
 			self.scale_velocity = 0.0;
+		}
+
+		if let Some(handle) = &self.saving_handle {
+			if handle.is_finished() {
+				println!("saving finished");
+				self.saving_handle = None;
+			}
 		}
 	}
 
@@ -213,39 +224,36 @@ impl Layable for LevelEditor {
 		}
 
 		if ctrl && s {
-			let level = Level::from_tilemap(&self.tilemap);
+			if self
+				.saving_handle
+				.as_ref()
+				.map(|h| h.is_finished())
+				.unwrap_or(true)
+			{
+				let level = Level::from_tilemap(&self.tilemap);
+				let handle = tokio::spawn(async move {
+					let files = AsyncFileDialog::new()
+						.add_filter("level file", &["cglf"])
+						.set_directory(std::env::current_dir()?)
+						.set_title("saving level")
+						.set_file_name("new-level.cglf")
+						.save_file()
+						.await;
 
-			std::thread::spawn(|| {
-				let nfd = Nfd::new().map_err(|err| anyhow!("nfde error: {err}"))?;
-
-				let mut res = nfd.save_file();
-				let res = res
-					.add_filter("level files", "cglf")
-					.map_err(|err| anyhow!("error while creating save dialog: {err}"))?;
-				let res = tokio::task::block_in_place(move || res.show());
-
-				use nfde::DialogResult;
-				match res {
-					DialogResult::Ok(path) => {
-						let path = PathBuf::from(path.as_path());
-						let a = async move { level.save(path).await };
-						tokio::spawn(a);
+					if let Some(files) = files {
+						let path = PathBuf::from(files.path());
+						println!("saving to {path:?}");
+						level.save(path).await
+					} else {
+						eprintln!("file saving dialog didn't return a file handle");
+						Ok(())
 					}
-					DialogResult::Cancel => return Ok(()),
-					DialogResult::Err(error_str) => return Err(anyhow!(error_str)),
-				};
+				});
 
-				anyhow::Ok(())
-			});
+				self.saving_handle = Some(handle);
+			}
 		}
 
 		std::iter::empty()
 	}
-}
-
-#[derive(Debug)]
-pub enum SaveState {
-	NotSaving,
-	Dialog(std::thread::JoinHandle<nfde::DialogResult<nfde::NfdPathBuf>>),
-	Save(tokio::task::JoinHandle<anyhow::Result<()>>),
 }
