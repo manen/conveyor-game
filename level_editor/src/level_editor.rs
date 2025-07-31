@@ -10,8 +10,7 @@ use game::{
 		tilemap::{SIZE, Tilemap},
 	},
 };
-use nfde::{FilterableDialogBuilder, Nfd, SingleFileDialogBuilder};
-use rfd::{AsyncFileDialog, FileDialog};
+use rfd::AsyncFileDialog;
 use std::{fmt::Debug, path::PathBuf};
 use sui::{
 	Details, DynamicLayable, Layable, LayableExt,

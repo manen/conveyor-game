@@ -1294,7 +1294,6 @@ dependencies = [
  "asset_provider",
  "bincode",
  "game",
- "nfde",
  "rfd",
  "strum",
  "sui",
@@ -1441,17 +1440,6 @@ name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
-
-[[package]]
-name = "nfde"
-version = "0.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96869d5587861a8c98eb0118644fd4ea13ae68f3748a084536881bfa9d64130f"
-dependencies = [
- "cmake",
- "pkg-config",
- "widestring",
-]
 
 [[package]]
 name = "nix"
@@ -2978,12 +2966,6 @@ name = "weezl"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3"
-
-[[package]]
-name = "widestring"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd7cf3379ca1aac9eea11fba24fd7e315d621f8dfe35c8d7d2be8b793726e07d"
 
 [[package]]
 name = "winapi"

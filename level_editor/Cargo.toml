@@ -12,5 +12,4 @@ sui_runner.workspace = true
 tokio.workspace = true
 strum.workspace = true
 bincode.workspace = true
-nfde = "0.0.8"
 rfd = { version = "0.15.4", features = ["tokio", "xdg-portal"], default-features = false }
