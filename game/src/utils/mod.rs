@@ -12,13 +12,13 @@ impl Layable for ReturnEvents {
 	}
 	fn render(&self, _d: &mut sui::Handle, _det: sui::Details, _scale: f32) {}
 
-	fn pass_event(
+	fn pass_events(
 		&mut self,
-		event: sui::core::Event,
+		events: impl Iterator<Item = sui::core::Event>,
 		_det: sui::Details,
 		_scale: f32,
-	) -> Option<sui::core::ReturnEvent> {
-		Some(ReturnEvent::new(event))
+	) -> impl Iterator<Item = sui::core::ReturnEvent> {
+		events.map(ReturnEvent::new)
 	}
 }
 

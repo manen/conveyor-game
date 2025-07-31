@@ -115,88 +115,96 @@ impl Layable for LevelEditor {
 		}
 	}
 
-	fn pass_event(
+	fn pass_events(
 		&mut self,
-		event: sui::core::Event,
+		events: impl Iterator<Item = Event>,
 		det: Details,
 		scale: f32,
-	) -> Option<sui::core::ReturnEvent> {
+	) -> impl Iterator<Item = sui::core::ReturnEvent> {
+		let events = events.collect::<Vec<_>>();
 		let move_amount = 0.1;
 
-		match event {
-			Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
-				self.scale_velocity += amount / 6.0
-			}
-			Event::MouseEvent(MouseEvent::MouseClick { y, .. }) => {
-				let (_, toolbar_h) = self.toolbar.size();
+		for event in events.iter().copied() {
+			match event {
+				Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
+					self.scale_velocity += amount / 6.0
+				}
+				Event::MouseEvent(MouseEvent::MouseClick { y, .. }) => {
+					let (_, toolbar_h) = self.toolbar.size();
 
-				if y <= toolbar_h {
-					match self.toolbar.pass_event(event, det, scale) {
-						Some(toolbar_resp) if toolbar_resp.can_take::<TileChange>() => {
-							if let Some(TileChange(tool)) = toolbar_resp.take() {
-								println!("selected {tool:?}");
-								self.placing = tool;
-								return None;
+					if y <= toolbar_h {
+						match self
+							.toolbar
+							.pass_events(std::iter::once(event), det, scale)
+							.next()
+						{
+							Some(toolbar_resp) if toolbar_resp.can_take::<TileChange>() => {
+								if let Some(TileChange(tool)) = toolbar_resp.take() {
+									println!("selected {tool:?}");
+									self.placing = tool;
+									continue;
+								}
 							}
+							Some(other_event) => {
+								println!("non-SelectTool ui return event: {other_event:?}")
+							}
+							None => {}
 						}
-						Some(other_event) => {
-							println!("non-SelectTool ui return event: {other_event:?}")
-						}
-						None => {}
 					}
 				}
-			}
-			Event::MouseEvent(MouseEvent::MouseHeld { x, y }) => {
-				let world_pos = || {
-					let mut world = self.wrap_as_world(ReturnEvents, det);
+				Event::MouseEvent(MouseEvent::MouseHeld { x, y }) => {
+					let world_pos = || {
+						let mut world = self.wrap_as_world(ReturnEvents, det);
 
-					let ret = world.pass_event(event, det, scale).ok_or_else(|| anyhow!(
+						let ret = world.pass_events(std::iter::once(event), det, scale).next().ok_or_else(|| anyhow!(
 								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
-					let ret: Event = ret
-						.take()
-						.ok_or_else(|| anyhow!("ReturnEvents didn't return a sui::core::Event"))?;
+						let ret: Event = ret.take().ok_or_else(|| {
+							anyhow!("ReturnEvents didn't return a sui::core::Event")
+						})?;
 
-					match ret {
-						Event::MouseEvent(m_event) => {
-							let (x, y) = m_event.at();
-							Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+						match ret {
+							Event::MouseEvent(m_event) => {
+								let (x, y) = m_event.at();
+								Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+							}
+							_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
 						}
-						_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
-					}
-				};
-				let world_pos = world_pos().with_context(|| {
-					format!("while handling {self:?} use action at screen (x,y) ({x}, {y})")
-				});
+					};
+					let world_pos = world_pos().with_context(|| {
+						format!("while handling {self:?} use action at screen (x,y) ({x}, {y})")
+					});
 
-				let world_pos = match world_pos {
-					Ok(a) => a,
-					Err(err) => {
-						eprintln!("{err}");
-						return None;
-					}
-				};
+					let world_pos = match world_pos {
+						Ok(a) => a,
+						Err(err) => {
+							eprintln!("{err}");
+							continue;
+						}
+					};
 
-				if let Some(target) = self.tilemap.at_mut(world_pos) {
-					*target = self.placing.clone();
+					if let Some(target) = self.tilemap.at_mut(world_pos) {
+						*target = self.placing.clone();
+					}
 				}
-			}
 
-			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_W)) => {
-				self.camera_velocity.1 -= move_amount;
-			}
-			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_S)) => {
-				self.camera_velocity.1 += move_amount;
-			}
-			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_A)) => {
-				self.camera_velocity.0 -= move_amount;
-			}
-			Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_D)) => {
-				self.camera_velocity.0 += move_amount;
-			}
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_W)) => {
+					self.camera_velocity.1 -= move_amount;
+				}
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_S)) => {
+					self.camera_velocity.1 += move_amount;
+				}
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_A)) => {
+					self.camera_velocity.0 -= move_amount;
+				}
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_D)) => {
+					self.camera_velocity.0 += move_amount;
+				}
 
-			_ => {}
+				_ => {}
+			}
 		}
-		None
+
+		std::iter::empty()
 	}
 }

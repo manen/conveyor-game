@@ -72,13 +72,4 @@ impl<'a> Layable for TilemapRenderer<'a> {
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
 		crate::world::render::draw_tilemap(d, &self.tilemap, &self.textures, det.x, det.y, scale);
 	}
-
-	fn pass_event(
-		&mut self,
-		_event: sui::core::Event,
-		_det: sui::Details,
-		_scale: f32,
-	) -> Option<sui::core::ReturnEvent> {
-		None
-	}
 }
