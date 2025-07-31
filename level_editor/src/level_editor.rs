@@ -1,6 +1,7 @@
 use anyhow::{Context, anyhow};
 use asset_provider::Assets;
 use game::{
+	levels::Level,
 	textures::Textures,
 	utils::ReturnEvents,
 	world::{
@@ -9,7 +10,8 @@ use game::{
 		tilemap::{SIZE, Tilemap},
 	},
 };
-use std::fmt::Debug;
+use nfde::{FilterableDialogBuilder, Nfd, SingleFileDialogBuilder};
+use std::{fmt::Debug, path::PathBuf};
 use sui::{
 	Details, DynamicLayable, Layable, LayableExt,
 	core::{Event, KeyboardEvent, MouseEvent},
@@ -121,10 +123,10 @@ impl Layable for LevelEditor {
 		det: Details,
 		scale: f32,
 	) -> impl Iterator<Item = sui::core::ReturnEvent> {
-		let events = events.collect::<Vec<_>>();
 		let move_amount = 0.1;
 
-		for event in events.iter().copied() {
+		let (mut ctrl, mut s) = (false, false);
+		for event in events {
 			match event {
 				Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
 					self.scale_velocity += amount / 6.0
@@ -193,6 +195,7 @@ impl Layable for LevelEditor {
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_S)) => {
 					self.camera_velocity.1 += move_amount;
+					s = true;
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_A)) => {
 					self.camera_velocity.0 -= move_amount;
@@ -201,10 +204,48 @@ impl Layable for LevelEditor {
 					self.camera_velocity.0 += move_amount;
 				}
 
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_LEFT_CONTROL)) => {
+					ctrl = true;
+				}
+
 				_ => {}
 			}
 		}
 
+		if ctrl && s {
+			let level = Level::from_tilemap(&self.tilemap);
+
+			std::thread::spawn(|| {
+				let nfd = Nfd::new().map_err(|err| anyhow!("nfde error: {err}"))?;
+
+				let mut res = nfd.save_file();
+				let res = res
+					.add_filter("level files", "cglf")
+					.map_err(|err| anyhow!("error while creating save dialog: {err}"))?;
+				let res = tokio::task::block_in_place(move || res.show());
+
+				use nfde::DialogResult;
+				match res {
+					DialogResult::Ok(path) => {
+						let path = PathBuf::from(path.as_path());
+						let a = async move { level.save(path).await };
+						tokio::spawn(a);
+					}
+					DialogResult::Cancel => return Ok(()),
+					DialogResult::Err(error_str) => return Err(anyhow!(error_str)),
+				};
+
+				anyhow::Ok(())
+			});
+		}
+
 		std::iter::empty()
 	}
+}
+
+#[derive(Debug)]
+pub enum SaveState {
+	NotSaving,
+	Dialog(std::thread::JoinHandle<nfde::DialogResult<nfde::NfdPathBuf>>),
+	Save(tokio::task::JoinHandle<anyhow::Result<()>>),
 }
