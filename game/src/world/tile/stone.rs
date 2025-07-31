@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{textures::TextureID, world::tile::Tile};
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, bincode::Encode, bincode::Decode)]
 pub struct Stone;
 impl Tile for Stone {
 	fn name(&self) -> Cow<'static, str> {

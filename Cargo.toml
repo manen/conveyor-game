@@ -20,3 +20,4 @@ tokio = "1.46.1"
 futures = "0.3.31"
 anyhow = "1.0.98"
 strum = { version = "0.27.2", features = ["derive"] }
+bincode = "2.0.1"

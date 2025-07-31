@@ -5,6 +5,7 @@ use crate::{assets::GameAssets, game::Game};
 pub mod assets;
 pub mod comp;
 pub mod game;
+pub mod levels;
 pub mod textures;
 pub mod utils;
 pub mod world;

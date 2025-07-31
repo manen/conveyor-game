@@ -11,3 +11,4 @@ sui.workspace = true
 sui_runner.workspace = true
 tokio.workspace = true
 strum.workspace = true
+bincode.workspace = true

@@ -24,6 +24,10 @@ impl Tilemap {
 		Self { tiles }
 	}
 
+	pub fn from_tiles(tiles: [[ETile; SIZE]; SIZE]) -> Self {
+		Self { tiles }
+	}
+
 	pub fn tiles(&self) -> &[[ETile; SIZE]; SIZE] {
 		&self.tiles
 	}
