@@ -1,12 +1,9 @@
 use std::path::Path;
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use bincode::{Decode, Encode};
 
-use crate::world::{
-	ETile,
-	tilemap::{SIZE, Tilemap},
-};
+use crate::world::{ETile, maps::Tilemap};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Encode, Decode, Default)]
 pub enum SaveFormat {
@@ -48,8 +45,7 @@ impl Level {
 
 	pub fn from_tilemap(tilemap: &Tilemap) -> Self {
 		let tiles = tilemap
-			.tiles()
-			.iter()
+			.iter_inner()
 			.map(|a| a.iter().cloned().collect::<Vec<_>>())
 			.collect::<Vec<_>>();
 
@@ -59,27 +55,6 @@ impl Level {
 		}
 	}
 	pub fn into_tilemap(&self) -> anyhow::Result<Tilemap> {
-		if self.tiles.len() != SIZE {
-			return Err(anyhow!(
-				"loaded level isn't {SIZE}x{SIZE} (len: {})\n(level: {self:?})",
-				self.tiles.len()
-			));
-		}
-		if self
-			.tiles
-			.iter()
-			.map(|a| a.len())
-			.filter(|len| *len != SIZE)
-			.count() > 0
-		{
-			return Err(anyhow!(
-				"loaded level's columns aren't {SIZE} long\n(level: {self:?})"
-			));
-		}
-
-		let tiles = core::array::from_fn(|x| core::array::from_fn(|y| self.tiles[x][y].clone()));
-		let tilemap = Tilemap::from_tiles(tiles);
-
-		Ok(tilemap)
+		Tilemap::from_vec(self.tiles.clone())
 	}
 }

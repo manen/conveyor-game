@@ -12,4 +12,4 @@ pub mod buildings;
 pub mod worldgen;
 
 pub mod maps;
-pub use maps::{Map, tilemap};
+pub use maps::Map;

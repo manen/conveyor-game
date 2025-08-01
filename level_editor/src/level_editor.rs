@@ -6,8 +6,8 @@ use game::{
 	utils::ReturnEvents,
 	world::{
 		ETile,
+		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
-		tilemap::{SIZE, Tilemap},
 	},
 };
 use rfd::AsyncFileDialog;
@@ -38,12 +38,15 @@ pub struct LevelEditor {
 }
 impl LevelEditor {
 	pub fn new<A: Assets + Send + Sync>(
+		width: usize,
+		height: usize,
+
 		assets: &A,
 		d: &mut sui::Handle,
 		thread: &sui::raylib::RaylibThread,
 	) -> anyhow::Result<Self> {
 		let textures = Textures::new(assets, d, thread)?;
-		let tilemap = Tilemap::stone();
+		let tilemap = Tilemap::stone(width, height);
 
 		Ok(Self {
 			textures,

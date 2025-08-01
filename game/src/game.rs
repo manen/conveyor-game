@@ -17,10 +17,9 @@ use crate::{
 	world::{
 		Tile,
 		buildings::BuildingsMap,
+		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
-		tilemap::{SIZE, Tilemap},
 		tool::Tool,
-		worldgen,
 	},
 };
 
@@ -252,7 +251,8 @@ impl Layable for Game {
 				}
 
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
-					*self.tilemap.tiles_mut() = worldgen::gen_tiles();
+					// *self.tilemap.tiles_mut() = worldgen::gen_tiles();
+					// TODO reimplement
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('t')) => {
 					self.tool.cycle();

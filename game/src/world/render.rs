@@ -5,7 +5,7 @@ use crate::{
 	world::{
 		Tile,
 		buildings::{Building, BuildingsMap},
-		tilemap::{SIZE, Tilemap},
+		maps::{SIZE, Tilemap},
 	},
 };
 

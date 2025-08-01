@@ -10,8 +10,8 @@ use crate::{
 	utils::{Direction, MultiMap},
 	world::{
 		EResource,
+		maps::SIZE,
 		render::{self, TILE_RENDER_SIZE},
-		tilemap::SIZE,
 	},
 };
 

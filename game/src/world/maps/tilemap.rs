@@ -8,48 +8,40 @@ use crate::{
 /// world size in tiles
 pub const SIZE: usize = 32;
 
-#[derive(Clone, Debug)]
-pub struct Tilemap {
-	tiles: [[ETile; SIZE]; SIZE],
+pub type Tilemap = super::Map<ETile>;
+
+pub trait TilemapExt {
+	fn new() -> Self;
+	fn new_size(width: usize, height: usize) -> Self;
+	fn stone(width: usize, height: usize) -> Self;
+	fn from_tiles<const SIZE: usize>(tiles: [[ETile; SIZE]; SIZE]) -> Self;
+
+	fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> TilemapRenderer<'a>;
 }
-impl Tilemap {
-	pub fn new() -> Self {
-		Self {
-			tiles: worldgen::gen_tiles(),
-		}
-	}
-	pub fn stone() -> Self {
-		let tiles = core::array::from_fn(|_| core::array::from_fn(|_| ETile::stone()));
 
-		Self { tiles }
+impl TilemapExt for Tilemap {
+	fn new() -> Self {
+		Self::new_size(SIZE, SIZE)
+	}
+	fn stone(width: usize, height: usize) -> Self {
+		let map = (0..width)
+			.map(|_| (0..height).map(|_| ETile::stone()).collect())
+			.collect();
+		Self::from_vec(map).expect("this shouldn't be possible TilemapExt::stone")
+	}
+	fn new_size(width: usize, height: usize) -> Self {
+		Self::from_vec(worldgen::gen_tiles(width, height))
+			.expect("this shouldn't be possible TilemapExt::new")
+	}
+	fn from_tiles<const SIZE: usize>(tiles: [[ETile; SIZE]; SIZE]) -> Self {
+		let map = Tilemap::from_vec(tiles.into_iter().map(|a| a.into_iter().collect()).collect())
+			.expect("this is impossible thanks to the type system");
+
+		map
 	}
 
-	pub fn from_tiles(tiles: [[ETile; SIZE]; SIZE]) -> Self {
-		Self { tiles }
-	}
-
-	pub fn tiles(&self) -> &[[ETile; SIZE]; SIZE] {
-		&self.tiles
-	}
-	pub fn tiles_mut(&mut self) -> &mut [[ETile; SIZE]; SIZE] {
-		&mut self.tiles
-	}
-
-	pub fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> TilemapRenderer<'a> {
+	fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> TilemapRenderer<'a> {
 		TilemapRenderer::new(self, textures)
-	}
-
-	pub fn at(&self, pos: (i32, i32)) -> Option<&ETile> {
-		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
-			return None;
-		}
-		Some(&self.tiles[pos.0 as usize][pos.1 as usize])
-	}
-	pub fn at_mut(&mut self, pos: (i32, i32)) -> Option<&mut ETile> {
-		if pos.0 < 0 || pos.1 < 0 || pos.0 >= SIZE as _ || pos.1 >= SIZE as _ {
-			return None;
-		}
-		Some(&mut self.tiles[pos.0 as usize][pos.1 as usize])
 	}
 }
 
