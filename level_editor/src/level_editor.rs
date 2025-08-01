@@ -1,5 +1,4 @@
 use anyhow::{Context, anyhow};
-use asset_provider::Assets;
 use game::{
 	levels::Level,
 	textures::Textures,
@@ -37,15 +36,7 @@ pub struct LevelEditor {
 	scale_velocity: f32,
 }
 impl LevelEditor {
-	pub fn new<A: Assets + Send + Sync>(
-		width: usize,
-		height: usize,
-
-		assets: &A,
-		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
-	) -> anyhow::Result<Self> {
-		let textures = Textures::new(assets, d, thread)?;
+	pub fn new(width: usize, height: usize, textures: Textures) -> anyhow::Result<Self> {
 		let tilemap = Tilemap::stone(width, height);
 
 		Ok(Self {
@@ -53,7 +44,7 @@ impl LevelEditor {
 			tilemap,
 			saving_handle: None,
 			toolbar: DynamicLayable::new(tools::toolbar()),
-			placing: ETile::iron_ore(),
+			placing: ETile::stone(),
 			camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,

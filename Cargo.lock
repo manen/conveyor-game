@@ -1295,6 +1295,7 @@ dependencies = [
  "bincode",
  "game",
  "rfd",
+ "stage_manager",
  "strum",
  "sui",
  "sui_runner",

@@ -18,12 +18,16 @@ pub fn draw_tilemap(
 	draw_x_base: i32,
 	draw_y_base: i32,
 	scale: f32,
+
+	// map size
+	width: usize,
+	height: usize,
 ) {
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
-	for x in 0..SIZE as i32 {
-		for y in 0..SIZE as i32 {
+	for x in 0..width as i32 {
+		for y in 0..height as i32 {
 			let draw_x = draw_x_base + (x as f32 * render_size) as i32;
 			let draw_y = draw_y_base + (y as f32 * render_size) as i32;
 

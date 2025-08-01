@@ -41,19 +41,27 @@ impl TilemapExt for Tilemap {
 	}
 
 	fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> TilemapRenderer<'a> {
-		TilemapRenderer::new(self, textures)
+		TilemapRenderer::new(self, textures, self.width, self.height)
 	}
 }
 
 #[derive(Clone, Debug)]
 /// world rendering as a component
 pub struct TilemapRenderer<'a> {
+	width: usize,
+	height: usize,
+
 	textures: &'a Textures,
 	tilemap: &'a Tilemap,
 }
 impl<'a> TilemapRenderer<'a> {
-	pub fn new(tilemap: &'a Tilemap, textures: &'a Textures) -> Self {
-		Self { tilemap, textures }
+	pub fn new(tilemap: &'a Tilemap, textures: &'a Textures, width: usize, height: usize) -> Self {
+		Self {
+			tilemap,
+			textures,
+			width,
+			height,
+		}
 	}
 }
 impl<'a> Layable for TilemapRenderer<'a> {
@@ -62,6 +70,15 @@ impl<'a> Layable for TilemapRenderer<'a> {
 		(size, size)
 	}
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		crate::world::render::draw_tilemap(d, &self.tilemap, &self.textures, det.x, det.y, scale);
+		crate::world::render::draw_tilemap(
+			d,
+			&self.tilemap,
+			&self.textures,
+			det.x,
+			det.y,
+			scale,
+			self.width,
+			self.height,
+		);
 	}
 }
