@@ -5,7 +5,7 @@ use game::{
 	utils::ReturnEvents,
 	world::{
 		ETile,
-		maps::{SIZE, Tilemap, TilemapExt},
+		maps::{Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
 	},
 };
@@ -39,17 +39,22 @@ impl LevelEditor {
 	pub fn new(width: usize, height: usize, textures: Textures) -> anyhow::Result<Self> {
 		let tilemap = Tilemap::stone(width, height);
 
-		Ok(Self {
+		Ok(Self::from_tilemap(tilemap, textures))
+	}
+	pub fn from_tilemap(tilemap: Tilemap, textures: Textures) -> Self {
+		let (width, height) = tilemap.size();
+
+		Self {
 			textures,
 			tilemap,
 			saving_handle: None,
 			toolbar: DynamicLayable::new(tools::toolbar()),
 			placing: ETile::stone(),
-			camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
+			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
-		})
+		}
 	}
 
 	fn wrap_as_world<L: Layable + Debug + Clone>(

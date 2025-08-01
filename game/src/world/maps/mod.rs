@@ -47,6 +47,16 @@ impl<T> Map<T> {
 		self.map
 	}
 
+	pub fn width(&self) -> usize {
+		self.width
+	}
+	pub fn height(&self) -> usize {
+		self.height
+	}
+	pub fn size(&self) -> (usize, usize) {
+		(self.width, self.height)
+	}
+
 	pub fn at_usize(&self, (x, y): (usize, usize)) -> Option<&T> {
 		if x < self.width && y < self.height {
 			Some(&self.map[x][y])

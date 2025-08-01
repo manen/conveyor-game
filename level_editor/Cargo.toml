@@ -14,3 +14,4 @@ strum.workspace = true
 bincode.workspace = true
 rfd = { version = "0.15.4", features = ["tokio", "xdg-portal"], default-features = false }
 stage_manager.workspace = true
+stage_manager_tokio.workspace = true

@@ -4,12 +4,13 @@ members = [
 	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
 	"game",
 	"sui/asset_provider_image"
-, "level_editor"]
+, "level_editor", "sui/stage_manager_tokio"]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
 stage_manager.path = "./sui/stage_manager"
+stage_manager_tokio.path = "./sui/stage_manager_tokio"
 
 asset_provider.path = "./sui/asset_provider"
 asset_provider_image.path = "./sui/asset_provider_image"

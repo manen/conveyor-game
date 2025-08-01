@@ -1296,6 +1296,7 @@ dependencies = [
  "game",
  "rfd",
  "stage_manager",
+ "stage_manager_tokio",
  "strum",
  "sui",
  "sui_runner",
@@ -2325,6 +2326,15 @@ name = "stage_manager"
 version = "0.1.0"
 dependencies = [
  "sui",
+]
+
+[[package]]
+name = "stage_manager_tokio"
+version = "0.1.0"
+dependencies = [
+ "stage_manager",
+ "sui",
+ "tokio",
 ]
 
 [[package]]
