@@ -9,5 +9,7 @@ pub mod tool;
 pub mod render;
 
 pub mod buildings;
-pub mod tilemap;
 pub mod worldgen;
+
+pub mod maps;
+pub use maps::{Map, tilemap};
