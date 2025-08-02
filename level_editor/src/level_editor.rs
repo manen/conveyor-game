@@ -36,10 +36,9 @@ pub struct LevelEditor {
 	scale_velocity: f32,
 }
 impl LevelEditor {
-	pub fn new(width: usize, height: usize, textures: Textures) -> anyhow::Result<Self> {
+	pub fn new(width: usize, height: usize, textures: Textures) -> Self {
 		let tilemap = Tilemap::stone(width, height);
-
-		Ok(Self::from_tilemap(tilemap, textures))
+		Self::from_tilemap(tilemap, textures)
 	}
 	pub fn from_tilemap(tilemap: Tilemap, textures: Textures) -> Self {
 		let (width, height) = tilemap.size();

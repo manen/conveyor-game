@@ -3,24 +3,13 @@ use std::fmt::{Debug, Display};
 use anyhow::Context;
 use game::{
 	assets::GameAssets,
-	textures::{self, Textures},
+	textures::{self, Textures, loader::load_as_scene as load_textures},
 };
 
 pub mod level_editor;
 use level_editor::LevelEditor;
-use stage_manager_tokio::Loading;
+use stage_manager_tokio::Loader;
 use sui::{Compatible, Layable, LayableExt, core::Store, form::typable::TypableData};
-
-/// safety: only accessed from the main thread
-static mut TEXTURES: Option<Textures> = None;
-
-/// very dangerous very bad code (or so i'm told)
-fn get_textures() -> Textures {
-	#[allow(static_mut_refs)]
-	let textures = unsafe { TEXTURES.take().expect("textures has already been taken") };
-
-	textures
-}
 
 pub mod tools;
 
@@ -32,17 +21,6 @@ pub async fn start_with_rt() {
 pub fn start() {
 	let (mut rl, thread) = sui_runner::rl();
 	let assets = GameAssets::default();
-
-	{
-		let d = rl.begin_drawing(&thread);
-		let mut d = sui::Handle::new_unfocused(d);
-
-		let textures =
-			textures::Textures::new(&assets, &mut d, &thread).expect("failed to load textures");
-		unsafe {
-			TEXTURES = Some(textures);
-		}
-	};
 
 	let game = creation_screen();
 	let game = stage_manager::Stage::new(game);
@@ -77,13 +55,12 @@ fn creation_screen() -> impl Layable + Debug + Clone {
 				let width = width_store.with_borrow(|a| a.text.parse())?;
 				let height = height_store.with_borrow(|a| a.text.parse())?;
 
-				anyhow::Ok(stage_manager::StageChange::from_dyn(
-					sui::DynamicLayable::new_only_debug(LevelEditor::new(
-						width,
-						height,
-						get_textures(),
-					)?),
-				))
+				anyhow::Ok(load_textures(GameAssets::default(), move |tex| match tex {
+					Ok(tex) => {
+						sui::DynamicLayable::new_only_debug(LevelEditor::new(width, height, tex))
+					}
+					Err(err) => sui::custom(err_page(err)),
+				}))
 			};
 
 			match f() {
@@ -100,7 +77,7 @@ fn creation_screen() -> impl Layable + Debug + Clone {
 }
 
 fn open_screen() -> impl Layable + Debug {
-	let loading = Loading::new(
+	let loading = Loader::new(
 		sui::text("loading save...", 32).centered(),
 		async {
 			use game::levels::Level;
@@ -120,10 +97,14 @@ fn open_screen() -> impl Layable + Debug {
 			save.into_tilemap()
 		},
 		|p| match p {
-			Ok(tilemap) => {
-				let level_editor = LevelEditor::from_tilemap(tilemap, get_textures());
-				sui::DynamicLayable::new_only_debug(level_editor)
-			}
+			Ok(tilemap) => load_textures(GameAssets::default(), move |tex| match tex {
+				Ok(tex) => {
+					let level_editor = LevelEditor::from_tilemap(tilemap.clone(), tex);
+					sui::DynamicLayable::new_only_debug(level_editor)
+				}
+				Err(err) => sui::custom(err_page(err)),
+			})
+			.take(),
 			Err(err) => sui::custom(err_page(err)),
 		},
 	);
@@ -132,19 +113,8 @@ fn open_screen() -> impl Layable + Debug {
 }
 
 fn err_page<E: Debug + Display>(err: E) -> impl Layable + Debug + Clone {
-	let display = format!("{err}");
-	let debug = format!("{err:?}");
-
-	let f = move |_| stage_manager::StageChange::new(creation_screen());
-
-	let err_info = sui::div([
-		sui::custom(sui::text(display, 32).centered()),
-		sui::custom(sui::text(debug, 24)),
-	]);
-
-	err_info.overlay(sui::DynamicLayable::new_only_debug(
-		sui::text("return to main menu", 24)
-			.clickable(f)
-			.to_bottom(),
-	))
+	game::comp::err_page(
+		err,
+		Some(stage_manager::StageChange::new(creation_screen())),
+	)
 }

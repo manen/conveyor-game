@@ -762,6 +762,7 @@ dependencies = [
  "perlin2d",
  "reqwest",
  "stage_manager",
+ "stage_manager_tokio",
  "strum",
  "sui",
  "sui_runner",

@@ -25,9 +25,9 @@ pub fn start() {
 	let game = {
 		let d = rl.begin_drawing(&thread);
 		let fh = sui::core::Store::new(sui::form::UniqueId::null());
-		let mut d = sui::Handle::new(d, &fh);
+		let mut d = sui::Handle::new(d, &thread, &fh);
 
-		Game::new(&assets, &mut d, &thread).unwrap()
+		Game::new(&assets, &mut d).unwrap()
 	};
 
 	let stage = stage_manager::Stage::from_dyn_layable(DynamicLayable::new_only_debug(game));

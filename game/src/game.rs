@@ -45,12 +45,8 @@ pub struct Game {
 	last_game_tick: Instant,
 }
 impl Game {
-	pub fn new<A: Assets + Send + Sync>(
-		assets: &A,
-		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
-	) -> anyhow::Result<Self> {
-		let textures = Textures::new(assets, d, thread)?;
+	pub fn new<A: Assets + Send + Sync>(assets: &A, d: &mut sui::Handle) -> anyhow::Result<Self> {
+		let textures = Textures::new(assets, d)?;
 		let tilemap = Tilemap::new();
 		let buildings = BuildingsMap::default();
 

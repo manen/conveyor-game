@@ -7,6 +7,8 @@ use futures::{Stream, stream::FuturesUnordered};
 use strum::{EnumIter, IntoEnumIterator};
 use sui::{Color, Details, raylib::prelude::RaylibDraw, tex::Texture};
 
+pub mod loader;
+
 /// an enum for every texture we can use \
 /// extensible in the future by adding an Other(u64) and have some sort of setup that hashes their
 /// resource_path, just so it's faster \
@@ -66,13 +68,15 @@ pub struct Textures {
 	textures: HashMap<TextureID, Texture>,
 }
 impl Textures {
-	pub fn new<A: Assets + Send + Sync>(
-		assets: &A,
-		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
-	) -> anyhow::Result<Self> {
+	pub fn from_hashmap(textures: HashMap<TextureID, Texture>) -> Self {
+		Self { textures }
+	}
+
+	/// loads all textures synchronously \
+	/// (loads the images in parallel but converts them into textures synchronously)
+	pub fn new<A: Assets + Send + Sync>(assets: &A, d: &mut sui::Handle) -> anyhow::Result<Self> {
 		let stream = Self::stream_images(assets);
-		let textures = Self::from_stream(stream, d, thread)?;
+		let textures = Self::from_stream(stream, d)?;
 
 		Ok(textures)
 	}
@@ -105,7 +109,6 @@ impl Textures {
 	pub fn from_stream<S: Stream<Item = anyhow::Result<(TextureID, DynamicImage)>> + Unpin>(
 		stream: S,
 		d: &mut sui::Handle,
-		thread: &sui::raylib::RaylibThread,
 	) -> anyhow::Result<Self> {
 		let mut map = HashMap::with_capacity(stream.size_hint().0);
 
@@ -113,7 +116,7 @@ impl Textures {
 		for result in iter {
 			let (tex, img) = result?;
 
-			let texture = img.texture(d, thread)?;
+			let texture = img.texture(d)?;
 			map.insert(tex, texture);
 		}
 		Ok(Self { textures: map })
