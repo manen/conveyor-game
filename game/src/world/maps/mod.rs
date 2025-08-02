@@ -2,6 +2,8 @@ use anyhow::anyhow;
 
 mod tilemap;
 pub use tilemap::*;
+mod buildingsmap;
+pub use buildingsmap::*;
 
 #[derive(Clone, Debug)]
 pub struct Map<T> {

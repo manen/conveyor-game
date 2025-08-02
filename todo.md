@@ -22,6 +22,6 @@ a levelekbe hamarosan a buildingeket is be kell rakni
 
 1. valoszinu a level loading system, main menu es hasonlok gondolom
 
-> ehhez kelleni fog a texture loading kicsit okosabban, meg kene csinalni a loadingos texture loadingot
+> ~~ehhez kelleni fog a texture loading kicsit okosabban, meg kene csinalni a loadingos texture loadingot~~ megcsinaltam
 
 meg ilyenek gn

@@ -47,8 +47,9 @@ pub struct Game {
 impl Game {
 	pub fn new<A: Assets + Send + Sync>(assets: &A, d: &mut sui::Handle) -> anyhow::Result<Self> {
 		let textures = Textures::new(assets, d)?;
-		let tilemap = Tilemap::new();
-		let buildings = BuildingsMap::default();
+		// let tilemap = Tilemap::new(SIZE, SIZE); // this causes a multiply overflow in perlin2d for some fucking reason
+		let tilemap = Tilemap::stone(SIZE, SIZE);
+		let buildings = BuildingsMap::new(SIZE, SIZE);
 
 		Ok(Self {
 			textures,
