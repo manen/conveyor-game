@@ -1,0 +1,5 @@
+[campaigns.tutorial]
+name = "Tutorial"
+progression = [
+	"introduction"
+]
