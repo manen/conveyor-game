@@ -34,10 +34,3 @@ moves the resource in the direction it's facing
 - output cube
 
 like a 3x3 cube that the target resource goes into
-
-## dev notes
-
-okay soooo we have things set up pretty much next up on the list
-
-- proper textures for buildings
-- resource rendering when it's on conveyors

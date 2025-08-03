@@ -1,29 +1,22 @@
 # todo
 
-okay so i think just start making the campaign and shit'll come
+## tutorial
 
-i kinda want to make it cool and dynamic and assets-based \
-sooooo like a campaign/campaign.toml
+so the tutorial system's basically set up, next up:
 
-na en valami ilyesmit tudnek elkepzelni \
-.toml fileokban es akkor in the future van meg lehetoseg siman boviteni
+- sui wrapped text component
+- building place listener (with the tile_resource under it included too)
 
-egy levelnel ket filet fog keresni, a `name.toml`-t es a `name.cglf`-t. az egyik a metadata masik a level
+the 'story' of the tutorial:
+
+- resources, resource gathering through buildings and tiles
+- placing a miner
+- placing conveyors
 
 ---
 
-az outputot ugy tudnam elkepzelni hogy a palya jobb es bal oldalan lenne par conveyor ami kivinne a palyarol az itemet es akkor szamit ha kivitted
+and this is about as long as we can get right now cause we're missing some crucial features:
 
-<!-- de ezeket triageolni kene amugy  -->
+- disposal/collection/counting of resources by wiring them out of the world (or maybe into a house where the player lives? that'd add a nice touch)
 
-a levelekbe hamarosan a buildingeket is be kell rakni
-
-## triage
-
-1. valoszinu a level loading system, main menu es hasonlok gondolom
-
-- ide is kelleni fog vmi system, hogy a level kozbe lehessen pofazni a playernek
-
-> lehet h nem akarok markdownnal baszakodni
-
-amugy meg csak a sima game loadinghoz csinaljunk componenteket
+- i'll probably need to put all the maps into an ugly ass broke ass shitty ass Arc<Mutex<_>> but ion think there's another option for much longer (off-thread ticking, checking to see if two buildings are connected with conveyors from the tutorial, etc)
