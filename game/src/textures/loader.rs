@@ -5,7 +5,6 @@ use anyhow::Context;
 use asset_provider::Assets;
 use asset_provider_image::{ImageExt, image::DynamicImage};
 use futures::StreamExt;
-use stage_manager::StageChange;
 use stage_manager_tokio::{ConstructFunction, ConstructiveLoader};
 use sui::DynamicLayable;
 use sui::LayableExt;
@@ -24,7 +23,7 @@ enum TextureLoaderPacket {
 pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
 	assets: A,
 	post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
-) -> StageChange<'static> {
+) -> DynamicLayable<'static> {
 	let loading_screen = sui::text("loading textures...", 32).centered();
 
 	let f = async move |tx: Sender<_>| {
@@ -84,5 +83,5 @@ pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
 		ConstructiveLoader::new_explicit(loading_screen, f, base_t, construct, neo_post_process);
 	let loading = DynamicLayable::new_only_debug(loading);
 
-	StageChange::from_dyn_ticking(loading)
+	loading
 }

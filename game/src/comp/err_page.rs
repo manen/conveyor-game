@@ -6,7 +6,7 @@ use sui::{Layable, LayableExt};
 pub fn err_page<E: Debug + Display>(
 	err: E,
 	mut return_to_menu: Option<StageChange<'static>>,
-) -> impl Layable + Debug + Clone {
+) -> impl Layable + Debug {
 	let display = format!("{err}");
 	let debug = format!("{err:?}");
 
