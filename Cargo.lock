@@ -2596,6 +2596,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tips"
+version = "0.1.0"
+dependencies = [
+ "stage_manager",
+ "sui",
+ "tokio",
+]
+
+[[package]]
 name = "tokio"
 version = "1.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
