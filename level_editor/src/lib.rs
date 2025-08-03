@@ -61,21 +61,18 @@ fn creation_screen() -> impl Layable + Debug {
 			};
 
 			match f() {
-				Ok(a) => StageChange::Simple(a),
+				Ok(a) => a,
 				Err(err) => StageChange::simple_only_debug(err_page(err)),
 			}
 		})),
 		sui::custom(sui::text("or", 32).centered().fix_wh(300, 200)),
-		sui::custom_only_debug(
-			sui::text("load from file", 32)
-				.clickable(move |_| stage_manager::StageChange::simple_only_debug(open_screen())),
-		),
+		sui::custom_only_debug(sui::text("load from file", 32).clickable(move |_| open_screen())),
 	])
 	.centered()
 }
 
-fn open_screen() -> impl Layable + Debug {
-	let loading = Loader::new(
+fn open_screen() -> StageChange<'static> {
+	let loading = Loader::new_overlay(
 		sui::text("loading save...", 32).centered(),
 		async {
 			use game::levels::Level;
@@ -102,7 +99,7 @@ fn open_screen() -> impl Layable + Debug {
 				}
 				Err(err) => sui::custom_only_debug(err_page(err)),
 			}),
-			Err(err) => sui::custom_only_debug(err_page(err)),
+			Err(err) => StageChange::Simple(sui::custom_only_debug(err_page(err))),
 		},
 	);
 
