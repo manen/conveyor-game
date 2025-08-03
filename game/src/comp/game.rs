@@ -3,13 +3,16 @@ use std::fmt::Debug;
 use anyhow::Context;
 use asset_provider::Assets;
 use stage_manager::StageChange;
+use stage_manager_loaders::Loader;
+use stage_manager_remote::RemoteStageChange;
 use sui::{DynamicLayable, Layable, LayableExt};
+use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::{
 	assets::GameAssets,
-	comp::{handle_err, handle_err_async, handle_err_async_dyn, handle_result_dyn},
+	comp::{handle_err, handle_err_async_dyn, handle_result, handle_result_dyn},
 	game::Game,
-	levels::{GameState, Level, LevelMetadata, Levels},
+	levels::{GameState, Level, Levels},
 	textures,
 	world::maps::BuildingsMap,
 };
@@ -25,14 +28,55 @@ pub async fn main() -> DynamicLayable<'static> {
 }
 
 pub async fn tutorial() -> DynamicLayable<'static> {
-	let f = async move || {
-		let assets = GameAssets::default();
+	let loader = textures::load_as_layable(GameAssets::default(), |textures| {
+		let f = move || {
+			let textures = textures?;
 
-		let levels = Levels::load(&assets).await?;
-		anyhow::Ok(level_by_id(assets, &levels.campaign.tutorial).await)
-	};
-	handle_err_async_dyn(f).await
+			let loader = Loader::new(
+				sui::text("loading tutorial...", 16).centered(),
+				async move { assemble_tutorial(textures).await },
+				|level| StageChange::Simple(handle_result(level)),
+			);
+			anyhow::Ok(DynamicLayable::new_only_debug(loader))
+		};
+
+		handle_result(f())
+	});
+	DynamicLayable::new_only_debug(loader)
 }
+
+pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<Game> {
+	let assets = GameAssets::default();
+	let levels = Levels::load(&assets).await?;
+
+	let level = Level::load_from_assets(&assets, &levels.campaign.tutorial).await?;
+	let tilemap = level.into_tilemap()?;
+	let buildings = BuildingsMap::new(tilemap.width(), tilemap.height());
+
+	let mut game = Game::from_maps(textures, tilemap, buildings);
+	game.enable_tips(test_controller);
+
+	Ok(game)
+}
+pub async fn test_controller(
+	tx: Sender<stage_manager_remote::RemoteStageChange>,
+	rx: Receiver<()>,
+) {
+	let mut i = 0;
+
+	loop {
+		tx.send(RemoteStageChange::simple(sui::text(
+			format!("hi this text is coming from another dimension ({i})"),
+			16,
+		)))
+		.await
+		.expect("pocs"); // TODO
+
+		tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+		i += 1;
+	}
+}
+
 pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
 	assets: A,
 	id: &str,
@@ -49,7 +93,8 @@ pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
 			let f = || {
 				let tex = tex?;
 
-				anyhow::Ok(Game::from_maps(tex, tilemap.clone(), buildings.clone()))
+				let game = Game::from_maps(tex, tilemap.clone(), buildings.clone());
+				anyhow::Ok(game)
 			};
 			handle_err(f)
 		});

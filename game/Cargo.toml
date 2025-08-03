@@ -10,6 +10,8 @@ sui_runner.workspace = true
 asset_provider.workspace = true
 stage_manager.workspace = true
 asset_provider_image.workspace = true
+stage_manager_loaders.workspace = true
+stage_manager_remote.workspace = true
 
 tokio.workspace = true
 futures.workspace = true
@@ -23,7 +25,6 @@ glissade = "0.2.6"
 include_dir = "0.7.4"
 heapless.git = "https://github.com/rust-embedded/heapless"
 tokio-util = { version = "0.7.15", features = ["compat", "io-util"] }
-stage_manager_loaders.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }
 toml = "0.9.4"
 dirs = "6.0.0"

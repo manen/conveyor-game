@@ -786,6 +786,7 @@ dependencies = [
  "serde",
  "stage_manager",
  "stage_manager_loaders",
+ "stage_manager_remote",
  "strum",
  "sui",
  "sui_runner",
@@ -2399,6 +2400,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "stage_manager_remote"
+version = "0.1.0"
+dependencies = [
+ "stage_manager",
+ "sui",
+ "tokio",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2593,15 +2603,6 @@ checksum = "5d4f6d1145dcb577acf783d4e601bc1d76a13337bb54e6233add580b07344c8b"
 dependencies = [
  "displaydoc",
  "zerovec",
-]
-
-[[package]]
-name = "tips"
-version = "0.1.0"
-dependencies = [
- "stage_manager",
- "sui",
- "tokio",
 ]
 
 [[package]]

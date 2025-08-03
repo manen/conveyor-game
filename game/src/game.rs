@@ -1,5 +1,4 @@
 use anyhow::{Context, anyhow};
-use asset_provider::Assets;
 use std::{
 	fmt::Debug,
 	time::{Duration, Instant},
@@ -29,7 +28,9 @@ pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 #[derive(Debug)]
 pub struct Game {
 	textures: Textures,
+
 	toolbar: DynamicLayable<'static>,
+	tips: Option<DynamicLayable<'static>>,
 
 	pub tilemap: Tilemap,
 	pub buildings: BuildingsMap,
@@ -58,6 +59,7 @@ impl Game {
 		Self {
 			textures,
 			toolbar: Self::gen_toolbar(),
+			tips: None,
 			tilemap,
 			buildings,
 			tool: Default::default(),
@@ -66,6 +68,38 @@ impl Game {
 			scale: 1.0,
 			scale_velocity: 0.0,
 			last_game_tick: Instant::now(),
+		}
+	}
+
+	pub fn enable_tips<T: Send + Debug + 'static, F: Future<Output = ()> + Send + 'static>(
+		&mut self,
+		controller: impl FnOnce(
+			tokio::sync::mpsc::Sender<stage_manager_remote::RemoteStageChange>,
+			tokio::sync::mpsc::Receiver<T>,
+		) -> F
+		+ Send,
+	) {
+		let remote = stage_manager_remote::RemoteStage::new(controller);
+		let remote = DynamicLayable::new_only_debug(remote);
+
+		self.tips = Some(remote);
+	}
+	pub fn disable_tips(&mut self) {
+		self.tips = None;
+	}
+
+	pub fn tips_det(&self, det: Details) -> Option<Details> {
+		if let Some(tips) = &self.tips {
+			let (_, h) = tips.size();
+			let l_det = Details {
+				x: 0,
+				y: det.ah - h,
+				aw: det.aw,
+				ah: h,
+			};
+			Some(l_det)
+		} else {
+			None
 		}
 	}
 
@@ -107,6 +141,12 @@ impl Layable for Game {
 		]));
 
 		comp.render(d, det, scale);
+
+		if let Some(tips) = &self.tips {
+			let l_det = self.tips_det(det).unwrap();
+
+			tips.render(d, l_det, 1.0);
+		}
 	}
 
 	fn tick(&mut self) {
@@ -155,6 +195,10 @@ impl Layable for Game {
 
 			self.last_game_tick = Instant::now();
 		}
+
+		if let Some(tips) = &mut self.tips {
+			tips.tick();
+		}
 	}
 
 	fn pass_events(
@@ -168,70 +212,106 @@ impl Layable for Game {
 		let move_amount = 0.1;
 		for event in events.iter().copied() {
 			match event {
-				Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
-					self.scale_velocity += amount / 6.0
-				}
-				Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-					let (_, toolbar_h) = self.toolbar.size();
+				Event::MouseEvent(m_event) => {
+					let (mouse_x, mouse_y) = m_event.at();
 
-					if y <= toolbar_h {
-						match self
-							.toolbar
-							.pass_events(std::iter::once(event), det, scale)
-							.next()
-						{
-							Some(toolbar_resp) if toolbar_resp.can_take::<SelectTool>() => {
-								if let Some(SelectTool(tool)) = toolbar_resp.take() {
-									println!("selected {tool:?}");
-									self.tool = tool;
-									continue;
-								}
-							}
-							Some(other_event) => {
-								println!("non-SelectTool ui return event: {other_event:?}")
-							}
-							None => {}
+					let mut pass_to_tips = false;
+					if let Some(tips) = &self.tips {
+						let (_, h) = tips.size();
+
+						let from_y = det.ah - h;
+						if mouse_y >= from_y {
+							pass_to_tips = true;
 						}
 					}
 
-					// use the tool on the block
-					// yes the code for that is this large
+					if pass_to_tips {
+						let l_det = self.tips_det(det).unwrap();
 
-					// okay something doesn't work idk what
-					// toolbar isn't responding to the ReturnEvent so it might be the new SpaceBetween or anything else basically
+						self.tips
+							.as_mut()
+							.unwrap()
+							.pass_events(std::iter::once(Event::MouseEvent(m_event)), l_det, 1.0)
+							.for_each(std::mem::drop)
+					} else {
+						match m_event {
+							MouseEvent::Scroll { amount, .. } => {
+								self.scale_velocity += amount / 6.0
+							}
+							MouseEvent::MouseClick { x, y } => {
+								let (_, toolbar_h) = self.toolbar.size();
 
-					let world_pos = || {
-						let mut world = self.wrap_as_world(ReturnEvents, det);
+								if y <= toolbar_h {
+									match self
+										.toolbar
+										.pass_events(std::iter::once(event), det, scale)
+										.next()
+									{
+										Some(toolbar_resp)
+											if toolbar_resp.can_take::<SelectTool>() =>
+										{
+											if let Some(SelectTool(tool)) = toolbar_resp.take() {
+												println!("selected {tool:?}");
+												self.tool = tool;
+												continue;
+											}
+										}
+										Some(other_event) => {
+											println!(
+												"non-SelectTool ui return event: {other_event:?}"
+											)
+										}
+										None => {}
+									}
+								}
 
-						let ret = world.pass_events(std::iter::once(event), det, scale).next().ok_or_else(|| anyhow!(
+								// use the tool on the block
+								// yes the code for that is this large
+
+								// okay something doesn't work idk what
+								// toolbar isn't responding to the ReturnEvent so it might be the new SpaceBetween or anything else basically
+
+								let world_pos = || {
+									let mut world = self.wrap_as_world(ReturnEvents, det);
+
+									let ret = world.pass_events(std::iter::once(event), det, scale).next().ok_or_else(|| anyhow!(
 								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
-						let ret: Event = ret.take().ok_or_else(|| {
-							anyhow!("ReturnEvents didn't return a sui::core::Event")
-						})?;
+									let ret: Event = ret.take().ok_or_else(|| {
+										anyhow!("ReturnEvents didn't return a sui::core::Event")
+									})?;
 
-						match ret {
-							Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-								Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+									match ret {
+										Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+											Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+										}
+										_ => Err(anyhow!(
+											"expected MouseEvent::MouseClick, got {ret:?}"
+										)),
+									}
+								};
+								let world_pos = world_pos().with_context(|| {
+									format!(
+										"while handling {self:?} use action at screen (x,y) ({x}, {y})"
+									)
+								});
+
+								let world_pos = match world_pos {
+									Ok(a) => a,
+									Err(err) => {
+										eprintln!("{err}");
+										continue;
+									}
+								};
+
+								let tool = std::mem::take(&mut self.tool);
+								tool.r#use(self, world_pos);
+								self.tool = tool
 							}
-							_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
-						}
-					};
-					let world_pos = world_pos().with_context(|| {
-						format!("while handling {self:?} use action at screen (x,y) ({x}, {y})")
-					});
 
-					let world_pos = match world_pos {
-						Ok(a) => a,
-						Err(err) => {
-							eprintln!("{err}");
-							continue;
+							_ => {}
 						}
-					};
-
-					let tool = std::mem::take(&mut self.tool);
-					tool.r#use(self, world_pos);
-					self.tool = tool
+					}
 				}
 
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_W)) => {
