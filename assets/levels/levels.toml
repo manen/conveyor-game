@@ -1,5 +1,2 @@
-[campaigns.tutorial]
-name = "Tutorial"
-progression = [
-	"introduction"
-]
+[campaign]
+tutorial = "tutorial"

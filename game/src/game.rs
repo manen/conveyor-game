@@ -45,13 +45,12 @@ pub struct Game {
 	last_game_tick: Instant,
 }
 impl Game {
-	pub fn new<A: Assets + Send + Sync>(assets: &A, d: &mut sui::Handle) -> anyhow::Result<Self> {
-		let textures = Textures::new(assets, d)?;
+	pub fn new(textures: Textures) -> Self {
 		// let tilemap = Tilemap::new(SIZE, SIZE); // this causes a multiply overflow in perlin2d for some fucking reason
 		let tilemap = Tilemap::stone(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
-		Ok(Self {
+		Self {
 			textures,
 			toolbar: Self::gen_toolbar(),
 			tilemap,
@@ -62,7 +61,7 @@ impl Game {
 			scale: 1.0,
 			scale_velocity: 0.0,
 			last_game_tick: Instant::now(),
-		})
+		}
 	}
 
 	fn gen_toolbar() -> DynamicLayable<'static> {

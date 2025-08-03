@@ -22,6 +22,8 @@ a levelekbe hamarosan a buildingeket is be kell rakni
 
 1. valoszinu a level loading system, main menu es hasonlok gondolom
 
-> ~~ehhez kelleni fog a texture loading kicsit okosabban, meg kene csinalni a loadingos texture loadingot~~ megcsinaltam
+- ide is kelleni fog vmi system, hogy a level kozbe lehessen pofazni a playernek
 
-meg ilyenek gn
+> lehet h nem akarok markdownnal baszakodni
+
+amugy meg csak a sima game loadinghoz csinaljunk componenteket

@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use anyhow::Context;
-use game::{assets::GameAssets, textures::loader::load_as_scene as load_textures};
+use game::{assets::GameAssets, textures};
 
 pub mod level_editor;
 use level_editor::LevelEditor;
@@ -52,12 +52,15 @@ fn creation_screen() -> impl Layable + Debug {
 				let width = width_store.with_borrow(|a| a.text.parse())?;
 				let height = height_store.with_borrow(|a| a.text.parse())?;
 
-				anyhow::Ok(load_textures(GameAssets::default(), move |tex| match tex {
-					Ok(tex) => {
-						sui::DynamicLayable::new_only_debug(LevelEditor::new(width, height, tex))
-					}
-					Err(err) => sui::custom_only_debug(err_page(err)),
-				}))
+				anyhow::Ok(textures::load_as_scene(
+					GameAssets::default(),
+					move |tex| match tex {
+						Ok(tex) => sui::DynamicLayable::new_only_debug(LevelEditor::new(
+							width, height, tex,
+						)),
+						Err(err) => sui::custom_only_debug(err_page(err)),
+					},
+				))
 			};
 
 			match f() {
@@ -73,7 +76,7 @@ fn creation_screen() -> impl Layable + Debug {
 
 fn open_screen() -> StageChange<'static> {
 	let loading = Loader::new_overlay(
-		sui::text("loading save...", 32).centered(),
+		sui::text("select save on file picker", 32).centered(),
 		async {
 			use game::levels::Level;
 			use rfd::AsyncFileDialog;
@@ -92,7 +95,7 @@ fn open_screen() -> StageChange<'static> {
 			save.into_tilemap()
 		},
 		|p| match p {
-			Ok(tilemap) => load_textures(GameAssets::default(), move |tex| match tex {
+			Ok(tilemap) => textures::load_as_scene(GameAssets::default(), move |tex| match tex {
 				Ok(tex) => {
 					let level_editor = LevelEditor::from_tilemap(tilemap.clone(), tex);
 					sui::DynamicLayable::new_only_debug(level_editor)

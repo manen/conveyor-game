@@ -18,19 +18,9 @@ pub async fn start_with_rt() {
 pub fn start() {
 	println!("Hello, world!");
 
-	let (mut rl, thread) = sui_runner::rl();
+	let (rl, thread) = sui_runner::rl();
 
-	let assets = GameAssets::default();
-
-	let game = {
-		let d = rl.begin_drawing(&thread);
-		let fh = sui::core::Store::new(sui::form::UniqueId::null());
-		let mut d = sui::Handle::new(d, &thread, &fh);
-
-		Game::new(&assets, &mut d).unwrap()
-	};
-
-	let stage = stage_manager::Stage::from_dyn_layable(DynamicLayable::new_only_debug(game));
+	let stage = stage_manager::Stage::new_only_debug(comp::main_menu());
 	let mut ctx = sui_runner::Context::new(stage, rl, thread);
 
 	ctx.start();
