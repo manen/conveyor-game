@@ -110,7 +110,7 @@ fn open_screen() -> StageChange<'static> {
 }
 
 fn err_page<E: Debug + Display>(err: E) -> impl Layable + Debug {
-	game::comp::err_page(
+	game::comp::err_page_customizable(
 		err,
 		Some(stage_manager::StageChange::simple_only_debug(
 			creation_screen(),

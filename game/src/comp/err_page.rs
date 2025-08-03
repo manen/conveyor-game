@@ -1,12 +1,14 @@
 use std::fmt::{Debug, Display};
 
 use stage_manager::StageChange;
-use sui::{Layable, LayableExt};
+use sui::{DynamicLayable, Layable, LayableExt};
 
-pub fn err_page<E: Debug + Display>(
+use crate::comp::main_menu;
+
+pub fn err_page_customizable<E: Debug + Display>(
 	err: E,
 	mut return_to_menu: Option<StageChange<'static>>,
-) -> impl Layable + Debug {
+) -> impl Layable + Debug + 'static {
 	let display = format!("{err}");
 	let debug = format!("{err:?}");
 
@@ -25,4 +27,53 @@ pub fn err_page<E: Debug + Display>(
 	};
 	let return_to_menu = sui::div(return_to_menu).to_bottom();
 	err_info.overlay(return_to_menu)
+}
+
+pub fn err_page<E: Debug + Display>(err: E) -> impl Layable + Debug + 'static {
+	err_page_customizable(err, Some(StageChange::simple_only_debug(main_menu())))
+}
+
+pub fn handle_result<E: Debug + Display, T: Layable + Debug + 'static>(
+	res: Result<T, E>,
+) -> DynamicLayable<'static> {
+	handle_result_dyn(res.map(DynamicLayable::new_only_debug))
+}
+pub fn handle_result_dyn<E: Debug + Display>(
+	res: Result<DynamicLayable<'static>, E>,
+) -> DynamicLayable<'static> {
+	match res {
+		Ok(a) => DynamicLayable::new_only_debug(a),
+		Err(err) => DynamicLayable::new_only_debug(err_page(err)),
+	}
+}
+
+pub fn handle_err<E: Debug + Display, T: Layable + Debug + 'static, F: FnOnce() -> Result<T, E>>(
+	f: F,
+) -> DynamicLayable<'static> {
+	handle_result(f())
+}
+pub async fn handle_err_async<
+	E: Debug + Display,
+	T: Layable + Debug + 'static,
+	F: Future<Output = Result<T, E>>,
+	Fn: FnOnce() -> F,
+>(
+	f: Fn,
+) -> DynamicLayable<'static> {
+	handle_result(f().await)
+}
+
+pub fn handle_err_dyn<E: Debug + Display, F: FnOnce() -> Result<DynamicLayable<'static>, E>>(
+	f: F,
+) -> DynamicLayable<'static> {
+	handle_result_dyn(f())
+}
+pub async fn handle_err_async_dyn<
+	E: Debug + Display,
+	F: Future<Output = Result<DynamicLayable<'static>, E>>,
+	Fn: FnOnce() -> F,
+>(
+	f: Fn,
+) -> DynamicLayable<'static> {
+	handle_result_dyn(f().await)
 }

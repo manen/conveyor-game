@@ -50,13 +50,18 @@ impl Game {
 		let tilemap = Tilemap::stone(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
+		Self::from_maps(textures, tilemap, buildings)
+	}
+	pub fn from_maps(textures: Textures, tilemap: Tilemap, buildings: BuildingsMap) -> Self {
+		let (width, height) = tilemap.size();
+
 		Self {
 			textures,
 			toolbar: Self::gen_toolbar(),
 			tilemap,
 			buildings,
 			tool: Default::default(),
-			camera_at: (SIZE as f32 / 2.0, SIZE as f32 / 2.0),
+			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
@@ -146,11 +151,7 @@ impl Layable for Game {
 				let resource = tile.generate_resource();
 				resource
 			};
-			self.buildings.tick(|pos| {
-				let tile_resource = tile_resource_at(pos);
-				println!("tile resource at {pos:?}: {tile_resource:?}");
-				tile_resource
-			});
+			self.buildings.tick(tile_resource_at);
 
 			self.last_game_tick = Instant::now();
 		}

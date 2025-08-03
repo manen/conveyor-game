@@ -12,15 +12,16 @@ pub mod world;
 
 #[tokio::main]
 pub async fn start_with_rt() {
-	start();
+	start().await;
 }
 
-pub fn start() {
+pub async fn start() {
 	println!("Hello, world!");
 
 	let (rl, thread) = sui_runner::rl();
 
-	let stage = stage_manager::Stage::new_only_debug(comp::main_menu());
+	let stage = stage_manager::Stage::from_dyn_layable(comp::main().await);
+
 	let mut ctx = sui_runner::Context::new(stage, rl, thread);
 
 	ctx.start();

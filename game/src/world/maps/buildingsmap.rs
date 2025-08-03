@@ -31,6 +31,13 @@ impl BuildingsMap {
 		}
 	}
 
+	pub fn width(&self) -> usize {
+		self.buildings.width()
+	}
+	pub fn height(&self) -> usize {
+		self.buildings.height()
+	}
+
 	pub fn tick(
 		&mut self,
 		mut tile_resource_at: impl FnMut((i32, i32)) -> Option<EResource>,

@@ -1,9 +1,15 @@
 use std::path::Path;
 
 use anyhow::Context;
+use asset_provider::Assets;
 use bincode::{Decode, Encode};
 
 use crate::world::{ETile, maps::Tilemap};
+
+mod levels;
+pub use levels::*;
+mod game_state;
+pub use game_state::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Encode, Decode, Default)]
 pub enum SaveFormat {
@@ -41,6 +47,20 @@ impl Level {
 
 		bincode::encode_into_std_write(self, &mut file, bincode::config::standard())?;
 		Ok(())
+	}
+
+	pub async fn load_from_assets<A: Assets>(assets: &A, id: &str) -> anyhow::Result<Self> {
+		let asset_key = format!("levels/{id}/level.cglf");
+		let asset = assets
+			.asset(&asset_key)
+			.await
+			.with_context(|| format!("while loading level {id}"))?;
+
+		let (decoded, _): (Self, _) =
+			bincode::decode_from_slice(asset.as_slice(), bincode::config::standard())
+				.with_context(|| format!("while decoding level {id}"))?;
+
+		Ok(decoded)
 	}
 
 	pub fn from_tilemap(tilemap: &Tilemap) -> Self {

@@ -16,15 +16,20 @@ use super::TextureID;
 use super::Textures;
 
 #[derive(Debug)]
-enum TextureLoaderPacket {
+pub enum TextureLoaderPacket {
 	Finished,
 	Image(anyhow::Result<(TextureID, DynamicImage)>),
 }
 
-pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
+/// same as load_as_scene, but load_as_scene return a StageChange (it'll keep the old stage in the background while it's loading)
+pub fn load_as_layable<A: Assets + Send + Sync + 'static>(
 	assets: A,
 	post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
-) -> StageChange<'static> {
+) -> ConstructiveLoader<
+	anyhow::Result<HashMap<TextureID, Texture>>,
+	TextureLoaderPacket,
+	impl Fn(anyhow::Result<HashMap<TextureID, Texture>>) -> StageChange<'static>, // one of the function signatures of all time
+> {
 	let loading_screen = sui::text("loading textures...", 32)
 		.with_background(sui::comp::Color::new(sui::Color::BLACK))
 		.centered();
@@ -82,5 +87,17 @@ pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
 		stage_manager::StageChange::Simple(post_process(textures))
 	};
 
-	ConstructiveLoader::new_overlay(loading_screen, f, base_t, construct, neo_post_process)
+	ConstructiveLoader::new_explicit(loading_screen, f, base_t, construct, neo_post_process)
+}
+
+pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
+	assets: A,
+	post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
+) -> StageChange<'static> {
+	let mut loader = load_as_layable(assets, post_process);
+
+	StageChange::swapper(move |old_stage| {
+		loader.loading_screen = old_stage;
+		sui::custom_only_debug(loader)
+	})
 }

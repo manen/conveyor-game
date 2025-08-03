@@ -78,8 +78,8 @@ pub fn draw_buildings(
 
 	const DEBUG: bool = false;
 
-	for x in 0..SIZE {
-		for y in 0..SIZE {
+	for x in 0..buildings.width() {
+		for y in 0..buildings.height() {
 			let draw_x = draw_x_base + (x as f32 * render_size) as i32;
 			let draw_y = draw_y_base + (y as f32 * render_size) as i32;
 
@@ -88,7 +88,7 @@ pub fn draw_buildings(
 
 			let building = buildings
 				.at((x as _, y as _))
-				.expect("we tried rendering a tile that doesn't exist");
+				.expect("we tried rendering a building that doesn't exist");
 
 			if building.texture_id() != TextureID::Transparent {
 				let render = building.render(textures);

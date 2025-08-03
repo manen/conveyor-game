@@ -7,8 +7,8 @@ use futures::{Stream, stream::FuturesUnordered};
 use strum::{EnumIter, IntoEnumIterator};
 use sui::{Color, Details, raylib::prelude::RaylibDraw, tex::Texture};
 
-mod loader;
-pub use loader::load_as_scene;
+pub mod loader;
+pub use loader::{load_as_layable, load_as_scene};
 
 /// an enum for every texture we can use \
 /// extensible in the future by adding an Other(u64) and have some sort of setup that hashes their
