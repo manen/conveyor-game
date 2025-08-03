@@ -6,7 +6,7 @@ use game::{assets::GameAssets, textures};
 pub mod level_editor;
 use level_editor::LevelEditor;
 use stage_manager::StageChange;
-use stage_manager_tokio::Loader;
+use stage_manager_loaders::Loader;
 use sui::{Compatible, Layable, LayableExt, core::Store, form::typable::TypableData};
 
 pub mod tools;

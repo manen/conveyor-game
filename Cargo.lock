@@ -785,7 +785,7 @@ dependencies = [
  "reqwest",
  "serde",
  "stage_manager",
- "stage_manager_tokio",
+ "stage_manager_loaders",
  "strum",
  "sui",
  "sui_runner",
@@ -1321,7 +1321,7 @@ dependencies = [
  "game",
  "rfd",
  "stage_manager",
- "stage_manager_tokio",
+ "stage_manager_loaders",
  "strum",
  "sui",
  "sui_runner",
@@ -2390,7 +2390,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "stage_manager_tokio"
+name = "stage_manager_loaders"
 version = "0.1.0"
 dependencies = [
  "stage_manager",

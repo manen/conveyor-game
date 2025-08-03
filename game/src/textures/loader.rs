@@ -6,7 +6,7 @@ use asset_provider::Assets;
 use asset_provider_image::{ImageExt, image::DynamicImage};
 use futures::StreamExt;
 use stage_manager::StageChange;
-use stage_manager_tokio::{ConstructFunction, ConstructiveLoader};
+use stage_manager_loaders::{ConstructFunction, ConstructiveLoader};
 use sui::DynamicLayable;
 use sui::LayableExt;
 use sui::tex::Texture;

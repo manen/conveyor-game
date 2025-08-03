@@ -4,20 +4,21 @@ members = [
 	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
 	"game",
 	"sui/asset_provider_image"
-, "level_editor", "sui/stage_manager_tokio", "tips"]
+, "level_editor", "sui/stage_manager_loaders", "sui/stage_manager_remote"]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
+
 stage_manager.path = "./sui/stage_manager"
-stage_manager_tokio.path = "./sui/stage_manager_tokio"
+stage_manager_loaders.path = "./sui/stage_manager_loaders"
+stage_manager_remote.path = "./sui/stage_manager_remote"
 
 asset_provider.path = "./sui/asset_provider"
 asset_provider_image.path = "./sui/asset_provider_image"
 
 game.path = "./game"
 level_editor.path = "./level_editor"
-tips.path = "./tips"
 
 tokio = "1.46.1"
 futures = "0.3.31"
