@@ -1,11 +1,17 @@
-use std::{borrow::Cow, fmt::Debug};
+use std::{borrow::Cow, fmt::Debug, time::Duration};
 
 use anyhow::{Context, anyhow};
 use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{
+	broadcast,
+	mpsc::{Receiver, Sender},
+};
 
-use crate::comp::{err_page, err_page_customizable};
+use crate::{
+	comp::{err_page, err_page_customizable},
+	world::{buildings::EBuilding, tool::Tool},
+};
 
 #[derive(Clone, Debug)]
 pub enum TooltipPage {
@@ -17,9 +23,11 @@ pub enum TooltipPage {
 type Tx = Sender<stage_manager_remote::RemoteStageChange>;
 type Rx = Receiver<TooltipPage>;
 
-pub async fn controller(mut tx: Tx, mut rx: Rx) {
+type ToolUse = broadcast::Receiver<((i32, i32), Tool)>;
+
+pub async fn controller(mut tx: Tx, mut rx: Rx, mut tool_use: ToolUse) {
 	loop {
-		match welcome(&mut tx, &mut rx).await {
+		match welcome(&mut tx, &mut rx, &mut tool_use).await {
 			Ok(a) => a,
 			Err(err) => {
 				eprintln!("tooltip thread caught an error: {err}")
@@ -62,7 +70,7 @@ pub fn text_with_actions(
 	RemoteStageChange::simple(div)
 }
 
-pub async fn welcome(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
+pub async fn welcome(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> anyhow::Result<()> {
 	tx.send(text_with_actions(
 		"welcome to conveyor-game!",
 		[
@@ -80,7 +88,7 @@ pub async fn welcome(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
 
 	match event {
 		TooltipPage::WhatIsThis => what_is_this(tx, rx).await?,
-		TooltipPage::GetStarted => get_started(tx, rx).await?,
+		TooltipPage::GetStarted => get_started(tx, rx, tool_use).await?,
 		_ => {
 			return Err(anyhow!(
 				"unexpected page {event:?} received in what_is_this"
@@ -108,21 +116,40 @@ pub async fn what_is_this(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
 	}
 }
 
-pub async fn get_started(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
+pub async fn get_started(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> anyhow::Result<()> {
 	tx.send(text_with_actions(
-		"not yet implemented :P",
+		"to begin extracting resources, you'll need to place a small extractor. select the small extractor from the toolbar at the top, and place it (left click) over any resource",
 		[action("go back", TooltipPage::Reset)],
 	))
 	.await
 	.map_err(|err| anyhow!("{err}"))?;
 
-	let event = rx
-		.recv()
-		.await
-		.with_context(|| format!("get_started didn't receive anything"))?;
+	let back_pressed = async {
+		loop {
+			match rx.recv().await {
+				Some(TooltipPage::Reset) => return true,
+				_ => continue,
+			}
+		}
+	};
+	let extractor_placed = async {
+		loop {
+			match tool_use.recv().await {
+				Ok((_, Tool::PlaceBuilding(EBuilding::SmallExtractor(_)))) => return true,
+				Err(broadcast::error::RecvError::Closed) => return false,
+				_ => continue,
+			}
+		}
+	};
 
-	match event {
-		TooltipPage::Reset => Ok(()),
-		_ => Err(anyhow!("unexpected page {event:?} received in get_started")),
-	}
+	tokio::select! {
+		res = back_pressed => if res {
+			return Ok(())
+		},
+		res = extractor_placed => if res {
+			tx.send(text_with_actions("just like that bro", [])).await.map_err(|err| anyhow!("{err}"))?;
+			tokio::time::sleep(Duration::from_millis(5000)).await;
+		}
+	};
+	Ok(())
 }

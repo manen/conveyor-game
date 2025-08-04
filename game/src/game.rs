@@ -8,6 +8,7 @@ use sui::{
 	core::{Event, KeyboardEvent, MouseEvent},
 	raylib::ffi::KeyboardKey,
 };
+use tokio::sync::broadcast;
 
 use crate::{
 	comp::{SelectTool, toolbar},
@@ -15,7 +16,7 @@ use crate::{
 	utils::ReturnEvents,
 	world::{
 		Tile,
-		buildings::BuildingsMap,
+		buildings::{BuildingsMap, EBuilding},
 		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
 		tool::Tool,
@@ -36,6 +37,7 @@ pub struct Game {
 	pub buildings: BuildingsMap,
 
 	tool: Tool,
+	tool_use_tx: broadcast::Sender<((i32, i32), Tool)>,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -56,6 +58,8 @@ impl Game {
 	pub fn from_maps(textures: Textures, tilemap: Tilemap, buildings: BuildingsMap) -> Self {
 		let (width, height) = tilemap.size();
 
+		let (tool_use_tx, _rx) = broadcast::channel(10);
+
 		Self {
 			textures,
 			toolbar: Self::gen_toolbar(),
@@ -63,6 +67,7 @@ impl Game {
 			tilemap,
 			buildings,
 			tool: Default::default(),
+			tool_use_tx,
 			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
@@ -86,6 +91,12 @@ impl Game {
 	}
 	pub fn disable_tips(&mut self) {
 		self.tips = None;
+	}
+
+	pub fn subscribe_to_tool_use(
+		&mut self,
+	) -> tokio::sync::broadcast::Receiver<((i32, i32), Tool)> {
+		self.tool_use_tx.subscribe()
 	}
 
 	pub fn tips_det(&self, det: Details) -> Option<Details> {
@@ -304,9 +315,12 @@ impl Layable for Game {
 									}
 								};
 
-								let tool = std::mem::take(&mut self.tool);
-								tool.r#use(self, world_pos);
-								self.tool = tool
+								{
+									let tool = std::mem::take(&mut self.tool);
+									tool.r#use(self, world_pos);
+									let _ = self.tool_use_tx.send((world_pos, tool.clone()));
+									self.tool = tool
+								}
 							}
 
 							_ => {}
