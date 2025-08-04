@@ -8,10 +8,7 @@ use tokio::sync::{
 	mpsc::{Receiver, Sender},
 };
 
-use crate::{
-	comp::{err_page, err_page_customizable},
-	world::{buildings::EBuilding, tool::Tool},
-};
+use crate::world::{buildings::EBuilding, tool::Tool};
 
 #[derive(Clone, Debug)]
 pub enum TooltipPage {
@@ -58,7 +55,7 @@ pub fn text_with_actions(
 	text: impl Into<Cow<'static, str>>,
 	actions: impl IntoIterator<Item = Action>,
 ) -> RemoteStageChange {
-	let text = sui::Text::new(text, 24).margin(4);
+	let text = sui::comp::WrappedText::new(text, 24).margin(4);
 
 	let actions = actions
 		.into_iter()
