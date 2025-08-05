@@ -1,4 +1,5 @@
 use anyhow::{Context, anyhow};
+use arc_swap::ArcSwap;
 use game::{
 	levels::Level,
 	textures::Textures,
@@ -10,10 +11,16 @@ use game::{
 	},
 };
 use rfd::AsyncFileDialog;
-use std::{fmt::Debug, path::PathBuf};
+use std::{
+	fmt::Debug,
+	hash::{DefaultHasher, Hash, Hasher},
+	ops::Deref,
+	path::PathBuf,
+	sync::Arc,
+};
 use sui::{
 	Details, DynamicLayable, Layable, LayableExt,
-	core::{Event, KeyboardEvent, MouseEvent},
+	core::{Event, KeyboardEvent, MouseEvent, ReturnEvent},
 	raylib::ffi::KeyboardKey,
 };
 
@@ -25,6 +32,7 @@ pub struct LevelEditor {
 	pub tilemap: Tilemap,
 
 	saving_handle: Option<tokio::task::JoinHandle<anyhow::Result<()>>>,
+	last_save_hash: Arc<ArcSwap<u64>>,
 
 	toolbar: DynamicLayable<'static>,
 	placing: ETile,
@@ -43,17 +51,31 @@ impl LevelEditor {
 	pub fn from_tilemap(tilemap: Tilemap, textures: Textures) -> Self {
 		let (width, height) = tilemap.size();
 
-		Self {
+		let level_editor = Self {
 			textures,
 			tilemap,
 			saving_handle: None,
+			last_save_hash: Arc::new(ArcSwap::from_pointee(0)),
 			toolbar: DynamicLayable::new(tools::toolbar()),
 			placing: ETile::stone(),
 			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
-		}
+		};
+		level_editor.hash_tiles();
+		level_editor
+	}
+
+	fn hash_get(&self) -> u64 {
+		let mut hasher = DefaultHasher::default();
+		self.tilemap.hash(&mut hasher);
+		hasher.finish()
+	}
+	/// hashes the tiles and saves them into self.last_save_hash \
+	/// so essentially make it so the game thinks you just saved
+	fn hash_tiles(&self) {
+		self.last_save_hash.store(Arc::new(self.hash_get()));
 	}
 
 	fn wrap_as_world<L: Layable + Debug + Clone>(
@@ -131,9 +153,11 @@ impl Layable for LevelEditor {
 		det: Details,
 		scale: f32,
 	) -> impl Iterator<Item = sui::core::ReturnEvent> {
+		let mut ret_events = Vec::new();
+
 		let move_amount = 0.1;
 
-		let (mut ctrl, mut s) = (false, false);
+		let (mut ctrl, mut s, mut esc) = (false, false, false);
 		for event in events {
 			match event {
 				Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
@@ -216,7 +240,27 @@ impl Layable for LevelEditor {
 					ctrl = true;
 				}
 
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_ESCAPE)) => {
+					esc = true;
+				}
+
 				_ => {}
+			}
+		}
+
+		if esc {
+			let saved = *self.last_save_hash.load().deref().deref() == self.hash_get();
+			match (saved, ctrl) {
+				(true, _) | (_, true) => {
+					let stage_change =
+						stage_manager::StageChange::simple_only_debug(crate::creation_screen());
+					ret_events.push(ReturnEvent::new(stage_change));
+				}
+				(false, false) => {
+					println!(
+						"you have unsaved progress. save with ctrl + s, or discard and quit with ctrl + esc"
+					)
+				}
 			}
 		}
 
@@ -228,6 +272,9 @@ impl Layable for LevelEditor {
 				.unwrap_or(true)
 			{
 				let level = Level::from_tilemap(&self.tilemap);
+				let current_hash = self.hash_get();
+				let save_hash = self.last_save_hash.clone();
+
 				let handle = tokio::spawn(async move {
 					let files = AsyncFileDialog::new()
 						.add_filter("level file", &["cglf"])
@@ -240,17 +287,19 @@ impl Layable for LevelEditor {
 					if let Some(files) = files {
 						let path = PathBuf::from(files.path());
 						println!("saving to {path:?}");
-						level.save(path).await
+						level.save(path).await?;
+
+						save_hash.swap(Arc::new(current_hash));
 					} else {
 						eprintln!("file saving dialog didn't return a file handle");
-						Ok(())
 					}
+					Ok(())
 				});
 
 				self.saving_handle = Some(handle);
 			}
 		}
 
-		std::iter::empty()
+		ret_events.into_iter()
 	}
 }

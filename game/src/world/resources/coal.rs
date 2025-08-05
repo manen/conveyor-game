@@ -16,7 +16,7 @@ impl Resource for Coal {
 	}
 }
 
-#[derive(Copy, Clone, Debug, Default, bincode::Encode, bincode::Decode)]
+#[derive(Copy, Clone, Debug, Hash, Default, bincode::Encode, bincode::Decode)]
 pub struct CoalOre;
 impl Tile for CoalOre {
 	fn name(&self) -> Cow<'static, str> {
