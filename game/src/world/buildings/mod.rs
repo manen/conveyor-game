@@ -11,12 +11,14 @@ use crate::{
 	world::{EResource, render::TILE_RENDER_SIZE},
 };
 
+mod conveyor;
+pub use conveyor::*;
 mod small_extractor;
 pub use small_extractor::*;
 mod debug_consumer;
 pub use debug_consumer::*;
-mod conveyor;
-pub use conveyor::*;
+mod channel_consumer;
+pub use channel_consumer::*;
 
 pub use super::maps::BuildingsMap;
 
@@ -85,6 +87,7 @@ pub enum EBuilding {
 	Nothing(Nothing),
 	SmallExtractor(SmallExtractor),
 	DebugConsumer(DebugConsumer),
+	ChannelConsumer(ChannelConsumer),
 	Conveyor(Conveyor),
 }
 impl EBuilding {
@@ -112,6 +115,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.name(),
 			Self::SmallExtractor(a) => a.name(),
 			Self::DebugConsumer(a) => a.name(),
+			Self::ChannelConsumer(a) => a.name(),
 			Self::Conveyor(a) => a.name(),
 		}
 	}
@@ -120,6 +124,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.texture_id(),
 			Self::SmallExtractor(a) => a.texture_id(),
 			Self::DebugConsumer(a) => a.texture_id(),
+			Self::ChannelConsumer(a) => a.texture_id(),
 			Self::Conveyor(a) => a.texture_id(),
 		}
 	}
@@ -129,6 +134,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => sui::custom(a.render(textures)),
 			Self::SmallExtractor(a) => sui::custom(a.render(textures)),
 			Self::DebugConsumer(a) => sui::custom(a.render(textures)),
+			Self::ChannelConsumer(a) => sui::custom(a.render(textures)),
 			Self::Conveyor(a) => sui::custom(a.render(textures)),
 		}
 	}
@@ -138,6 +144,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.can_receive(),
 			Self::SmallExtractor(a) => a.can_receive(),
 			Self::DebugConsumer(a) => a.can_receive(),
+			Self::ChannelConsumer(a) => a.can_receive(),
 			Self::Conveyor(a) => a.can_receive(),
 		}
 	}
@@ -146,6 +153,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.capacity_for(resource),
 			Self::SmallExtractor(a) => a.capacity_for(resource),
 			Self::DebugConsumer(a) => a.capacity_for(resource),
+			Self::ChannelConsumer(a) => a.capacity_for(resource),
 			Self::Conveyor(a) => a.capacity_for(resource),
 		}
 	}
@@ -154,6 +162,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.receive(resource),
 			Self::SmallExtractor(a) => a.receive(resource),
 			Self::DebugConsumer(a) => a.receive(resource),
+			Self::ChannelConsumer(a) => a.receive(resource),
 			Self::Conveyor(a) => a.receive(resource),
 		}
 	}
@@ -163,6 +172,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.needs_poll(),
 			Self::SmallExtractor(a) => a.needs_poll(),
 			Self::DebugConsumer(a) => a.needs_poll(),
+			Self::ChannelConsumer(a) => a.needs_poll(),
 			Self::Conveyor(a) => a.needs_poll(),
 		}
 	}
@@ -171,6 +181,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.resource_sample(tile_resource),
 			Self::SmallExtractor(a) => a.resource_sample(tile_resource),
 			Self::DebugConsumer(a) => a.resource_sample(tile_resource),
+			Self::ChannelConsumer(a) => a.resource_sample(tile_resource),
 			Self::Conveyor(a) => a.resource_sample(tile_resource),
 		}
 	}
@@ -179,6 +190,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.poll_resource(tile_resource),
 			Self::SmallExtractor(a) => a.poll_resource(tile_resource),
 			Self::DebugConsumer(a) => a.poll_resource(tile_resource),
+			Self::ChannelConsumer(a) => a.poll_resource(tile_resource),
 			Self::Conveyor(a) => a.poll_resource(tile_resource),
 		}
 	}
@@ -188,6 +200,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.pass_relatives(),
 			Self::SmallExtractor(a) => a.pass_relatives(),
 			Self::DebugConsumer(a) => a.pass_relatives(),
+			Self::ChannelConsumer(a) => a.pass_relatives(),
 			Self::Conveyor(a) => a.pass_relatives(),
 		}
 	}
@@ -196,6 +209,7 @@ impl Building for EBuilding {
 			Self::Nothing(a) => a.rank_pass_source(relative_pos),
 			Self::SmallExtractor(a) => a.rank_pass_source(relative_pos),
 			Self::DebugConsumer(a) => a.rank_pass_source(relative_pos),
+			Self::ChannelConsumer(a) => a.rank_pass_source(relative_pos),
 			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
 		}
 	}

@@ -37,6 +37,9 @@ impl BuildingsMap {
 	pub fn height(&self) -> usize {
 		self.buildings.height()
 	}
+	pub fn size(&self) -> (usize, usize) {
+		self.buildings.size()
+	}
 
 	pub fn tick(
 		&mut self,

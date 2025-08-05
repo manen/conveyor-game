@@ -19,6 +19,7 @@ pub enum TextureID {
 	Transparent,
 
 	SmallExtractor,
+	ChannelConsumer,
 
 	Stone,
 	IronOre,
@@ -38,6 +39,7 @@ impl TextureID {
 			TextureID::SmallExtractor => Cow::Borrowed(
 				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e7/Diamond_Pickaxe_JE3_BE3.png/revision/latest/scale-to-width/360?cb=20250628224016",
 			),
+			TextureID::ChannelConsumer => Cow::Borrowed("textures/channel-consumer.png"),
 
 			TextureID::Stone => Cow::Borrowed("textures/stone.png"),
 			TextureID::IronOre => Cow::Borrowed("textures/iron_ore.png"),
