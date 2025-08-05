@@ -28,9 +28,7 @@ impl TextureID {
 		match self {
 			TextureID::Transparent => Cow::Borrowed("textures/transparent.png"),
 
-			TextureID::SmallExtractor => Cow::Borrowed(
-				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e7/Diamond_Pickaxe_JE3_BE3.png/revision/latest/scale-to-width/360?cb=20250628224016",
-			),
+			TextureID::SmallExtractor => Cow::Borrowed("textures/small-extractor.png"),
 			TextureID::ChannelConsumer => Cow::Borrowed("textures/channel-consumer.png"),
 
 			TextureID::Stone => Cow::Borrowed("textures/stone.png"),
