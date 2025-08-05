@@ -39,10 +39,10 @@ mod basic {
 		post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
 	) -> DynamicLayable<'static>
 // ConstructiveLoader<
-// 	anyhow::Result<HashMap<TextureID, Texture>>,
-// 	TextureLoaderPacket,
-// 	impl Fn(anyhow::Result<HashMap<TextureID, Texture>>) -> StageChange<'static>, // one of the function signatures of all time
-// >
+		// 	anyhow::Result<HashMap<TextureID, Texture>>,
+		// 	TextureLoaderPacket,
+		// 	impl Fn(anyhow::Result<HashMap<TextureID, Texture>>) -> StageChange<'static>, // one of the function signatures of all time
+		// >
 	{
 		let f = async move |tx: Sender<_>| {
 			let mut stream = Textures::stream_images(&assets);
