@@ -5,7 +5,7 @@ use std::{
 };
 use sui::{
 	Compatible, Details, DynamicLayable, Layable, LayableExt,
-	core::{Event, KeyboardEvent, MouseEvent},
+	core::{Event, KeyboardEvent, MouseEvent, ReturnEvent},
 	raylib::ffi::KeyboardKey,
 };
 use tokio::sync::broadcast;
@@ -218,10 +218,10 @@ impl Layable for Game {
 		det: sui::Details,
 		scale: f32,
 	) -> impl Iterator<Item = sui::core::ReturnEvent> {
-		let events = events.collect::<Vec<_>>();
+		let mut ret_events = Vec::new();
 
 		let move_amount = 0.1;
-		for event in events.iter().copied() {
+		for event in events {
 			match event {
 				Event::MouseEvent(m_event) => {
 					let (mouse_x, mouse_y) = m_event.at();
@@ -344,6 +344,14 @@ impl Layable for Game {
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
 					// *self.tilemap.tiles_mut() = worldgen::gen_tiles();
 					// TODO reimplement
+
+					let future = async { crate::comp::main().await };
+					let loader = stage_manager_loaders::Loader::new_overlay(
+						sui::comp::Space::new(10, 10),
+						future,
+						|a| stage_manager::StageChange::Simple(a),
+					);
+					ret_events.push(ReturnEvent::new(loader));
 				}
 
 				_ => {
@@ -352,6 +360,6 @@ impl Layable for Game {
 			};
 		}
 
-		std::iter::empty()
+		ret_events.into_iter()
 	}
 }

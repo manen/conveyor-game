@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+	collections::HashMap,
+	sync::{Arc, OnceLock},
+};
 
 use anyhow::Context;
 use asset_provider::Assets;
@@ -11,19 +14,47 @@ pub use loader::{load_as_layable, load_as_scene};
 mod texture_id;
 pub use texture_id::*;
 
-/// contains all the logic for storing textures
-#[derive(Debug)]
+pub(self) static INTERNAL_CACHE: OnceLock<Textures> = OnceLock::new();
+
+/// contains all the logic for storing textures \
+/// cheap to clone, and cached after the first load
+#[derive(Debug, Clone)]
 pub struct Textures {
-	textures: HashMap<TextureID, Texture>,
+	textures: Arc<HashMap<TextureID, Texture>>,
 }
 impl Textures {
-	pub fn from_hashmap(textures: HashMap<TextureID, Texture>) -> Self {
+	pub fn new(textures: HashMap<TextureID, Texture>) -> Self {
+		let textures = Arc::new(textures);
 		Self { textures }
 	}
 
+	/// can only cache the first instance of Textures you call .cache() on \
+	/// actually you just shouldn't have two Textures instances if you're doing any type of caching
+	pub fn cache(&self) {
+		let cache_copy = self.clone();
+		if INTERNAL_CACHE.get().is_none() {
+			tokio::spawn(async move {
+				let res = INTERNAL_CACHE.set(cache_copy);
+				match res {
+					Ok(a) => a,
+					Err(_) => {
+						eprintln!(
+							"failed to cache Textures; most likely another instance has beed cached before"
+						);
+					}
+				}
+			});
+		}
+	}
+
 	/// loads all textures synchronously \
-	/// (loads the images in parallel but converts them into textures synchronously)
-	pub fn new<A: Assets + Send + Sync>(assets: &A, d: &mut sui::Handle) -> anyhow::Result<Self> {
+	/// (loads the images in parallel but converts them into textures synchronously) \
+	///
+	/// uncached by default
+	pub fn load_from_assets<A: Assets + Send + Sync>(
+		assets: &A,
+		d: &mut sui::Handle,
+	) -> anyhow::Result<Self> {
 		let stream = Self::stream_images(assets);
 		let textures = Self::from_stream(stream, d)?;
 
@@ -53,8 +84,10 @@ impl Textures {
 		stream
 	}
 
-	/// load images into textures \
-	/// this has to be run on the main thread
+	/// load images into textures, blocking on the stream \
+	/// this has to be run on the main thread \
+	///
+	/// does not cache by default
 	pub fn from_stream<S: Stream<Item = anyhow::Result<(TextureID, DynamicImage)>> + Unpin>(
 		stream: S,
 		d: &mut sui::Handle,
@@ -68,7 +101,7 @@ impl Textures {
 			let texture = img.texture(d)?;
 			map.insert(tex, texture);
 		}
-		Ok(Self { textures: map })
+		Ok(Self::new(map))
 	}
 
 	pub fn texture_for(&self, tiletex: TextureID) -> Option<&Texture> {

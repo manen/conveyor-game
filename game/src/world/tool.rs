@@ -2,8 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
 	game::Game,
-	utils::Direction,
-	world::buildings::{Building, Conveyor, EBuilding, Nothing},
+	world::buildings::{Building, EBuilding, Nothing},
 };
 
 #[derive(Clone, Debug)]
