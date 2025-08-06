@@ -48,6 +48,6 @@ and this is about as long as we can get right now cause we're missing some cruci
 
 ---
 
-- [ ] ok so the thing is pass_events is really wasteful with DynamicLayables rn, so i should probably change the function signature to `(iter: impl Iterator, det, scale, ret_events: &mut Vec<ReturnEvent>);`
+- [x] ok so the thing is pass_events is really wasteful with DynamicLayables rn, so i should probably change the function signature to `(iter: impl Iterator, det, scale, ret_events: &mut Vec<ReturnEvent>);`
 
 that'd be uglyyyy tho right now i think it's easy to use but it's really wasteful (DynamicLayables have to allocate coming in and allocate coming out). a stack of 3 dynamiclayables is 6 allocations PER PASS_EVENTS CALL (so per tick)
