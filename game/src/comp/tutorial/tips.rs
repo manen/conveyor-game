@@ -8,7 +8,7 @@ use tokio::sync::{
 	mpsc::{Receiver, Sender},
 };
 
-use crate::world::{buildings::EBuilding, tool::Tool};
+use crate::{game::Tool, world::buildings::EBuilding};
 
 #[derive(Clone, Debug)]
 pub enum TooltipPage {

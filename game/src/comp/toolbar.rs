@@ -4,28 +4,14 @@ use sui::{Layable, LayableExt};
 
 use crate::{
 	comp::{TooltipData, TooltipProvider},
+	game::{Tool, tools},
 	textures::Textures,
-	utils::Direction,
-	world::{
-		buildings::{Building, EBuilding},
-		tool::Tool,
-	},
+	world::buildings::Building,
 };
 
 #[derive(Clone, Debug)]
 /// the ReturnEvent sent back by the component
 pub struct SelectTool(pub Tool);
-
-fn tools() -> impl Iterator<Item = Tool> {
-	use std::iter;
-
-	iter::once(Tool::PlaceBuilding(EBuilding::nothing()))
-		.chain(Direction::all().map(|dir| Tool::PlaceBuilding(EBuilding::conveyor(dir))))
-		.chain([
-			Tool::PlaceBuilding(EBuilding::small_extractor()),
-			Tool::PlaceBuilding(EBuilding::debug_consumer()),
-		])
-}
 
 /// creates the toolbar layout. listen to [SelectTool] in your component to have it working
 pub fn toolbar(textures: &Textures) -> impl Layable + Clone + Debug + 'static {

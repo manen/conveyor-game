@@ -3,8 +3,20 @@ use std::borrow::Cow;
 use crate::{
 	game::Game,
 	textures::TextureID,
+	utils::Direction,
 	world::buildings::{Building, EBuilding, Nothing},
 };
+
+pub fn tools() -> impl Iterator<Item = Tool> {
+	use std::iter;
+
+	iter::once(Tool::PlaceBuilding(EBuilding::nothing()))
+		.chain(Direction::all().map(|dir| Tool::PlaceBuilding(EBuilding::conveyor(dir))))
+		.chain([
+			Tool::PlaceBuilding(EBuilding::small_extractor()),
+			Tool::PlaceBuilding(EBuilding::debug_consumer()),
+		])
+}
 
 #[derive(Clone, Debug)]
 pub enum Tool {

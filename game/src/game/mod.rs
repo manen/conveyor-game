@@ -19,9 +19,11 @@ use crate::{
 		buildings::BuildingsMap,
 		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
-		tool::Tool,
 	},
 };
+
+mod tool;
+pub use tool::*;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
