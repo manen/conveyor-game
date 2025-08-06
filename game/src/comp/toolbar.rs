@@ -3,8 +3,12 @@ use std::fmt::Debug;
 use sui::{Layable, LayableExt};
 
 use crate::{
+	textures::Textures,
 	utils::Direction,
-	world::{buildings::EBuilding, tool::Tool},
+	world::{
+		buildings::{Building, EBuilding},
+		tool::Tool,
+	},
 };
 
 #[derive(Clone, Debug)]
@@ -23,17 +27,38 @@ fn tools() -> impl Iterator<Item = Tool> {
 }
 
 /// creates the toolbar layout. listen to [SelectTool] in your component to have it working
-pub fn toolbar() -> impl Layable + Clone + Debug {
-	toolbar_from_tools(tools())
+pub fn toolbar(textures: &Textures) -> impl Layable + Clone + Debug + 'static {
+	toolbar_from_tools(textures, tools())
 }
-pub fn toolbar_from_tools(tools: impl Iterator<Item = Tool>) -> impl Layable + Clone + Debug {
+pub fn toolbar_from_tools(
+	textures: &Textures,
+	tools: impl Iterator<Item = Tool>,
+) -> impl Layable + Clone + Debug + 'static {
 	let toolbar = tools.map(|tool| {
-		sui::Text::new(tool.name(), 24)
+		let texture = match tool.clone() {
+			Tool::PlaceBuilding(building) => sui::custom(building.tool_icon_render(textures)),
+
+			#[allow(unreachable_patterns)]
+			_ => sui::custom(
+				textures
+					.texture_for(tool.texture_id())
+					.expect("no texture for tool texture")
+					.clone(),
+			),
+		};
+
+		let texture = texture.fix_wh_square(64);
+
+		// sui::Text::new(tool.name(), 24)
+		texture
 			.margin(4)
 			.clickable(move |_| SelectTool(tool.clone()))
 	});
 
-	let toolbar = sui::comp::div::SpaceBetween::new_horizontal(toolbar.collect::<Vec<_>>());
+	let toolbar = toolbar.collect::<Vec<_>>();
+
+	// let toolbar = sui::comp::div::SpaceBetween::new_horizontal(toolbar);
+	let toolbar = sui::div_h(toolbar);
 
 	toolbar
 }

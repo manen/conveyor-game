@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
 	game::Game,
+	textures::TextureID,
 	world::buildings::{Building, EBuilding, Nothing},
 };
 
@@ -19,6 +20,11 @@ impl Tool {
 		match self {
 			Tool::PlaceBuilding(EBuilding::Nothing(_)) => "remove buildings".into(),
 			Tool::PlaceBuilding(building) => format!("place {}", building.name()).into(),
+		}
+	}
+	pub fn texture_id(&self) -> TextureID {
+		match self {
+			Tool::PlaceBuilding(building) => building.texture_id(),
 		}
 	}
 

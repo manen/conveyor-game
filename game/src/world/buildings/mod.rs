@@ -3,7 +3,7 @@
 
 use std::{borrow::Cow, fmt::Debug};
 
-use sui::Layable;
+use sui::{Layable, LayableExt};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -49,6 +49,16 @@ pub trait Building {
 			texture_id: self.texture_id(),
 			textures,
 		}
+	}
+
+	/// used to render an image of the building statically \
+	/// the returned layable can't depend on any lifetime
+	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
+		textures
+			.texture_for(self.texture_id())
+			.expect("texture for building isn't loaded")
+			.clone()
+			.fix_wh_square(64)
 	}
 
 	// returns how many of the given resource it can receive right now

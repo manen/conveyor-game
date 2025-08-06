@@ -61,8 +61,8 @@ impl Game {
 		let (tool_use_tx, _rx) = broadcast::channel(10);
 
 		Self {
+			toolbar: sui::custom(toolbar(&textures)),
 			textures,
-			toolbar: Self::gen_toolbar(),
 			tips: None,
 			tilemap,
 			buildings,
@@ -114,8 +114,8 @@ impl Game {
 		}
 	}
 
-	fn gen_toolbar() -> DynamicLayable<'static> {
-		DynamicLayable::new(toolbar())
+	fn gen_toolbar(&self) -> DynamicLayable<'static> {
+		DynamicLayable::new(toolbar(&self.textures))
 	}
 	fn wrap_as_world<L: Layable + Debug + Clone>(
 		&self,
