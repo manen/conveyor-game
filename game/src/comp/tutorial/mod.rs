@@ -45,7 +45,8 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 
 	let mut buildings = BuildingsMap::new(tilemap.width(), tilemap.height());
 
-	let (consumer, resource_rx) = ChannelConsumer::new();
+	let (mut consumer, resource_rx) = ChannelConsumer::new();
+	consumer.protected = true;
 	let consumer = EBuilding::ChannelConsumer(consumer);
 	place_at_center(&mut buildings, consumer);
 

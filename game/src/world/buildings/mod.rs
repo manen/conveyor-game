@@ -61,10 +61,10 @@ pub trait Building {
 			.fix_wh_square(64)
 	}
 
-	// returns how many of the given resource it can receive right now
 	fn can_receive(&self) -> bool {
 		false
 	}
+	// returns how many of the given resource it can receive right now
 	fn capacity_for(&self, resource: &EResource) -> i32 {
 		0
 	}
@@ -86,9 +86,13 @@ pub trait Building {
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
 		1
 	}
-
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
+	}
+
+	/// if true, this building can't be removed by the standard eraser tool
+	fn is_protected(&self) -> bool {
+		false
 	}
 }
 
@@ -230,6 +234,16 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.rank_pass_source(relative_pos),
 			Self::ChannelConsumer(a) => a.rank_pass_source(relative_pos),
 			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
+		}
+	}
+
+	fn is_protected(&self) -> bool {
+		match self {
+			Self::Nothing(a) => a.is_protected(),
+			Self::SmallExtractor(a) => a.is_protected(),
+			Self::DebugConsumer(a) => a.is_protected(),
+			Self::ChannelConsumer(a) => a.is_protected(),
+			Self::Conveyor(a) => a.is_protected(),
 		}
 	}
 }

@@ -8,11 +8,15 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct ChannelConsumer {
 	tx: Sender<EResource>,
+	pub protected: bool,
 }
 impl ChannelConsumer {
 	pub fn new() -> (Self, Receiver<EResource>) {
 		let (tx, rx) = tokio::sync::mpsc::channel(20);
-		let consumer = Self { tx };
+		let consumer = Self {
+			tx,
+			protected: false,
+		};
 
 		(consumer, rx)
 	}
@@ -34,5 +38,9 @@ impl Building for ChannelConsumer {
 	}
 	fn receive(&mut self, resource: EResource) {
 		let _ = self.tx.try_send(resource);
+	}
+
+	fn is_protected(&self) -> bool {
+		self.protected
 	}
 }
