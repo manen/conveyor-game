@@ -217,9 +217,8 @@ impl Layable for Game {
 		events: impl Iterator<Item = Event>,
 		det: sui::Details,
 		scale: f32,
-	) -> impl Iterator<Item = sui::core::ReturnEvent> {
-		let mut ret_events = Vec::new();
-
+		ret_events: &mut Vec<ReturnEvent>,
+	) {
 		let move_amount = 0.1;
 		for event in events {
 			match event {
@@ -242,7 +241,12 @@ impl Layable for Game {
 						self.tips
 							.as_mut()
 							.unwrap()
-							.pass_events(std::iter::once(Event::MouseEvent(m_event)), l_det, 1.0)
+							.pass_events_simple(
+								std::iter::once(Event::MouseEvent(m_event)),
+								l_det,
+								1.0,
+							)
+							.into_iter()
 							.for_each(std::mem::drop)
 					} else {
 						match m_event {
@@ -255,7 +259,8 @@ impl Layable for Game {
 								if y <= toolbar_h {
 									match self
 										.toolbar
-										.pass_events(std::iter::once(event), det, scale)
+										.pass_events_simple(std::iter::once(event), det, scale)
+										.into_iter()
 										.next()
 									{
 										Some(toolbar_resp)
@@ -285,7 +290,7 @@ impl Layable for Game {
 								let world_pos = || {
 									let mut world = self.wrap_as_world(ReturnEvents, det);
 
-									let ret = world.pass_events(std::iter::once(event), det, scale).next().ok_or_else(|| anyhow!(
+									let ret = world.pass_events_simple(std::iter::once(event), det, scale).into_iter().next().ok_or_else(|| anyhow!(
 								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
 									let ret: Event = ret.take().ok_or_else(|| {
@@ -359,7 +364,5 @@ impl Layable for Game {
 				}
 			};
 		}
-
-		ret_events.into_iter()
 	}
 }

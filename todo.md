@@ -36,4 +36,18 @@ and this is about as long as we can get right now cause we're missing some cruci
 
 ---
 
+- [ ] audio!
+
+- SoundProvider component that catches SoundEvent return events and plays the audio, managing the audio files and loading and everything by itself (essentially just Textures at the root of the component tree)
+
+- let RemoteStages output SoundEvents and you can play sound from other threads
+
+---
+
 - [ ] i'll probably need to put all the maps into an ugly ass broke ass shitty ass Arc<Mutex<_>> but ion think there's another option for much longer (off-thread ticking, checking to see if two buildings are connected with conveyors from the tutorial, etc)
+
+---
+
+- [ ] ok so the thing is pass_events is really wasteful with DynamicLayables rn, so i should probably change the function signature to `(iter: impl Iterator, det, scale, ret_events: &mut Vec<ReturnEvent>);`
+
+that'd be uglyyyy tho right now i think it's easy to use but it's really wasteful (DynamicLayables have to allocate coming in and allocate coming out). a stack of 3 dynamiclayables is 6 allocations PER PASS_EVENTS CALL (so per tick)

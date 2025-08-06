@@ -17,8 +17,9 @@ impl Layable for ReturnEvents {
 		events: impl Iterator<Item = sui::core::Event>,
 		_det: sui::Details,
 		_scale: f32,
-	) -> impl Iterator<Item = sui::core::ReturnEvent> {
-		events.map(ReturnEvent::new)
+		ret_events: &mut Vec<ReturnEvent>,
+	) {
+		ret_events.extend(events.map(ReturnEvent::new))
 	}
 }
 

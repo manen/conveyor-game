@@ -152,9 +152,8 @@ impl Layable for LevelEditor {
 		events: impl Iterator<Item = Event>,
 		det: Details,
 		scale: f32,
-	) -> impl Iterator<Item = sui::core::ReturnEvent> {
-		let mut ret_events = Vec::new();
-
+		ret_events: &mut Vec<ReturnEvent>,
+	) {
 		let move_amount = 0.1;
 
 		let (mut ctrl, mut s, mut esc) = (false, false, false);
@@ -169,7 +168,8 @@ impl Layable for LevelEditor {
 					if y <= toolbar_h {
 						match self
 							.toolbar
-							.pass_events(std::iter::once(event), det, scale)
+							.pass_events_simple(std::iter::once(event), det, scale)
+							.into_iter()
 							.next()
 						{
 							Some(toolbar_resp) if toolbar_resp.can_take::<TileChange>() => {
@@ -190,7 +190,7 @@ impl Layable for LevelEditor {
 					let world_pos = || {
 						let mut world = self.wrap_as_world(ReturnEvents, det);
 
-						let ret = world.pass_events(std::iter::once(event), det, scale).next().ok_or_else(|| anyhow!(
+						let ret = world.pass_events_simple(std::iter::once(event), det, scale).into_iter().next().ok_or_else(|| anyhow!(
 								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
 						let ret: Event = ret.take().ok_or_else(|| {
@@ -299,7 +299,5 @@ impl Layable for LevelEditor {
 				self.saving_handle = Some(handle);
 			}
 		}
-
-		ret_events.into_iter()
 	}
 }
