@@ -9,6 +9,7 @@ use strum::{EnumIter, IntoEnumIterator};
 #[derive(Clone, Debug, PartialEq, Eq, Hash, EnumIter)]
 pub enum TextureID {
 	Transparent,
+	Eraser,
 
 	SmallExtractor,
 	ChannelConsumer,
@@ -27,6 +28,7 @@ impl TextureID {
 	pub const fn resource_path(&self) -> Cow<'static, str> {
 		match self {
 			TextureID::Transparent => Cow::Borrowed("textures/transparent.png"),
+			TextureID::Eraser => Cow::Borrowed("textures/eraser.png"),
 
 			TextureID::SmallExtractor => Cow::Borrowed("textures/small-extractor.png"),
 			TextureID::ChannelConsumer => Cow::Borrowed("textures/channel-consumer.png"),

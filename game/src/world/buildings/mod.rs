@@ -240,11 +240,15 @@ impl Building for Nothing {
 	fn name(&self) -> Cow<'static, str> {
 		"nothing".into()
 	}
+
+	fn texture_id(&self) -> TextureID {
+		TextureID::Transparent
+	}
 	fn render<'a>(&'a self, _textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
 		sui::comp::Space::new(0, 0)
 	}
 
-	fn texture_id(&self) -> TextureID {
-		TextureID::Transparent
+	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
+		textures.texture_for(TextureID::Eraser).cloned()
 	}
 }
