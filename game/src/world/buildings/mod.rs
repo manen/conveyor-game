@@ -148,6 +148,15 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => sui::custom(a.render(textures)),
 		}
 	}
+	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
+		match self {
+			Self::Nothing(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::SmallExtractor(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::DebugConsumer(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::ChannelConsumer(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::Conveyor(a) => sui::custom(a.tool_icon_render(textures)),
+		}
+	}
 
 	fn can_receive(&self) -> bool {
 		match self {

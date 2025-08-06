@@ -1,4 +1,4 @@
-use sui::{Layable, LayableExt, raylib::prelude::RaylibDraw};
+use sui::{Layable, LayableExt, raylib::prelude::RaylibDraw, tex::Texture};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -109,6 +109,50 @@ impl Building for Conveyor {
 			textures,
 			dir: self.dir,
 			holding: &self.holding,
+		}
+	}
+	fn tool_icon_render(
+		&self,
+		textures: &Textures,
+	) -> impl Layable + Clone + std::fmt::Debug + 'static {
+		#[derive(Clone, Debug)]
+		struct ConveyorIconRenderer {
+			texture: Option<Texture>,
+			dir: Direction,
+		}
+		impl Layable for ConveyorIconRenderer {
+			fn size(&self) -> (i32, i32) {
+				(64, 64)
+			}
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+				let det = det.mul_size(scale);
+
+				if let Some(top_texture) = &self.texture {
+					// draws the top facing texture rotated the right way
+
+					let (x_offset, y_offset) = match self.dir {
+						Direction::Top => (0, 0),
+						Direction::Right => (1, 0),
+						Direction::Bottom => (1, 1),
+						Direction::Left => (0, 1),
+					};
+					let (x_offset, y_offset) = (x_offset * det.aw, y_offset * det.aw);
+
+					let tex_det = sui::Details {
+						x: det.x + x_offset,
+						y: det.y + y_offset,
+						..det
+					};
+					top_texture.render_with_rotation(d, tex_det, self.dir.degrees());
+				} else {
+					d.draw_rectangle(det.x, det.y, det.aw, det.ah, sui::Color::PURPLE);
+				}
+			}
+		}
+
+		ConveyorIconRenderer {
+			dir: self.dir,
+			texture: textures.texture_for(self.texture_id()).cloned(),
 		}
 	}
 
