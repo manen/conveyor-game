@@ -100,21 +100,23 @@ pub fn draw_buildings(
 				};
 				render.render(d, l_det, 1.0);
 
-				let cursor_inside = Details {
-					x: draw_x,
-					y: draw_y,
-					aw: render_size_i32,
-					ah: render_size_i32,
-				}
-				.is_inside(d.get_mouse_x(), d.get_mouse_y());
-				if DEBUG || cursor_inside {
-					d.draw_text(
-						&format!("({x}, {y})\n{building:?}\n{}", building.needs_poll()),
-						draw_x,
-						draw_y,
-						11,
-						sui::Color::WHITE,
-					);
+				if DEBUG {
+					let cursor_inside = Details {
+						x: draw_x,
+						y: draw_y,
+						aw: render_size_i32,
+						ah: render_size_i32,
+					}
+					.is_inside(d.get_mouse_x(), d.get_mouse_y());
+					if cursor_inside {
+						d.draw_text(
+							&format!("({x}, {y})\n{building:?}\n{}", building.needs_poll()),
+							draw_x,
+							draw_y,
+							11,
+							sui::Color::WHITE,
+						);
+					}
 				}
 			}
 		}
