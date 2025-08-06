@@ -221,6 +221,34 @@ impl Layable for Game {
 		scale: f32,
 		ret_events: &mut Vec<ReturnEvent>,
 	) {
+		macro_rules! world_pos {
+			($m_event:expr, $err_msg:expr) => {{
+				let world_pos = || {
+					let mut world = self.wrap_as_world(ReturnEvents, det);
+
+					let (x, y) = $m_event.at();
+					let ret = world.pass_events_simple(std::iter::once(Event::MouseEvent(MouseEvent::MouseClick { x, y })), det, scale).into_iter().next().ok_or_else(|| anyhow!(
+				"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
+
+					let ret: Event = ret.take().ok_or_else(|| {
+						anyhow!("ReturnEvents didn't return a sui::core::Event")
+					})?;
+
+					match ret {
+						Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
+							Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
+						}
+						_ => Err(anyhow!(
+							"expected MouseEvent::MouseClick, got {ret:?}"
+						)),
+					}
+				};
+				let world_pos = world_pos().with_context(|| format!($err_msg));
+
+				world_pos
+			}};
+		}
+
 		let move_amount = 0.1;
 		for event in events {
 			match event {
@@ -283,38 +311,29 @@ impl Layable for Game {
 									}
 								}
 
-								// use the tool on the block
-								// yes the code for that is this large
-
-								// okay something doesn't work idk what
-								// toolbar isn't responding to the ReturnEvent so it might be the new SpaceBetween or anything else basically
-
-								let world_pos = || {
-									let mut world = self.wrap_as_world(ReturnEvents, det);
-
-									let ret = world.pass_events_simple(std::iter::once(event), det, scale).into_iter().next().ok_or_else(|| anyhow!(
-								"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
-
-									let ret: Event = ret.take().ok_or_else(|| {
-										anyhow!("ReturnEvents didn't return a sui::core::Event")
-									})?;
-
-									match ret {
-										Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-											Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
-										}
-										_ => Err(anyhow!(
-											"expected MouseEvent::MouseClick, got {ret:?}"
-										)),
+								let world_pos = match world_pos!(
+									m_event,
+									"couldn't get world_pos in MouseClick"
+								) {
+									Ok(a) => a,
+									Err(err) => {
+										eprintln!("{err}");
+										continue;
 									}
 								};
-								let world_pos = world_pos().with_context(|| {
-									format!(
-										"while handling {self:?} use action at screen (x,y) ({x}, {y})"
-									)
-								});
 
-								let world_pos = match world_pos {
+								{
+									let mut tool = std::mem::take(&mut self.tool);
+									tool.r#use(self, world_pos);
+									let _ = self.tool_use_tx.send((world_pos, tool.clone()));
+									self.tool = tool
+								}
+							}
+							MouseEvent::MouseHeld { .. } => {
+								let world_pos = match world_pos!(
+									m_event,
+									"couldn't get world_pos in MouseHeld"
+								) {
 									Ok(a) => a,
 									Err(err) => {
 										eprintln!("{err}");
@@ -324,13 +343,28 @@ impl Layable for Game {
 
 								{
 									let tool = std::mem::take(&mut self.tool);
-									tool.r#use(self, world_pos);
-									let _ = self.tool_use_tx.send((world_pos, tool.clone()));
-									self.tool = tool
+									tool.held(self, world_pos);
+									self.tool = tool;
 								}
 							}
+							MouseEvent::MouseRelease { .. } => {
+								let world_pos = match world_pos!(
+									m_event,
+									"couldn't get world_pos in MouseRelease"
+								) {
+									Ok(a) => a,
+									Err(err) => {
+										eprintln!("{err}");
+										continue;
+									}
+								};
 
-							_ => {}
+								{
+									let mut tool = std::mem::take(&mut self.tool);
+									tool.release(self, world_pos);
+									self.tool = tool;
+								}
+							}
 						}
 					}
 				}
