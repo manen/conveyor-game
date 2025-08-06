@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use sui::{Layable, LayableExt};
 
 use crate::{
+	comp::{TooltipData, TooltipProvider},
 	textures::Textures,
 	utils::Direction,
 	world::{
@@ -34,6 +35,8 @@ pub fn toolbar_from_tools(
 	textures: &Textures,
 	tools: impl Iterator<Item = Tool>,
 ) -> impl Layable + Clone + Debug + 'static {
+	let tooltip_data = TooltipData::default();
+
 	let toolbar = tools.map(|tool| {
 		let texture = match tool.clone() {
 			Tool::PlaceBuilding(building) => sui::custom(building.tool_icon_render(textures)),
@@ -48,18 +51,18 @@ pub fn toolbar_from_tools(
 		};
 
 		let texture = texture.fix_wh_square(64);
-		let texture = super::TooltipOnHover::new(tool.name(), texture);
+		let texture = texture.margin(4);
+		let texture = super::TooltipOnHover::new(tool.name(), tooltip_data.clone(), texture);
 
 		// sui::Text::new(tool.name(), 24)
-		texture
-			.margin(4)
-			.clickable(move |_| SelectTool(tool.clone()))
+		texture.clickable(move |_| SelectTool(tool.clone()))
 	});
 
 	let toolbar = toolbar.collect::<Vec<_>>();
 
 	// let toolbar = sui::comp::div::SpaceBetween::new_horizontal(toolbar);
 	let toolbar = sui::div_h(toolbar);
+	let toolbar = TooltipProvider::new_explicit(toolbar, tooltip_data);
 
 	toolbar
 }
