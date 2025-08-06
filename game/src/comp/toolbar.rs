@@ -48,6 +48,7 @@ pub fn toolbar_from_tools(
 		};
 
 		let texture = texture.fix_wh_square(64);
+		let texture = super::TooltipOnHover::new(tool.name(), texture);
 
 		// sui::Text::new(tool.name(), 24)
 		texture

@@ -6,3 +6,5 @@ mod game;
 pub use game::*;
 mod tutorial;
 pub use tutorial::*;
+mod tooltip_on_hover;
+pub use tooltip_on_hover::*;
