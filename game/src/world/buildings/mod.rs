@@ -98,8 +98,18 @@ pub trait Building {
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
 		1
 	}
-	fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
+
+	/// even though this can return any number as a relative, if it's not a direction it will not go through by
+	/// the current implementation
+	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
+	}
+	/// lets the building pick which target candidate it'd like to pass resources to
+	fn confirm_pass_relatives(
+		&mut self,
+		available_directions: &[(i32, i32)],
+	) -> Option<(i32, i32)> {
+		available_directions.iter().cloned().last()
 	}
 
 	/// if true, this building can't be removed by the standard eraser tool
@@ -266,7 +276,7 @@ impl Building for EBuilding {
 		}
 	}
 
-	fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
+	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		match self {
 			Self::Nothing(a) => a.pass_relatives(),
 			Self::SmallExtractor(a) => a.pass_relatives(),
@@ -275,6 +285,17 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.pass_relatives(),
 			Self::Junction(a) => a.pass_relatives(),
 			Self::Router(a) => a.pass_relatives(),
+		}
+	}
+	fn confirm_pass_relatives(&mut self, dirs: &[(i32, i32)]) -> Option<(i32, i32)> {
+		match self {
+			Self::Nothing(a) => a.confirm_pass_relatives(dirs),
+			Self::SmallExtractor(a) => a.confirm_pass_relatives(dirs),
+			Self::DebugConsumer(a) => a.confirm_pass_relatives(dirs),
+			Self::ChannelConsumer(a) => a.confirm_pass_relatives(dirs),
+			Self::Conveyor(a) => a.confirm_pass_relatives(dirs),
+			Self::Junction(a) => a.confirm_pass_relatives(dirs),
+			Self::Router(a) => a.confirm_pass_relatives(dirs),
 		}
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {

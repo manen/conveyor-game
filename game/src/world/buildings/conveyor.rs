@@ -1,3 +1,5 @@
+// use std::time::{Duration, Instant};
+
 use sui::{Layable, LayableExt, raylib::prelude::RaylibDraw, tex::Texture};
 
 use crate::{
@@ -7,18 +9,21 @@ use crate::{
 };
 
 pub const CONVEYOR_CAPACITY: usize = 3;
+// pub const CONVEYOR_SPEED: Duration = Duration::from_millis(200);
 
 #[derive(Clone, Debug)]
 pub struct Conveyor {
 	pub dir: Direction,
 
 	holding: heapless::Deque<EResource, CONVEYOR_CAPACITY>,
+	// last_tick: Instant,
 }
 impl Conveyor {
 	pub fn new(dir: Direction) -> Self {
 		Self {
 			dir,
 			holding: heapless::Deque::default(),
+			// last_tick: Instant::now(),
 		}
 	}
 }
@@ -165,11 +170,13 @@ impl Building for Conveyor {
 	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
 		if self.capacity_for(&resource, _from) > 0 {
 			let _ = self.holding.push_back(resource);
+			// self.last_tick = Instant::now();
 		}
 	}
 
 	fn needs_poll(&self) -> bool {
 		!self.holding.is_empty()
+		//  && self.last_tick.elapsed() > CONVEYOR_SPEED
 	}
 	fn resource_sample(
 		&self,
@@ -186,7 +193,7 @@ impl Building for Conveyor {
 		self.holding.pop_front()
 	}
 
-	fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
+	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		self.dir.rel_array()
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {

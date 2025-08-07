@@ -47,6 +47,8 @@ impl BuildingsMap {
 	) -> () {
 		let mut tile_resource_at = |(x, y)| tile_resource_at((x as _, y as _));
 
+		let mut target_poss_buf = Vec::new();
+
 		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
@@ -93,12 +95,27 @@ impl BuildingsMap {
 
 			let building = self.at_mut(source_pos).unwrap();
 			let relatives = building.pass_relatives();
-			let target_poss = relatives
-				.iter()
-				.cloned()
-				.map(|(rx, ry)| (source_pos.0 + rx, source_pos.1 + ry));
 
-			for target_pos in target_poss {
+			let target_poss = relatives.iter().cloned().filter_map(|(rx, ry)| {
+				let dir = Direction::from_rel((rx, ry));
+				let target_pos = (source_pos.0 + rx, source_pos.1 + ry);
+				let can_receive = {
+					let target = self.at(target_pos)?;
+					target.can_receive(dir.map(Direction::reverse))
+				};
+				if can_receive { Some(target_pos) } else { None }
+			});
+			target_poss_buf.clear();
+			target_poss_buf.extend(target_poss);
+
+			let selected_target = {
+				let source = self.at_mut(source_pos).expect(
+					"if you check to see where source_pos is generated it's guaranteed to exist",
+				);
+				source.confirm_pass_relatives(&target_poss_buf)
+			};
+
+			for target_pos in selected_target.into_iter() {
 				let from =
 					Direction::from_rel((target_pos.0 - source_pos.0, target_pos.1 - source_pos.1));
 

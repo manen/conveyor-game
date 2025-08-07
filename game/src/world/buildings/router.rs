@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::{
 	textures::TextureID,
 	utils::Direction,
@@ -13,7 +15,7 @@ pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 pub struct Router {
 	// (received_from, resource)
 	holding: heapless::Deque<(Direction, EResource), ROUTER_CAPACITY>,
-	pass_to: Direction,
+	pass_i: usize,
 }
 impl Router {
 	/// returns index in self.holding
@@ -90,9 +92,40 @@ impl Building for Router {
 		Some(res)
 	}
 
-	fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
-		let array = self.pass_to.rel_array();
-		self.pass_to = self.pass_to.rotate_r();
-		array
+	// fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
+	// 	let array = self.pass_to.rel_array();
+	// 	self.pass_to = self.pass_to.rotate_r();
+	// 	array
+	// }
+	fn confirm_pass_relatives(
+		&mut self,
+		available_directions: &[(i32, i32)],
+	) -> Option<(i32, i32)> {
+		// if self.pass_i >= available_directions.len() {
+		// 	self.pass_i = 1;
+		// 	available_directions.iter().copied().nth(0)
+		// } else {
+		// 	let dir = available_directions.iter().copied().nth(self.pass_i);
+		// 	self.pass_i += 1;
+		// 	dir
+		// }
+
+		let last_i = available_directions.len() as i32;
+		match (self.pass_i as i32).cmp(&last_i) {
+			Ordering::Less => {
+				let item = available_directions.iter().copied().nth(self.pass_i);
+				self.pass_i += 1;
+				item
+			}
+			Ordering::Equal => {
+				let last = available_directions.iter().copied().nth(self.pass_i);
+				self.pass_i = 0;
+				last
+			}
+			Ordering::Greater => {
+				self.pass_i = 1;
+				available_directions.iter().copied().next()
+			}
+		}
 	}
 }
