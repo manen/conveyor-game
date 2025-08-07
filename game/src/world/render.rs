@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use sui::{Color, Details, Layable, raylib::prelude::RaylibDraw};
 
 use crate::{
@@ -76,8 +78,9 @@ pub fn draw_buildings(
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
-	const DEBUG: bool = false;
+	const DEBUG: bool = true;
 
+	let mut tooltip = Option::<((i32, i32), Cow<'static, str>)>::None;
 	for x in 0..buildings.width() {
 		for y in 0..buildings.height() {
 			let draw_x = draw_x_base + (x as f32 * render_size) as i32;
@@ -109,16 +112,17 @@ pub fn draw_buildings(
 					}
 					.is_inside(d.get_mouse_x(), d.get_mouse_y());
 					if cursor_inside {
-						d.draw_text(
-							&format!("({x}, {y})\n{building:?}\n{}", building.needs_poll()),
-							draw_x,
-							draw_y,
-							11,
-							sui::Color::WHITE,
-						);
+						tooltip = Some((
+							(draw_x, draw_y),
+							format!("({x}, {y})\n{building:?}\n{}", building.needs_poll()).into(),
+						))
 					}
 				}
 			}
 		}
+	}
+
+	if let Some(((draw_x, draw_y), tooltip)) = tooltip {
+		d.draw_text(&tooltip, draw_x, draw_y, 11, sui::Color::WHITE);
 	}
 }

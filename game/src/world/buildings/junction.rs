@@ -48,7 +48,7 @@ impl Building for Junction {
 			None => false,
 		}
 	}
-	fn capacity_for(&self, resource: &EResource, from: Option<Direction>) -> i32 {
+	fn capacity_for(&self, _resource: &EResource, from: Option<Direction>) -> i32 {
 		match from {
 			Some(dir) => CONVEYOR_CAPACITY as i32 - self.queue_for(dir).len() as i32,
 			None => 0,
