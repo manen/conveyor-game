@@ -48,6 +48,7 @@ pub struct Game {
 	scale: f32,
 	scale_velocity: f32,
 
+	last_tick: Instant,
 	last_game_tick: Instant,
 }
 impl Game {
@@ -75,6 +76,7 @@ impl Game {
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
+			last_tick: Instant::now(),
 			last_game_tick: Instant::now(),
 		}
 	}
@@ -165,6 +167,8 @@ impl Layable for Game {
 	}
 
 	fn tick(&mut self) {
+		let delta = self.last_tick.elapsed().as_secs_f32();
+
 		let tile_render_size = TILE_RENDER_SIZE as f32 * self.real_scale();
 
 		// world coords
@@ -175,6 +179,9 @@ impl Layable for Game {
 
 		let move_amount_x = self.camera_velocity.0 * 0.85 * move_amount_x;
 		let move_amount_y = self.camera_velocity.1 * 0.85 * move_amount_y;
+
+		let move_amount_x = move_amount_x * 60.0 * delta;
+		let move_amount_y = move_amount_y * 60.0 * delta;
 
 		// ...except if it'd move too many tiles away
 		let move_limit = 0.2;
@@ -192,11 +199,13 @@ impl Layable for Game {
 			self.camera_velocity = (0.0, 0.0);
 		}
 
-		self.scale += self.scale_velocity;
+		let scale_taken = self.scale_velocity * delta * 120.0;
+		self.scale += scale_taken;
 		self.scale = self.scale.max(-40.0).min(60.0);
 
-		self.scale_velocity *= 0.95;
-		if self.scale_velocity.abs() < 0.005 {
+		let scale_reduce = self.scale_velocity * 18.0 * delta;
+		self.scale_velocity = self.scale_velocity - scale_reduce;
+		if self.scale_velocity.abs() < 0.05 {
 			self.scale_velocity = 0.0;
 		}
 
@@ -204,10 +213,10 @@ impl Layable for Game {
 			self.data.tick();
 			self.last_game_tick = Instant::now();
 		}
-
 		if let Some(tips) = &mut self.tips {
 			tips.tick();
 		}
+		self.last_tick = Instant::now();
 	}
 
 	fn pass_events(
@@ -277,7 +286,7 @@ impl Layable for Game {
 					} else {
 						match m_event {
 							MouseEvent::Scroll { amount, .. } => {
-								self.scale_velocity += amount / 6.0
+								self.scale_velocity += amount / 2.0
 							}
 							MouseEvent::MouseClick { x, y } => {
 								let (_, toolbar_h) = self.toolbar.size();
