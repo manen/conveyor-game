@@ -18,6 +18,37 @@ jobs:
       with:
         submodules: true
         lfs: true
+
+     # Cache crates.io index and registry
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+          
+
+    # Cache cloned git dependencies
+    - name: Cache cargo git
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-git-
+
+    # Cache compilation artifacts
+    - name: Cache compiled target
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-target-
+            
     - name: cmake
       uses: lukka/get-cmake@latest
       with:
@@ -32,7 +63,6 @@ jobs:
       run: cargo test --all-targets
     - name: Build
       run: cargo build --release
-
     
     - uses: actions/upload-artifact@v4
       with:
@@ -47,6 +77,39 @@ jobs:
       with:
         submodules: true
         lfs: true
+
+
+
+     # Cache crates.io index and registry
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+          
+
+    # Cache cloned git dependencies
+    - name: Cache cargo git
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-git-
+
+    # Cache compilation artifacts
+    - name: Cache compiled target
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-target-
+
     - name: cmake
       uses: lukka/get-cmake@latest
       with:
@@ -55,7 +118,6 @@ jobs:
       run: cargo test --all-targets
     - name: Build
       run: cargo build --release
-
     
     - uses: actions/upload-artifact@v4
       with:
