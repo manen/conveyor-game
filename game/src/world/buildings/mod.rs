@@ -13,6 +13,8 @@ use crate::{
 
 mod conveyor;
 pub use conveyor::*;
+mod junction;
+pub use junction::*;
 mod small_extractor;
 pub use small_extractor::*;
 mod debug_consumer;
@@ -61,24 +63,32 @@ pub trait Building {
 			.fix_wh_square(64)
 	}
 
-	fn can_receive(&self) -> bool {
+	fn can_receive(&self, from: Option<Direction>) -> bool {
 		false
 	}
 	// returns how many of the given resource it can receive right now
-	fn capacity_for(&self, resource: &EResource) -> i32 {
+	fn capacity_for(&self, resource: &EResource, from: Option<Direction>) -> i32 {
 		0
 	}
-	fn receive(&mut self, resource: EResource) {}
+	fn receive(&mut self, resource: EResource, from: Option<Direction>) {}
 
 	/// [Self::poll_resource], without advancing any internal timers or anything
-	fn resource_sample(&self, tile_resource: Option<EResource>) -> Option<EResource> {
+	fn resource_sample(
+		&self,
+		tile_resource: Option<EResource>,
+		to: Option<Direction>,
+	) -> Option<EResource> {
 		None
 	}
 	// polling is how you generate new shit
 	fn needs_poll(&self) -> bool {
 		false
 	}
-	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
+	fn poll_resource(
+		&mut self,
+		tile_resource: Option<EResource>,
+		to: Option<Direction>,
+	) -> Option<EResource> {
 		None
 	}
 
@@ -103,6 +113,7 @@ pub enum EBuilding {
 	DebugConsumer(DebugConsumer),
 	ChannelConsumer(ChannelConsumer),
 	Conveyor(Conveyor),
+	Junction(Junction),
 }
 impl EBuilding {
 	pub const fn nothing() -> Self {
@@ -116,6 +127,9 @@ impl EBuilding {
 	}
 	pub fn conveyor(dir: Direction) -> Self {
 		Self::Conveyor(Conveyor::new(dir))
+	}
+	pub fn junction() -> Self {
+		Self::Junction(Junction::default())
 	}
 }
 impl Default for EBuilding {
@@ -131,6 +145,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.name(),
 			Self::ChannelConsumer(a) => a.name(),
 			Self::Conveyor(a) => a.name(),
+			Self::Junction(a) => a.name(),
 		}
 	}
 	fn texture_id(&self) -> TextureID {
@@ -140,6 +155,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.texture_id(),
 			Self::ChannelConsumer(a) => a.texture_id(),
 			Self::Conveyor(a) => a.texture_id(),
+			Self::Junction(a) => a.texture_id(),
 		}
 	}
 
@@ -150,6 +166,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => sui::custom(a.render(textures)),
 			Self::ChannelConsumer(a) => sui::custom(a.render(textures)),
 			Self::Conveyor(a) => sui::custom(a.render(textures)),
+			Self::Junction(a) => sui::custom(a.render(textures)),
 		}
 	}
 	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
@@ -159,34 +176,38 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => sui::custom(a.tool_icon_render(textures)),
 			Self::ChannelConsumer(a) => sui::custom(a.tool_icon_render(textures)),
 			Self::Conveyor(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::Junction(a) => sui::custom(a.tool_icon_render(textures)),
 		}
 	}
 
-	fn can_receive(&self) -> bool {
+	fn can_receive(&self, from: Option<Direction>) -> bool {
 		match self {
-			Self::Nothing(a) => a.can_receive(),
-			Self::SmallExtractor(a) => a.can_receive(),
-			Self::DebugConsumer(a) => a.can_receive(),
-			Self::ChannelConsumer(a) => a.can_receive(),
-			Self::Conveyor(a) => a.can_receive(),
+			Self::Nothing(a) => a.can_receive(from),
+			Self::SmallExtractor(a) => a.can_receive(from),
+			Self::DebugConsumer(a) => a.can_receive(from),
+			Self::ChannelConsumer(a) => a.can_receive(from),
+			Self::Conveyor(a) => a.can_receive(from),
+			Self::Junction(a) => a.can_receive(from),
 		}
 	}
-	fn capacity_for(&self, resource: &EResource) -> i32 {
+	fn capacity_for(&self, resource: &EResource, from: Option<Direction>) -> i32 {
 		match self {
-			Self::Nothing(a) => a.capacity_for(resource),
-			Self::SmallExtractor(a) => a.capacity_for(resource),
-			Self::DebugConsumer(a) => a.capacity_for(resource),
-			Self::ChannelConsumer(a) => a.capacity_for(resource),
-			Self::Conveyor(a) => a.capacity_for(resource),
+			Self::Nothing(a) => a.capacity_for(resource, from),
+			Self::SmallExtractor(a) => a.capacity_for(resource, from),
+			Self::DebugConsumer(a) => a.capacity_for(resource, from),
+			Self::ChannelConsumer(a) => a.capacity_for(resource, from),
+			Self::Conveyor(a) => a.capacity_for(resource, from),
+			Self::Junction(a) => a.capacity_for(resource, from),
 		}
 	}
-	fn receive(&mut self, resource: EResource) {
+	fn receive(&mut self, resource: EResource, from: Option<Direction>) {
 		match self {
-			Self::Nothing(a) => a.receive(resource),
-			Self::SmallExtractor(a) => a.receive(resource),
-			Self::DebugConsumer(a) => a.receive(resource),
-			Self::ChannelConsumer(a) => a.receive(resource),
-			Self::Conveyor(a) => a.receive(resource),
+			Self::Nothing(a) => a.receive(resource, from),
+			Self::SmallExtractor(a) => a.receive(resource, from),
+			Self::DebugConsumer(a) => a.receive(resource, from),
+			Self::ChannelConsumer(a) => a.receive(resource, from),
+			Self::Conveyor(a) => a.receive(resource, from),
+			Self::Junction(a) => a.receive(resource, from),
 		}
 	}
 
@@ -197,24 +218,35 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.needs_poll(),
 			Self::ChannelConsumer(a) => a.needs_poll(),
 			Self::Conveyor(a) => a.needs_poll(),
+			Self::Junction(a) => a.needs_poll(),
 		}
 	}
-	fn resource_sample(&self, tile_resource: Option<EResource>) -> Option<EResource> {
+	fn resource_sample(
+		&self,
+		tile_resource: Option<EResource>,
+		to: Option<Direction>,
+	) -> Option<EResource> {
 		match self {
-			Self::Nothing(a) => a.resource_sample(tile_resource),
-			Self::SmallExtractor(a) => a.resource_sample(tile_resource),
-			Self::DebugConsumer(a) => a.resource_sample(tile_resource),
-			Self::ChannelConsumer(a) => a.resource_sample(tile_resource),
-			Self::Conveyor(a) => a.resource_sample(tile_resource),
+			Self::Nothing(a) => a.resource_sample(tile_resource, to),
+			Self::SmallExtractor(a) => a.resource_sample(tile_resource, to),
+			Self::DebugConsumer(a) => a.resource_sample(tile_resource, to),
+			Self::ChannelConsumer(a) => a.resource_sample(tile_resource, to),
+			Self::Conveyor(a) => a.resource_sample(tile_resource, to),
+			Self::Junction(a) => a.resource_sample(tile_resource, to),
 		}
 	}
-	fn poll_resource(&mut self, tile_resource: Option<EResource>) -> Option<EResource> {
+	fn poll_resource(
+		&mut self,
+		tile_resource: Option<EResource>,
+		to: Option<Direction>,
+	) -> Option<EResource> {
 		match self {
-			Self::Nothing(a) => a.poll_resource(tile_resource),
-			Self::SmallExtractor(a) => a.poll_resource(tile_resource),
-			Self::DebugConsumer(a) => a.poll_resource(tile_resource),
-			Self::ChannelConsumer(a) => a.poll_resource(tile_resource),
-			Self::Conveyor(a) => a.poll_resource(tile_resource),
+			Self::Nothing(a) => a.poll_resource(tile_resource, to),
+			Self::SmallExtractor(a) => a.poll_resource(tile_resource, to),
+			Self::DebugConsumer(a) => a.poll_resource(tile_resource, to),
+			Self::ChannelConsumer(a) => a.poll_resource(tile_resource, to),
+			Self::Conveyor(a) => a.poll_resource(tile_resource, to),
+			Self::Junction(a) => a.poll_resource(tile_resource, to),
 		}
 	}
 
@@ -225,6 +257,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.pass_relatives(),
 			Self::ChannelConsumer(a) => a.pass_relatives(),
 			Self::Conveyor(a) => a.pass_relatives(),
+			Self::Junction(a) => a.pass_relatives(),
 		}
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
@@ -234,6 +267,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.rank_pass_source(relative_pos),
 			Self::ChannelConsumer(a) => a.rank_pass_source(relative_pos),
 			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
+			Self::Junction(a) => a.rank_pass_source(relative_pos),
 		}
 	}
 
@@ -244,6 +278,7 @@ impl Building for EBuilding {
 			Self::DebugConsumer(a) => a.is_protected(),
 			Self::ChannelConsumer(a) => a.is_protected(),
 			Self::Conveyor(a) => a.is_protected(),
+			Self::Junction(a) => a.is_protected(),
 		}
 	}
 }

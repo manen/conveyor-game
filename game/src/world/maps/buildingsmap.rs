@@ -4,7 +4,7 @@ use sui::Layable;
 
 use crate::{
 	textures::Textures,
-	utils::MultiMap,
+	utils::{Direction, MultiMap},
 	world::{
 		EResource, Map,
 		buildings::{Building, EBuilding},
@@ -57,16 +57,20 @@ impl BuildingsMap {
 				let target = self.at(*target_pos)?;
 				let source = self.at(source_pos)?;
 
+				let from =
+					Direction::from_rel((target_pos.0 - source_pos.0, target_pos.1 - source_pos.1));
+				let to = from.map(Direction::reverse);
+
 				let tile_resource = tile_resource_at(source_pos);
-				let sample = source.resource_sample(tile_resource.clone())?;
-				let capacity = target.capacity_for(&sample);
+				let sample = source.resource_sample(tile_resource.clone(), to)?;
+				let capacity = target.capacity_for(&sample, from);
 
 				if capacity > 0 {
 					let source = self.at_mut(source_pos)?;
-					let resource = source.poll_resource(tile_resource)?;
+					let resource = source.poll_resource(tile_resource, to)?;
 
 					let target = self.at_mut(*target_pos)?;
-					target.receive(resource);
+					target.receive(resource, from);
 				}
 
 				Some(0)
@@ -90,9 +94,12 @@ impl BuildingsMap {
 				.map(|(rx, ry)| (source_pos.0 + rx, source_pos.1 + ry));
 
 			for target_pos in target_poss {
+				let from =
+					Direction::from_rel((target_pos.0 - source_pos.0, target_pos.1 - source_pos.1));
+
 				if self
 					.at(target_pos)
-					.map(|target| target.can_receive())
+					.map(|target| target.can_receive(from))
 					.unwrap_or(false)
 				{
 					moves_queue.multimap_insert(target_pos, source_pos);

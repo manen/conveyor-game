@@ -15,6 +15,7 @@ pub fn tools() -> impl Iterator<Item = Tool> {
 		.chain([
 			Tool::PlaceBuilding(EBuilding::small_extractor()),
 			Tool::PlaceBuilding(EBuilding::debug_consumer()),
+			Tool::PlaceBuilding(EBuilding::junction()),
 		])
 }
 

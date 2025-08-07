@@ -22,6 +22,7 @@ pub enum TextureID {
 	RawIron,
 
 	ConveyorTop,
+	Junction,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -43,6 +44,7 @@ impl TextureID {
 				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d2/Raw_Iron_JE3_BE2.png/revision/latest?cb=20210421181435",
 			),
 			TextureID::ConveyorTop => Cow::Borrowed("textures/conveyor-top.png"),
+			TextureID::Junction => Cow::Borrowed("textures/junction.png"),
 		}
 	}
 }

@@ -6,7 +6,7 @@ use crate::{
 	world::{EResource, Resource, buildings::Building, render::TILE_RENDER_SIZE},
 };
 
-const CONVEYOR_CAPACITY: usize = 3;
+pub const CONVEYOR_CAPACITY: usize = 3;
 
 #[derive(Clone, Debug)]
 pub struct Conveyor {
@@ -156,14 +156,14 @@ impl Building for Conveyor {
 		}
 	}
 
-	fn can_receive(&self) -> bool {
+	fn can_receive(&self, _from: Option<Direction>) -> bool {
 		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32 > 0
 	}
-	fn capacity_for(&self, _resource: &EResource) -> i32 {
+	fn capacity_for(&self, _resource: &EResource, _from: Option<Direction>) -> i32 {
 		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32
 	}
-	fn receive(&mut self, resource: EResource) {
-		if self.capacity_for(&resource) > 0 {
+	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
+		if self.capacity_for(&resource, _from) > 0 {
 			let _ = self.holding.push_back(resource);
 		}
 	}
@@ -171,10 +171,18 @@ impl Building for Conveyor {
 	fn needs_poll(&self) -> bool {
 		!self.holding.is_empty()
 	}
-	fn resource_sample(&self, _tile_resource: Option<EResource>) -> Option<EResource> {
+	fn resource_sample(
+		&self,
+		_tile_resource: Option<EResource>,
+		_to: Option<Direction>,
+	) -> Option<EResource> {
 		self.holding.iter().next().cloned()
 	}
-	fn poll_resource(&mut self, _tile_resource: Option<EResource>) -> Option<EResource> {
+	fn poll_resource(
+		&mut self,
+		_tile_resource: Option<EResource>,
+		_to: Option<Direction>,
+	) -> Option<EResource> {
 		self.holding.pop_front()
 	}
 

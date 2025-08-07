@@ -2,6 +2,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::{
 	textures::TextureID,
+	utils::Direction,
 	world::{EResource, buildings::Building},
 };
 
@@ -30,13 +31,13 @@ impl Building for ChannelConsumer {
 		TextureID::ChannelConsumer
 	}
 
-	fn can_receive(&self) -> bool {
+	fn can_receive(&self, _from: Option<Direction>) -> bool {
 		self.tx.capacity() > 0
 	}
-	fn capacity_for(&self, _resource: &EResource) -> i32 {
+	fn capacity_for(&self, _resource: &EResource, _from: Option<Direction>) -> i32 {
 		self.tx.capacity() as i32
 	}
-	fn receive(&mut self, resource: EResource) {
+	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
 		let _ = self.tx.try_send(resource);
 	}
 
