@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-	game::Game,
+	game::GameData,
 	textures::TextureID,
 	utils::Direction,
 	world::buildings::{Building, EBuilding, Nothing},
@@ -42,7 +42,7 @@ impl Tool {
 		}
 	}
 
-	pub fn r#use(&mut self, game: &mut Game, pos: (i32, i32)) {
+	pub fn r#use(&mut self, game: &mut GameData, pos: (i32, i32)) {
 		match self {
 			Self::PlaceBuilding(EBuilding::Nothing(_)) => {
 				if let Some(existing) = game.buildings.at_mut(pos) {
@@ -62,6 +62,6 @@ impl Tool {
 			},
 		}
 	}
-	pub fn held(&self, game: &mut Game, pos: (i32, i32)) {}
-	pub fn release(&mut self, game: &mut Game, pos: (i32, i32)) {}
+	pub fn held(&self, game: &mut GameData, pos: (i32, i32)) {}
+	pub fn release(&mut self, game: &mut GameData, pos: (i32, i32)) {}
 }

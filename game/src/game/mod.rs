@@ -24,6 +24,8 @@ use crate::{
 
 mod tool;
 pub use tool::*;
+mod data;
+pub use data::*;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
@@ -35,8 +37,7 @@ pub struct Game {
 	toolbar: DynamicLayable<'static>,
 	tips: Option<DynamicLayable<'static>>,
 
-	pub tilemap: Tilemap,
-	pub buildings: BuildingsMap,
+	data: GameData,
 
 	tool: Tool,
 	tool_use_tx: broadcast::Sender<((i32, i32), Tool)>,
@@ -59,6 +60,7 @@ impl Game {
 	}
 	pub fn from_maps(textures: Textures, tilemap: Tilemap, buildings: BuildingsMap) -> Self {
 		let (width, height) = tilemap.size();
+		let data = GameData::new(tilemap, buildings);
 
 		let (tool_use_tx, _rx) = broadcast::channel(10);
 
@@ -66,8 +68,7 @@ impl Game {
 			toolbar: sui::custom(toolbar(&textures)),
 			textures,
 			tips: None,
-			tilemap,
-			buildings,
+			data,
 			tool: Default::default(),
 			tool_use_tx,
 			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
@@ -145,9 +146,10 @@ impl Layable for Game {
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
 		let comp = self
+			.data
 			.tilemap
 			.render(&self.textures)
-			.overlay(self.buildings.render(&self.textures));
+			.overlay(self.data.buildings.render(&self.textures));
 		let comp = self.wrap_as_world(comp, det).overlay(sui::div([
 			sui::custom(self.toolbar.immutable_wrap()).into_comp(),
 			sui::text(format!("tool: {:?}", self.tool), 24),
@@ -199,13 +201,7 @@ impl Layable for Game {
 		}
 
 		if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
-			let tile_resource_at = |pos| {
-				let tile = self.tilemap.at(pos)?;
-				let resource = tile.generate_resource();
-				resource
-			};
-			self.buildings.tick(tile_resource_at);
-
+			self.data.tick();
 			self.last_game_tick = Instant::now();
 		}
 
@@ -322,12 +318,8 @@ impl Layable for Game {
 									}
 								};
 
-								{
-									let mut tool = std::mem::take(&mut self.tool);
-									tool.r#use(self, world_pos);
-									let _ = self.tool_use_tx.send((world_pos, tool.clone()));
-									self.tool = tool
-								}
+								self.tool.r#use(&mut self.data, world_pos);
+								let _ = self.tool_use_tx.send((world_pos, self.tool.clone()));
 							}
 							MouseEvent::MouseHeld { .. } => {
 								let world_pos = match world_pos!(
@@ -341,11 +333,7 @@ impl Layable for Game {
 									}
 								};
 
-								{
-									let tool = std::mem::take(&mut self.tool);
-									tool.held(self, world_pos);
-									self.tool = tool;
-								}
+								self.tool.held(&mut self.data, world_pos);
 							}
 							MouseEvent::MouseRelease { .. } => {
 								let world_pos = match world_pos!(
@@ -359,11 +347,7 @@ impl Layable for Game {
 									}
 								};
 
-								{
-									let mut tool = std::mem::take(&mut self.tool);
-									tool.release(self, world_pos);
-									self.tool = tool;
-								}
+								self.tool.release(&mut self.data, world_pos);
 							}
 						}
 					}
