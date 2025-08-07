@@ -96,12 +96,14 @@ impl<T> Map<T> {
 	pub fn iter(&self) -> impl Iterator<Item = ((i32, i32), &T)> {
 		self.iter_coords().map(|coords| (coords, self.at(coords).expect("Map<T>::iter_coords and Map<T>::iter are wrong! coordinate returned by Map<T>::iter_coords returned a coordinate that self.at() returned None for")))
 	}
-	pub fn iter_coords_usize(&self) -> impl Iterator<Item = (usize, usize)> {
-		(0..self.width)
-			.map(move |x| (0..self.height).map(move |y| (x, y)))
+	pub fn iter_coords_usize(&self) -> impl Iterator<Item = (usize, usize)> + 'static {
+		let (width, height) = self.size();
+
+		(0..width)
+			.map(move |x| (0..height).map(move |y| (x, y)))
 			.flatten()
 	}
-	pub fn iter_coords(&self) -> impl Iterator<Item = (i32, i32)> {
+	pub fn iter_coords(&self) -> impl Iterator<Item = (i32, i32)> + 'static {
 		self.iter_coords_usize().map(|(x, y)| (x as _, y as _))
 	}
 }

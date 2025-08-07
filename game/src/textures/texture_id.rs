@@ -23,6 +23,7 @@ pub enum TextureID {
 
 	ConveyorTop,
 	Junction,
+	Router,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -45,6 +46,7 @@ impl TextureID {
 			),
 			TextureID::ConveyorTop => Cow::Borrowed("textures/conveyor-top.png"),
 			TextureID::Junction => Cow::Borrowed("textures/junction.png"),
+			TextureID::Router => Cow::Borrowed("textures/router.png"),
 		}
 	}
 }

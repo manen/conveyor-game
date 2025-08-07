@@ -23,11 +23,12 @@ impl Layable for ReturnEvents {
 	}
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum Direction {
 	Right,
 	Bottom,
 	Left,
+	#[default]
 	Top,
 }
 impl Direction {

@@ -186,7 +186,7 @@ impl Building for Conveyor {
 		self.holding.pop_front()
 	}
 
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
+	fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
 		self.dir.rel_array()
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {

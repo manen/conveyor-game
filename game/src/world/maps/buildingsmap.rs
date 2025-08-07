@@ -82,11 +82,16 @@ impl BuildingsMap {
 		}
 
 		// check for buildings that need polling and list
-		for (source_pos, building) in self.iter() {
-			if !building.needs_poll() {
+		for source_pos in self.buildings.iter_coords() {
+			if !self
+				.at(source_pos)
+				.map(Building::needs_poll)
+				.unwrap_or(false)
+			{
 				continue;
 			}
 
+			let building = self.at_mut(source_pos).unwrap();
 			let relatives = building.pass_relatives();
 			let target_poss = relatives
 				.iter()
