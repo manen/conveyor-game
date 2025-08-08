@@ -3,8 +3,8 @@ use stage_manager_loaders::Loader;
 use sui::{DynamicLayable, LayableExt};
 // use tokio::sync::mpsc::{Receiver, Sender};
 
-mod tips;
-use tips::controller;
+mod controller;
+use controller::controller;
 
 use crate::{
 	assets::GameAssets,
@@ -56,13 +56,13 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 
 	let tool_use_rx = game.subscribe_to_tool_use();
 	game.enable_tips(|tx, rx| {
-		let channels = tips::Channels {
+		let channels = controller::Channels {
 			stage_tx: tx,
 			stage_rx: rx,
 			tool_use_rx,
 			game_tx,
 		};
-		tips::controller(channels)
+		controller::controller(channels)
 	});
 
 	game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));

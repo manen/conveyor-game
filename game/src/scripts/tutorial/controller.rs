@@ -8,7 +8,11 @@ use tokio::sync::{
 	mpsc::{self},
 };
 
-use crate::{game::Tool, world::buildings::EBuilding};
+use crate::{
+	game::Tool,
+	scripts::tips::{action, text_with_actions},
+	world::buildings::EBuilding,
+};
 
 #[derive(Clone, Debug)]
 pub enum TooltipPage {
@@ -19,10 +23,36 @@ pub enum TooltipPage {
 
 #[derive(Debug)]
 pub struct Channels {
-	pub stage_tx: mpsc::Sender<stage_manager_remote::RemoteStageChange>,
+	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
 	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
 	pub game_tx: mpsc::Sender<crate::game::GameCommand>,
+}
+impl Channels {
+	pub async fn send_stage<L: Layable + Debug + 'static>(
+		&mut self,
+		new_stage: L,
+	) -> anyhow::Result<()> {
+		self.send_stage_change(RemoteStageChange::simple_only_debug(new_stage))
+			.await
+	}
+	pub async fn send_stage_change(
+		&mut self,
+		stage_change: RemoteStageChange,
+	) -> anyhow::Result<()> {
+		self.stage_tx
+			.send(stage_change)
+			.await
+			.map_err(|err| anyhow!("error while sending stage change:\n{err}"))
+	}
+
+	pub async fn receive_stage_event(&mut self) -> anyhow::Result<TooltipPage> {
+		drain_mpsc(&mut self.stage_rx);
+		self.stage_rx
+			.recv()
+			.await
+			.ok_or_else(|| anyhow!("expected to receive TooltipPage from stage_rx"))
+	}
 }
 
 pub async fn controller(mut channels: Channels) {
@@ -34,40 +64,6 @@ pub async fn controller(mut channels: Channels) {
 			}
 		}
 	}
-}
-
-#[derive(Clone, Debug)]
-pub struct Action {
-	name: Cow<'static, str>,
-	page: TooltipPage,
-}
-impl Action {
-	fn into_button(self) -> impl Layable + Debug {
-		let button = sui::text(self.name, 16).clickable(move |_| RemoteEvent(self.page.clone()));
-		button
-	}
-}
-pub fn action(name: impl Into<Cow<'static, str>>, page: TooltipPage) -> Action {
-	Action {
-		name: name.into(),
-		page,
-	}
-}
-
-pub fn text_with_actions(
-	text: impl Into<Cow<'static, str>>,
-	actions: impl IntoIterator<Item = Action>,
-) -> RemoteStageChange {
-	let text = sui::comp::WrappedText::new(text, 24).margin(4);
-
-	let actions = actions
-		.into_iter()
-		.map(|action| action.into_button().margin_h(4))
-		.map(sui::custom_only_debug);
-	let actions = sui::div(actions.collect::<Vec<_>>());
-
-	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
-	RemoteStageChange::simple(div)
 }
 
 pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
@@ -102,9 +98,9 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
-	channels.stage_tx.send(text_with_actions("this is the tutorial, and these tooltips are going to help you get the gist of the game. if you've played conveyor/factory games before, it'll feel familiar.", [
+	channels.send_stage_change(text_with_actions("this is the tutorial, and these tooltips are going to help you get the gist of the game. if you've played conveyor/factory games before, it'll feel familiar.", [
 		action("okay sure", TooltipPage::Reset)
-	])).await.map_err(|err| anyhow!("{err}"))?;
+	])).await?;
 
 	let event = channels
 		.stage_rx
@@ -121,16 +117,24 @@ pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
-	start_extracting(channels).await
+	channels
+		.send_stage_change(text_with_actions(
+			"hold up",
+			[action("ok", TooltipPage::Reset)],
+		))
+		.await?;
+
+	let _ = channels.receive_stage_event().await?;
+
+	Ok(())
 }
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
-	channels.stage_tx.send(text_with_actions(
+	channels.send_stage_change(text_with_actions(
 		"to begin extracting resources, you'll need to place a small extractor. select the small extractor from the toolbar at the top, and place it (left click) over any resource",
 		[action("go back", TooltipPage::Reset)],
 	))
-	.await
-	.map_err(|err| anyhow!("{err}"))?;
+	.await?;
 
 	let back_pressed = async {
 		loop {
@@ -140,6 +144,8 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			}
 		}
 	};
+
+	drain_broadcast(&mut channels.tool_use_rx);
 	let extractor_placed = async {
 		loop {
 			match channels.tool_use_rx.recv().await {
@@ -155,9 +161,28 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			return Ok(())
 		},
 		res = extractor_placed => if res {
-			channels.stage_tx.send(text_with_actions("just like that bro", [])).await.map_err(|err| anyhow!("{err}"))?;
+			channels.send_stage_change(text_with_actions::<TooltipPage>("just like that bro", [])).await.map_err(|err| anyhow!("{err}"))?;
 			tokio::time::sleep(Duration::from_millis(5000)).await;
 		}
 	};
 	Ok(())
+}
+
+fn drain_broadcast<T: Clone>(rx: &mut broadcast::Receiver<T>) {
+	loop {
+		match rx.try_recv() {
+			Ok(_) => (),
+			Err(broadcast::error::TryRecvError::Closed) => return,
+			Err(_) => break,
+		}
+	}
+}
+fn drain_mpsc<T>(rx: &mut mpsc::Receiver<T>) {
+	loop {
+		match rx.try_recv() {
+			Ok(_) => (),
+			Err(mpsc::error::TryRecvError::Disconnected) => return,
+			Err(_) => break,
+		}
+	}
 }
