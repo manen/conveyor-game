@@ -15,7 +15,6 @@ use crate::{
 	textures::Textures,
 	utils::ReturnEvents,
 	world::{
-		Tile,
 		buildings::BuildingsMap,
 		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
@@ -28,6 +27,7 @@ mod data;
 pub use data::*;
 pub mod timer;
 pub use timer::Timer;
+use timer::TimerRenderable;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
@@ -110,8 +110,15 @@ impl Game {
 		self.tool_use_tx.subscribe()
 	}
 
+	/// sets and starts the timer if the game is started; use self.pause_time() to spawn in paused
 	pub fn enable_timer(&mut self, target: Duration) {
-		self.timer = Some(Timer::new(target))
+		self.timer = Some(Timer::new(target));
+
+		if self.paused {
+			self.pause_time();
+		} else {
+			self.resume_time();
+		}
 	}
 	pub fn disable_timer(&mut self) {
 		self.timer = None;
@@ -180,15 +187,26 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		let comp = self
+		let stage_comp = self
 			.data
 			.tilemap
 			.render(&self.textures)
 			.overlay(self.data.buildings.render(&self.textures));
-		let comp = self.wrap_as_world(comp, det).overlay(sui::div([
+		let comp = self.wrap_as_world(stage_comp, det);
+
+		let timer = if let Some(timer) = &self.timer {
+			let render = sui::custom_only_debug(timer.render());
+			render.into_comp()
+		} else {
+			sui::Comp::Space(sui::comp::Space::new(0, 0))
+		};
+		println!("timer: {timer:?}");
+		let ui = sui::div([
 			sui::custom(self.toolbar.immutable_wrap()).into_comp(),
-			sui::text(format!("tool: {:?}", self.tool), 24),
-		]));
+			sui::Text::new(format!("tool: {:?}", self.tool), 24).into_comp(),
+			timer,
+		]);
+		let comp = comp.overlay(ui);
 
 		comp.render(d, det, scale);
 
@@ -246,6 +264,9 @@ impl Layable for Game {
 			if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
 				self.data.tick();
 				self.last_game_tick = Instant::now();
+			}
+			if let Some(timer) = &mut self.timer {
+				timer.tick();
 			}
 		}
 

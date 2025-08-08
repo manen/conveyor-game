@@ -55,6 +55,8 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let tool_use_rx = game.subscribe_to_tool_use();
 	game.enable_tips(|tx, rx| controller(tx, rx, tool_use_rx));
 
+	game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));
+
 	Ok(game)
 }
 
