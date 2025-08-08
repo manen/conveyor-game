@@ -26,6 +26,8 @@ mod tool;
 pub use tool::*;
 mod data;
 pub use data::*;
+pub mod timer;
+pub use timer::Timer;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
