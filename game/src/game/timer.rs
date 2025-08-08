@@ -3,7 +3,7 @@ use std::{
 	time::{Duration, Instant},
 };
 
-use sui::Layable;
+use sui::{Compatible, Layable, LayableExt};
 
 #[derive(Clone, Debug)]
 pub enum Pause {
@@ -93,20 +93,30 @@ impl TimerRenderable for Timer {
 
 		// add :s and assemble
 		let mut in_order = in_order.peekable();
-		let mut div = sui::Div::empty_horizontal_with_capacity(in_order.size_hint().0);
+		let mut time_div = sui::Div::empty_horizontal_with_capacity(in_order.size_hint().0);
+		// add a : after every value where there's a next one coming
 		loop {
 			if let Some(next) = in_order.next() {
-				div.push(next);
+				time_div.push(next);
 				if in_order.peek().is_some() {
 					let colon = sui::Text::new(":", font_size);
-					div.push(colon);
+					time_div.push(colon);
 				}
 			} else {
 				break;
 			}
 		}
 
-		div
+		let paused_ui = if self.is_paused() {
+			sui::custom(sui::Text::new("PAUSED", 16).centered()).into_comp()
+		} else {
+			sui::Comp::Space(sui::comp::Space::new(0, 0))
+		};
+		let total = sui::div([
+			sui::custom_only_debug(time_div.centered()).into_comp(),
+			paused_ui,
+		]);
+		total
 	}
 }
 

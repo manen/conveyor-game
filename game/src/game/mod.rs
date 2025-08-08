@@ -195,12 +195,11 @@ impl Layable for Game {
 		let comp = self.wrap_as_world(stage_comp, det);
 
 		let timer = if let Some(timer) = &self.timer {
-			let render = sui::custom_only_debug(timer.render());
+			let render = sui::custom_only_debug(timer.render()); // timer.render() is already centered
 			render.into_comp()
 		} else {
 			sui::Comp::Space(sui::comp::Space::new(0, 0))
 		};
-		println!("timer: {timer:?}");
 		let ui = sui::div([
 			sui::custom(self.toolbar.immutable_wrap()).into_comp(),
 			sui::Text::new(format!("tool: {:?}", self.tool), 24).into_comp(),
