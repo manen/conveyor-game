@@ -7,9 +7,10 @@ use sui::{DynamicLayable, Layable, LayableExt};
 
 use crate::{
 	assets::GameAssets,
-	comp::{handle_err, handle_result_dyn, tutorial},
+	comp::{handle_err, handle_result_dyn},
 	game::Game,
 	levels::{GameState, Level},
+	scripts::tutorial,
 	textures,
 	world::maps::BuildingsMap,
 };
@@ -18,7 +19,7 @@ pub async fn main() -> DynamicLayable<'static> {
 	let game_state = GameState::load().await;
 
 	if !game_state.tutorial_completed {
-		tutorial().await
+		tutorial::tutorial().await
 	} else {
 		DynamicLayable::new_only_debug(main_menu())
 	}

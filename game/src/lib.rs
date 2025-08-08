@@ -2,6 +2,7 @@ pub mod assets;
 pub mod comp;
 pub mod game;
 pub mod levels;
+pub mod scripts;
 pub mod textures;
 pub mod utils;
 pub mod world;
