@@ -5,7 +5,7 @@ use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
 use tokio::sync::{
 	broadcast,
-	mpsc::{Receiver, Sender},
+	mpsc::{self},
 };
 
 use crate::{game::Tool, world::buildings::EBuilding};
@@ -17,14 +17,17 @@ pub enum TooltipPage {
 	GetStarted,
 }
 
-type Tx = Sender<stage_manager_remote::RemoteStageChange>;
-type Rx = Receiver<TooltipPage>;
+#[derive(Debug)]
+pub struct Channels {
+	pub stage_tx: mpsc::Sender<stage_manager_remote::RemoteStageChange>,
+	pub stage_rx: mpsc::Receiver<TooltipPage>,
+	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
+	pub game_tx: mpsc::Sender<crate::game::GameCommand>,
+}
 
-type ToolUse = broadcast::Receiver<((i32, i32), Tool)>;
-
-pub async fn controller(mut tx: Tx, mut rx: Rx, mut tool_use: ToolUse) {
+pub async fn controller(mut channels: Channels) {
 	loop {
-		match welcome(&mut tx, &mut rx, &mut tool_use).await {
+		match welcome(&mut channels).await {
 			Ok(a) => a,
 			Err(err) => {
 				eprintln!("tooltip thread caught an error: {err}")
@@ -67,25 +70,28 @@ pub fn text_with_actions(
 	RemoteStageChange::simple(div)
 }
 
-pub async fn welcome(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> anyhow::Result<()> {
-	tx.send(text_with_actions(
-		"welcome to conveyor-game!",
-		[
-			action("what is this", TooltipPage::WhatIsThis),
-			action("let's get started!", TooltipPage::GetStarted),
-		],
-	))
-	.await
-	.map_err(|err| anyhow!("{err}"))?;
+pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
+	channels
+		.stage_tx
+		.send(text_with_actions(
+			"welcome to conveyor-game!",
+			[
+				action("what is this", TooltipPage::WhatIsThis),
+				action("let's get started!", TooltipPage::GetStarted),
+			],
+		))
+		.await
+		.map_err(|err| anyhow!("{err}"))?;
 
-	let event = rx
+	let event = channels
+		.stage_rx
 		.recv()
 		.await
 		.with_context(|| format!("welcome didn't receive anything"))?;
 
 	match event {
-		TooltipPage::WhatIsThis => what_is_this(tx, rx).await?,
-		TooltipPage::GetStarted => get_started(tx, rx, tool_use).await?,
+		TooltipPage::WhatIsThis => what_is_this(channels).await?,
+		TooltipPage::GetStarted => get_started(channels).await?,
 		_ => {
 			return Err(anyhow!(
 				"unexpected page {event:?} received in what_is_this"
@@ -95,12 +101,13 @@ pub async fn welcome(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> anyhow
 	Ok(())
 }
 
-pub async fn what_is_this(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
-	tx.send(text_with_actions("this is the tutorial, and these tooltips are going to help you get the gist of the game. if you've played conveyor/factory games before, it'll feel familiar.", [
+pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
+	channels.stage_tx.send(text_with_actions("this is the tutorial, and these tooltips are going to help you get the gist of the game. if you've played conveyor/factory games before, it'll feel familiar.", [
 		action("okay sure", TooltipPage::Reset)
 	])).await.map_err(|err| anyhow!("{err}"))?;
 
-	let event = rx
+	let event = channels
+		.stage_rx
 		.recv()
 		.await
 		.with_context(|| format!("what_is_this didn't receive anything"))?;
@@ -113,8 +120,12 @@ pub async fn what_is_this(tx: &mut Tx, rx: &mut Rx) -> anyhow::Result<()> {
 	}
 }
 
-pub async fn get_started(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> anyhow::Result<()> {
-	tx.send(text_with_actions(
+pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
+	start_extracting(channels).await
+}
+
+pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
+	channels.stage_tx.send(text_with_actions(
 		"to begin extracting resources, you'll need to place a small extractor. select the small extractor from the toolbar at the top, and place it (left click) over any resource",
 		[action("go back", TooltipPage::Reset)],
 	))
@@ -123,7 +134,7 @@ pub async fn get_started(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> an
 
 	let back_pressed = async {
 		loop {
-			match rx.recv().await {
+			match channels.stage_rx.recv().await {
 				Some(TooltipPage::Reset) => return true,
 				_ => continue,
 			}
@@ -131,7 +142,7 @@ pub async fn get_started(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> an
 	};
 	let extractor_placed = async {
 		loop {
-			match tool_use.recv().await {
+			match channels.tool_use_rx.recv().await {
 				Ok((_, Tool::PlaceBuilding(EBuilding::SmallExtractor(_)))) => return true,
 				Err(broadcast::error::RecvError::Closed) => return false,
 				_ => continue,
@@ -144,7 +155,7 @@ pub async fn get_started(tx: &mut Tx, rx: &mut Rx, tool_use: &mut ToolUse) -> an
 			return Ok(())
 		},
 		res = extractor_placed => if res {
-			tx.send(text_with_actions("just like that bro", [])).await.map_err(|err| anyhow!("{err}"))?;
+			channels.stage_tx.send(text_with_actions("just like that bro", [])).await.map_err(|err| anyhow!("{err}"))?;
 			tokio::time::sleep(Duration::from_millis(5000)).await;
 		}
 	};

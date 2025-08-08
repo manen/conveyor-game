@@ -1,9 +1,11 @@
+use std::ops::{Deref, DerefMut};
+
 use sui::Layable;
 use tokio::sync::mpsc;
 
 use super::Game;
 
-pub struct GameCommand(pub Box<dyn FnOnce(&mut Game)>);
+pub struct GameCommand(pub Box<dyn FnOnce(&mut Game) + Send>);
 
 #[derive(Debug)]
 /// a wrapper around Game that allows you to call Game functions from another thread
@@ -46,4 +48,29 @@ impl Layable for GameRunner {
 	) {
 		self.game.pass_events(events, det, scale, ret_events);
 	}
+}
+
+impl Deref for GameRunner {
+	type Target = Game;
+
+	fn deref(&self) -> &Self::Target {
+		&self.game
+	}
+}
+impl DerefMut for GameRunner {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.game
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn send_test() {
+		let _ = has_to_be_send::<GameRunner>();
+	}
+
+	fn has_to_be_send<T: Send>() {}
 }

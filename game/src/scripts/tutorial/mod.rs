@@ -9,8 +9,9 @@ use tips::controller;
 use crate::{
 	assets::GameAssets,
 	comp::handle_result,
-	game::Game,
+	game::{Game, GameRunner},
 	levels::{Level, Levels},
+	scripts::tutorial,
 	textures,
 	world::{
 		buildings::{ChannelConsumer, EBuilding},
@@ -36,7 +37,7 @@ pub async fn tutorial() -> DynamicLayable<'static> {
 	DynamicLayable::new_only_debug(loader)
 }
 
-pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<Game> {
+pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<GameRunner> {
 	let assets = GameAssets::default();
 	let levels = Levels::load(&assets).await?;
 
@@ -50,10 +51,19 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let consumer = EBuilding::ChannelConsumer(consumer);
 	place_at_center(&mut buildings, consumer);
 
-	let mut game = Game::from_maps(textures, tilemap, buildings);
+	let game = Game::from_maps(textures, tilemap, buildings);
+	let (mut game, game_tx) = GameRunner::new(game);
 
 	let tool_use_rx = game.subscribe_to_tool_use();
-	game.enable_tips(|tx, rx| controller(tx, rx, tool_use_rx));
+	game.enable_tips(|tx, rx| {
+		let channels = tips::Channels {
+			stage_tx: tx,
+			stage_rx: rx,
+			tool_use_rx,
+			game_tx,
+		};
+		tips::controller(channels)
+	});
 
 	game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));
 
