@@ -35,14 +35,16 @@ pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 #[derive(Debug)]
 pub struct Game {
 	textures: Textures,
+	data: GameData,
 
 	toolbar: DynamicLayable<'static>,
 	tips: Option<DynamicLayable<'static>>,
 
-	data: GameData,
-
 	tool: Tool,
 	tool_use_tx: broadcast::Sender<((i32, i32), Tool)>,
+
+	timer: Option<Timer>,
+	paused: bool,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -71,6 +73,8 @@ impl Game {
 			toolbar: sui::custom(toolbar(&textures)),
 			textures,
 			tips: None,
+			timer: None,
+			paused: false,
 			data,
 			tool: Default::default(),
 			tool_use_tx,
@@ -104,6 +108,33 @@ impl Game {
 		&mut self,
 	) -> tokio::sync::broadcast::Receiver<((i32, i32), Tool)> {
 		self.tool_use_tx.subscribe()
+	}
+
+	pub fn enable_timer(&mut self, target: Duration) {
+		self.timer = Some(Timer::new(target))
+	}
+	pub fn disable_timer(&mut self) {
+		self.timer = None;
+	}
+
+	pub fn pause_time(&mut self) {
+		self.paused = true;
+		if let Some(timer) = &mut self.timer {
+			timer.pause();
+		}
+	}
+	pub fn resume_time(&mut self) {
+		self.paused = false;
+		if let Some(timer) = &mut self.timer {
+			timer.resume();
+		}
+	}
+	pub fn toggle_time(&mut self) {
+		if self.paused {
+			self.resume_time();
+		} else {
+			self.pause_time();
+		}
 	}
 
 	pub fn tips_det(&self, det: Details) -> Option<Details> {
@@ -211,10 +242,13 @@ impl Layable for Game {
 			self.scale_velocity = 0.0;
 		}
 
-		if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
-			self.data.tick();
-			self.last_game_tick = Instant::now();
+		if !self.paused {
+			if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
+				self.data.tick();
+				self.last_game_tick = Instant::now();
+			}
 		}
+
 		if let Some(tips) = &mut self.tips {
 			tips.tick();
 		}
@@ -375,6 +409,9 @@ impl Layable for Game {
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_D)) => {
 					self.camera_velocity.0 += move_amount;
+				}
+				Event::KeyboardEvent(_, KeyboardEvent::CharPressed(' ')) => {
+					self.toggle_time();
 				}
 
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
