@@ -28,6 +28,8 @@ pub use data::*;
 pub mod timer;
 pub use timer::Timer;
 use timer::TimerRenderable;
+mod runner;
+pub use runner::*;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
