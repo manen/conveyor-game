@@ -51,12 +51,14 @@ impl Layable for GameRunner {
 	}
 
 	fn tick(&mut self) {
-		match self.rx.try_recv() {
-			Ok(command) => {
-				let f = command.0;
-				f(&mut self.game)
+		loop {
+			match self.rx.try_recv() {
+				Ok(command) => {
+					let f = command.0;
+					f(&mut self.game)
+				}
+				Err(_) => break,
 			}
-			Err(_) => {}
 		}
 
 		self.game.tick()

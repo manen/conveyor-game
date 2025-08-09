@@ -57,6 +57,33 @@ impl Channels {
 			.ok_or_else(|| anyhow!("expected to receive TooltipPage from stage_rx"))
 	}
 
+	/// displays a simple page with a single action: continue
+	pub async fn simple_page_with_continue(
+		&mut self,
+		text: impl Into<Cow<'static, str>>,
+	) -> anyhow::Result<()> {
+		self.simple_page_with_named_continue(text, "continue").await
+	}
+	pub async fn simple_page_with_named_continue(
+		&mut self,
+		text: impl Into<Cow<'static, str>>,
+		continue_name: impl Into<Cow<'static, str>>,
+	) -> anyhow::Result<()> {
+		self.send_stage_change(text_with_actions(
+			text,
+			[action(continue_name, TooltipPage::Continue)],
+		))
+		.await
+		.map_err(|err| anyhow!("{err}"))?;
+
+		let event = self.receive_stage_event().await?;
+		match event {
+			TooltipPage::Continue => {}
+			_ => return Err(anyhow!("invalid tooltippage received in mined: {event:?}")),
+		}
+		Ok(())
+	}
+
 	/// does NOT wait for the GameRunner to execute the Fn
 	pub async fn game<F: FnOnce(&mut Game) + Send + 'static>(
 		&mut self,
@@ -186,18 +213,7 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
-	channels
-		.send_stage_change(text_with_actions(
-			"resources are extracted using extractors. you can see the blocks available to you on the toolbar at the top.",
-			[action("continue", TooltipPage::Continue)],
-		))
-		.await?;
-
-	let event = channels.receive_stage_event().await?;
-	match event {
-		TooltipPage::Continue => {}
-		_ => return Err(anyhow!("incorrect tooltippage received")),
-	}
+	channels.simple_page_with_continue("resources are extracted using extractors. you can see the blocks available to you on the toolbar at the top.").await?;
 
 	channels.send_stage_change(text_with_actions(
 		"select the small extractor from the toolbar at the top, and place it (left click) over any resource",
@@ -232,15 +248,7 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			res = back_pressed => match res {
 				1 => return Ok(()),
 				2 => {
-					channels.send_stage_change(text_with_actions("to make anything, we need to start by extracting raw materials from the ground. we can do that using the small extractor, found on the toolbar at the top of the screen.", [
-							action("continue", TooltipPage::Continue)
-						])).await?;
-
-					let event = channels.receive_stage_event().await?;
-					match event {
-						TooltipPage::Continue => {}
-						_ => return Err(anyhow!("invalid tooltippage received"))
-					}
+					channels.simple_page_with_continue("to make anything, we need to start by extracting raw materials from the ground. we can do that using the small extractor, found on the toolbar at the top of the screen.").await?;
 
 					channels.send_stage_change(text_with_actions("to continue the tutorial, select the small extractor from the toolbar and place it over a resource you'd like to mine", [
 						action("go back", TooltipPage::Reset)
@@ -248,7 +256,7 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 
 					continue;
 				}
-				_ => return Err(anyhow!("invalid return value from back_pressed"))
+				invalid => return Err(anyhow!("invalid return value {invalid} received from back_pressed"))
 			},
 			res = extractor_placed => if let Some(pos) = res {
 				let again = mined(channels, pos).await?;
@@ -278,14 +286,37 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	};
 
 	channels
-		.send_stage_change(text_with_actions::<TooltipPage>(
-			format!(
-				"good job! this extractor will begin mining {tile_resource_name} when the game is unpaused."
-			),
-			[],
+		.simple_page_with_continue(format!(
+			"good job! this extractor will begin mining {tile_resource_name} when the game is unpaused."
 		))
-		.await
-		.map_err(|err| anyhow!("{err}"))?;
+		.await?;
+
+	channels
+		.simple_page_with_continue(
+			"before we do that, we need to make sure the extracted resources are collected.",
+		)
+		.await?;
+	channels
+		.simple_page_with_named_continue(
+			"in the middle of the scene, you can see 4 buildings with red dots in the middle...",
+			"yes what about it",
+		)
+		.await?;
+	channels
+		.simple_page_with_continue(
+			"this is the central building the final, smelted resources should go into.",
+		)
+		.await?;
+
+	channels
+		.simple_page_with_named_continue(
+			"resources are moved using conveyors, which you can find on the toolbar. to finish the tutorial, you'll need to wire up the extractor you just placed into the central collector buildings.",
+			"okay i'm ready"
+		).await?;
+
+	// TODO connection checker utility
+	// we should poll the game like twice a second to check if the miner we placed has a way to go into any of the collector buildings
+	// if yes, continue
 
 	tokio::time::sleep(Duration::from_millis(5000)).await;
 	Ok(false)
