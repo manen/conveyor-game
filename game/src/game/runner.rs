@@ -1,11 +1,33 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+	fmt::Debug,
+	ops::{Deref, DerefMut},
+};
 
 use sui::Layable;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 
 use super::Game;
 
 pub struct GameCommand(pub Box<dyn FnOnce(&mut Game) + Send>);
+impl GameCommand {
+	pub fn new<F: FnOnce(&mut Game) + Send + 'static>(f: F) -> Self {
+		Self(Box::new(f))
+	}
+
+	pub fn new_return<R: Debug + Send + 'static, F: FnOnce(&mut Game) -> R + Send + 'static>(
+		f: F,
+	) -> (Self, oneshot::Receiver<R>) {
+		let (tx, rx) = oneshot::channel();
+
+		let command = Self::new(move |game| {
+			let ret = f(game);
+			tx.send(ret)
+				.expect("could not send return value into oneshot channel from GameCommand");
+		});
+
+		(command, rx)
+	}
+}
 
 #[derive(Debug)]
 /// a wrapper around Game that allows you to call Game functions from another thread

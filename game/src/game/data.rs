@@ -1,5 +1,5 @@
 use crate::world::{
-	Tile,
+	EResource, Tile,
 	maps::{BuildingsMap, Tilemap},
 };
 
@@ -11,6 +11,12 @@ pub struct GameData {
 impl GameData {
 	pub fn new(tilemap: Tilemap, buildings: BuildingsMap) -> Self {
 		Self { tilemap, buildings }
+	}
+
+	pub fn tile_resource_at(&self, pos: (i32, i32)) -> Option<EResource> {
+		let tile = self.tilemap.at(pos)?;
+		let resource = tile.generate_resource();
+		resource
 	}
 
 	pub fn tick(&mut self) {

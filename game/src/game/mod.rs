@@ -15,6 +15,7 @@ use crate::{
 	textures::Textures,
 	utils::ReturnEvents,
 	world::{
+		EResource, Resource,
 		buildings::BuildingsMap,
 		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
@@ -144,6 +145,10 @@ impl Game {
 		} else {
 			self.pause_time();
 		}
+	}
+
+	pub fn tile_resource_at(&self, pos: (i32, i32)) -> Option<EResource> {
+		self.data.tile_resource_at(pos)
 	}
 
 	pub fn tips_det(&self, det: Details) -> Option<Details> {

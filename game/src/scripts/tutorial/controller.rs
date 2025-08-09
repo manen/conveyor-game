@@ -1,17 +1,18 @@
-use std::{borrow::Cow, fmt::Debug, time::Duration};
+use std::{borrow::Cow, fmt::Debug, sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
 use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
 use tokio::sync::{
-	broadcast,
+	Mutex, broadcast,
 	mpsc::{self},
+	oneshot,
 };
 
 use crate::{
-	game::Tool,
+	game::{Game, GameCommand, Tool},
 	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
-	world::buildings::EBuilding,
+	world::{EResource, Resource, buildings::EBuilding},
 };
 
 #[derive(Clone, Debug)]
@@ -54,6 +55,36 @@ impl Channels {
 			.recv()
 			.await
 			.ok_or_else(|| anyhow!("expected to receive TooltipPage from stage_rx"))
+	}
+
+	/// does NOT wait for the GameRunner to execute the Fn
+	pub async fn game<F: FnOnce(&mut Game) + Send + 'static>(
+		&mut self,
+		f: F,
+	) -> anyhow::Result<()> {
+		let command = GameCommand::new(f);
+		self.game_tx
+			.send(command)
+			.await
+			.map_err(|err| anyhow!("channel.game failed: {err}"))?;
+		Ok(())
+	}
+	/// waits for the GameRunner to actually execute the Fn sent
+	pub async fn game_with_return<
+		R: Debug + Send + 'static,
+		F: FnOnce(&mut Game) -> R + Send + 'static,
+	>(
+		&mut self,
+		f: F,
+	) -> anyhow::Result<R> {
+		let (command, rx) = GameCommand::new_return(f);
+		self.game_tx
+			.send(command)
+			.await
+			.map_err(|err| anyhow!("channel.game_with_return failed: {err}"))?;
+
+		let ret = rx.await?;
+		Ok(ret)
 	}
 }
 
@@ -129,7 +160,7 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 	let event = channels.receive_stage_event().await?;
 	match event {
 		TooltipPage::Continue => {}
-		_ => return Err(anyhow!("incorrect tooltippage received")),
+		_ => return Err(anyhow!("incorrect tooltippage {event:?} received")),
 	}
 
 	channels.send_stage_change(text_with_actions_fullscreen("let's get started!\nwhen you click continue, the tutorial will be moved to the bottom-left corner of the screen.", [
@@ -141,6 +172,13 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 		TooltipPage::Continue => {}
 		_ => return Err(anyhow!("incorrect tooltippage received")),
 	}
+
+	channels
+		.game(|game| {
+			game.enable_timer(Duration::from_secs(60 * 5));
+			game.pause_time();
+		})
+		.await?;
 
 	start_extracting(channels).await?;
 
@@ -181,8 +219,10 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 		let extractor_placed = async {
 			loop {
 				match channels.tool_use_rx.recv().await {
-					Ok((_, Tool::PlaceBuilding(EBuilding::SmallExtractor(_)))) => return true,
-					Err(broadcast::error::RecvError::Closed) => return false,
+					Ok((pos, Tool::PlaceBuilding(EBuilding::SmallExtractor(_)))) => {
+						return Some(pos);
+					}
+					Err(broadcast::error::RecvError::Closed) => return None,
 					_ => continue,
 				}
 			}
@@ -210,21 +250,45 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 				}
 				_ => return Err(anyhow!("invalid return value from back_pressed"))
 			},
-			res = extractor_placed => if res {
-				return mined(channels).await;
+			res = extractor_placed => if let Some(pos) = res {
+				let again = mined(channels, pos).await?;
+				if again {
+					continue;
+				} else {
+					break Ok(());
+				}
 			}
 		};
 	}
 }
 
-async fn mined(channels: &mut Channels) -> anyhow::Result<()> {
+/// returns true if the extractor should be placed again
+async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool> {
+	let tile_resource = channels
+		.game_with_return(move |game| game.tile_resource_at(pos))
+		.await?;
+	let tile_resource_name = match tile_resource {
+		None => {
+			// player put the extractor over fucking stone
+			channels.send_stage_change(text_with_actions::<TooltipPage>("extractors placed over stone don't extract anything useful. to use the extractor, place it over the iron or coal found on the level.", [])).await?;
+
+			return Ok(true);
+		}
+		Some(res) => res.name(),
+	};
+
 	channels
-		.send_stage_change(text_with_actions::<TooltipPage>("just like that bro", []))
+		.send_stage_change(text_with_actions::<TooltipPage>(
+			format!(
+				"good job! this extractor will begin mining {tile_resource_name} when the game is unpaused."
+			),
+			[],
+		))
 		.await
 		.map_err(|err| anyhow!("{err}"))?;
 
 	tokio::time::sleep(Duration::from_millis(5000)).await;
-	Ok(())
+	Ok(false)
 }
 
 fn drain_broadcast<T: Clone>(rx: &mut broadcast::Receiver<T>) {
