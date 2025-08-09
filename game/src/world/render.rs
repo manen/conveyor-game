@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use sui::{Color, Details, Layable, raylib::prelude::RaylibDraw};
+use sui::{Color, Details, Layable, comp::text::Font, raylib::prelude::RaylibDraw};
 
 use crate::{
 	textures::{TextureID, Textures},
@@ -123,6 +123,15 @@ pub fn draw_buildings(
 	}
 
 	if let Some(((draw_x, draw_y), tooltip)) = tooltip {
-		d.draw_text(&tooltip, draw_x, draw_y, 11, sui::Color::WHITE);
+		Font::default().with_font(|font| {
+			d.draw_text_ex(
+				font,
+				&tooltip,
+				sui::raylib::math::Vector2::new(draw_x as _, draw_y as _),
+				11 as _,
+				sui::comp::text::SPACING,
+				sui::Color::WHITE,
+			);
+		});
 	}
 }

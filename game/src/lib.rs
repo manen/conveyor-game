@@ -18,7 +18,7 @@ pub async fn start_with_rt() {
 
 pub async fn start() {
 	println!("Hello, world!");
-	// rust_i18n::set_locale("hu");
+	rust_i18n::set_locale("hu");
 
 	let (mut rl, thread) = sui_runner::rl();
 

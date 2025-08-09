@@ -2,6 +2,7 @@ use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use sui::{
 	Layable,
+	comp::text::Font,
 	raylib::{math::glam::Vec2, prelude::RaylibDraw},
 };
 
@@ -40,7 +41,17 @@ impl<L: Layable> Layable for TooltipProvider<L> {
 		{
 			let mut handle = self.data.borrow_mut();
 			if let Some((pos, tooltip)) = handle.take() {
-				d.draw_text(&tooltip, pos.0, pos.1, 24, sui::Color::WHITE);
+				// d.draw_text(&tooltip, pos.0, pos.1, 24, sui::Color::WHITE);
+				Font::default().with_font(|font| {
+					d.draw_text_ex(
+						font,
+						&tooltip,
+						sui::raylib::math::Vector2::new(pos.0 as _, pos.1 as _),
+						24 as _,
+						sui::comp::text::SPACING,
+						sui::Color::WHITE,
+					);
+				})
 			}
 		}
 	}
