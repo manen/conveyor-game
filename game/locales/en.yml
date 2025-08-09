@@ -1,0 +1,31 @@
+_version: 1
+
+welcome-to-conveyor-game: "welcome to conveyor game!"
+what-is-this: "what is this"
+lets-get-started: "let's get started!"
+
+tutorial-game-about: "conveyor-game is a game about factories and resources.\nuse the buildings available to extract, smelt, and produce resources.\nthe rest of the tutorial will teach you all about playing the game."
+okay-sure: "okay sure"
+
+the-main-challenge-timer: "the main challenge of this game is the timer. you have to finish producing the resources required before the timer reaches zero.\nthe game starts with the timer stopped, and it's recommended to only start the timer once you've finished building."
+continue: "continue"
+
+lets-get-started-end-fullscreen: "let's get started!\nwhen you click continue, the tutorial will be moved to the bottom-left corner of the screen."
+resources-are-extracted-using-extractor: "resources are extracted using extractors. you can see the blocks available to you on the toolbar at the top."
+
+select-the-small-extractor: "select the small extractor from the toolbar at the top, and place it (left click) over any resource"
+go-back: "go back"
+what-am-i-supposed-to-do: "what am i supposed to do again?"
+
+to-make-anything: "to make anything, we need to start by extracting raw materials from the ground. we can do that using the small extractor, found on the toolbar at the top of the screen."
+to-continue-the-tutorial: "to continue the tutorial, select the small extractor from the toolbar and place it over a resource you'd like to mine"
+
+extractors-placed-over-stone: "extractors placed over stone don't extract anything useful. to use the extractor, place it over the iron or coal found on the level."
+this-extractor-will-begin-mining: "good job! this extractor will begin mining %{tile_resource_name} when the game is unpaused."
+before-we-do-that: "before we do that, we need to make sure the extracted resources are collected."
+in-the-middle-of-the-screen: "in the middle of the scene, you can see 4 buildings with red dots in the middle..."
+yes-what-about-it: "yes what about it"
+this-is-the-central-building: "this is the central building the final, smelted resources should go into."
+
+resources-are-moved-using-conveyors: "resources are moved using conveyors, which you can find on the toolbar. to finish the tutorial, you'll need to wire up the extractor you just placed into the central collector buildings."
+okay-im-ready: "okay i'm ready"

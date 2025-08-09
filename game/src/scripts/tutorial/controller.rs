@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt::Debug, sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
+use rust_i18n::t;
 use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
 use tokio::sync::{
@@ -62,7 +63,8 @@ impl Channels {
 		&mut self,
 		text: impl Into<Cow<'static, str>>,
 	) -> anyhow::Result<()> {
-		self.simple_page_with_named_continue(text, "continue").await
+		self.simple_page_with_named_continue(text, t!("continue"))
+			.await
 	}
 	pub async fn simple_page_with_named_continue(
 		&mut self,
@@ -130,10 +132,10 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.stage_tx
 		.send(text_with_actions_fullscreen(
-			"welcome to conveyor-game!",
+			t!("welcome-to-conveyor-game"),
 			[
-				action("what is this", TooltipPage::WhatIsThis),
-				action("let's get started!", TooltipPage::GetStarted),
+				action(t!("what-is-this"), TooltipPage::WhatIsThis),
+				action(t!("lets-get-started"), TooltipPage::GetStarted),
 			],
 		))
 		.await
@@ -158,9 +160,12 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
-	channels.send_stage_change(text_with_actions_fullscreen("conveyor-game is a game about factories and resources.\nuse the buildings available to extract, smelt, and produce resources.\nthe rest of the tutorial will teach you all about playing the game.", [
-		action("okay sure", TooltipPage::Reset)
-	])).await?;
+	channels
+		.send_stage_change(text_with_actions_fullscreen(
+			t!("tutorial-game-about"),
+			[action(t!("okay-sure"), TooltipPage::Reset)],
+		))
+		.await?;
 
 	let event = channels
 		.stage_rx
@@ -179,8 +184,8 @@ pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.send_stage_change(text_with_actions_fullscreen(
-			"the main challenge of this game is the timer. the game starts with the timer stopped, and it's recommended to only start the timer once you've finished building.",
-			[action("continue", TooltipPage::Continue)],
+			t!("the-main-challenge-timer"),
+			[action(t!("continue"), TooltipPage::Continue)],
 		))
 		.await?;
 
@@ -190,9 +195,12 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 		_ => return Err(anyhow!("incorrect tooltippage {event:?} received")),
 	}
 
-	channels.send_stage_change(text_with_actions_fullscreen("let's get started!\nwhen you click continue, the tutorial will be moved to the bottom-left corner of the screen.", [
-		action("continue", TooltipPage::Continue)
-	])).await?;
+	channels
+		.send_stage_change(text_with_actions_fullscreen(
+			t!("lets-get-started-end-fullscreen"),
+			[action(t!("continue"), TooltipPage::Continue)],
+		))
+		.await?;
 
 	let event = channels.receive_stage_event().await?;
 	match event {
@@ -213,13 +221,22 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
-	channels.simple_page_with_continue("resources are extracted using extractors. you can see the blocks available to you on the toolbar at the top.").await?;
+	channels
+		.simple_page_with_continue(t!("resources-are-extracted-using-extractors"))
+		.await?;
 
-	channels.send_stage_change(text_with_actions(
-		"select the small extractor from the toolbar at the top, and place it (left click) over any resource",
-		[action("go back", TooltipPage::Reset), action("what am i supposed to do again?", TooltipPage::WhatAmISupposedToDo)],
-	))
-	.await?;
+	channels
+		.send_stage_change(text_with_actions(
+			t!("select-the-small-extractor"),
+			[
+				action(t!("go-back"), TooltipPage::Reset),
+				action(
+					t!("what-am-i-supposed-to-do"),
+					TooltipPage::WhatAmISupposedToDo,
+				),
+			],
+		))
+		.await?;
 	loop {
 		let back_pressed = async {
 			loop {
@@ -248,10 +265,10 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			res = back_pressed => match res {
 				1 => return Ok(()),
 				2 => {
-					channels.simple_page_with_continue("to make anything, we need to start by extracting raw materials from the ground. we can do that using the small extractor, found on the toolbar at the top of the screen.").await?;
+					channels.simple_page_with_continue(t!("to-make-anything")).await?;
 
-					channels.send_stage_change(text_with_actions("to continue the tutorial, select the small extractor from the toolbar and place it over a resource you'd like to mine", [
-						action("go back", TooltipPage::Reset)
+					channels.send_stage_change(text_with_actions(t!("to-continue-the-tutorial"), [
+						action(t!("go-back"), TooltipPage::Reset)
 					])).await?;
 
 					continue;
@@ -278,7 +295,12 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	let tile_resource_name = match tile_resource {
 		None => {
 			// player put the extractor over fucking stone
-			channels.send_stage_change(text_with_actions::<TooltipPage>("extractors placed over stone don't extract anything useful. to use the extractor, place it over the iron or coal found on the level.", [])).await?;
+			channels
+				.send_stage_change(text_with_actions::<TooltipPage>(
+					t!("extractors-placed-over-stone"),
+					[],
+				))
+				.await?;
 
 			return Ok(true);
 		}
@@ -286,33 +308,27 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	};
 
 	channels
-		.simple_page_with_continue(format!(
-			"good job! this extractor will begin mining {tile_resource_name} when the game is unpaused."
-		))
-		.await?;
-
-	channels
 		.simple_page_with_continue(
-			"before we do that, we need to make sure the extracted resources are collected.",
-		)
-		.await?;
-	channels
-		.simple_page_with_named_continue(
-			"in the middle of the scene, you can see 4 buildings with red dots in the middle...",
-			"yes what about it",
-		)
-		.await?;
-	channels
-		.simple_page_with_continue(
-			"this is the central building the final, smelted resources should go into.",
+			t!("this-extractor-will-begin-mining", tile_resource_at => tile_resource_name),
 		)
 		.await?;
 
 	channels
+		.simple_page_with_continue(t!("before-we-do-that"))
+		.await?;
+	channels
+		.simple_page_with_named_continue(t!("in-the-middle-of-the-screen"), t!("yes-what-about-it"))
+		.await?;
+	channels
+		.simple_page_with_continue(t!("this-is-the-central-building"))
+		.await?;
+
+	channels
 		.simple_page_with_named_continue(
-			"resources are moved using conveyors, which you can find on the toolbar. to finish the tutorial, you'll need to wire up the extractor you just placed into the central collector buildings.",
-			"okay i'm ready"
-		).await?;
+			t!("resources-are-moved-using-conveyors"),
+			t!("okay-im-ready"),
+		)
+		.await?;
 
 	// TODO connection checker utility
 	// we should poll the game like twice a second to check if the miner we placed has a way to go into any of the collector buildings
