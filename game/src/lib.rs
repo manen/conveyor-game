@@ -1,3 +1,5 @@
+use crate::assets::GameAssets;
+
 pub mod assets;
 pub mod comp;
 pub mod game;
@@ -18,7 +20,19 @@ pub async fn start() {
 	println!("Hello, world!");
 	// rust_i18n::set_locale("hu");
 
-	let (rl, thread) = sui_runner::rl();
+	let (mut rl, thread) = sui_runner::rl();
+
+	{
+		let d = rl.begin_drawing(&thread);
+		let mut handle = sui::Handle::new_unfocused(d, &thread);
+
+		let assets = GameAssets::default();
+		let font = asset_provider_font::load_font(&assets, "font.ttf", &mut handle)
+			.await
+			.expect("failed to font");
+
+		font.set_as_global();
+	};
 
 	let stage = stage_manager::Stage::from_dyn_layable(comp::main().await);
 	let mut ctx = sui_runner::Context::new(stage, rl, thread);

@@ -1,21 +1,30 @@
 [workspace]
 resolver = "3"
 members = [
-	"sui/sui", "sui/sui_runner", "sui/asset_provider", "sui/stage_manager",
+	"sui/sui",
+	"sui/sui_runner",
+	"sui/asset_provider",
+	"sui/asset_provider_image",
+	"sui/asset_provider_font",
+	"sui/stage_manager",
+	"sui/stage_manager_loaders",
+	"sui/stage_manager_remote",
+
 	"game",
-	"sui/asset_provider_image"
-, "level_editor", "sui/stage_manager_loaders", "sui/stage_manager_remote"]
+	"level_editor"
+]
 
 [workspace.dependencies]
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
 
+asset_provider.path = "./sui/asset_provider"
+asset_provider_image.path = "./sui/asset_provider_image"
+asset_provider_font.path = "./sui/asset_provider_font"
+
 stage_manager.path = "./sui/stage_manager"
 stage_manager_loaders.path = "./sui/stage_manager_loaders"
 stage_manager_remote.path = "./sui/stage_manager_remote"
-
-asset_provider.path = "./sui/asset_provider"
-asset_provider_image.path = "./sui/asset_provider_image"
 
 game.path = "./game"
 level_editor.path = "./level_editor"

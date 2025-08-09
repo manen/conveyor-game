@@ -10,6 +10,7 @@ sui_runner.workspace = true
 asset_provider.workspace = true
 stage_manager.workspace = true
 asset_provider_image.workspace = true
+asset_provider_font.workspace = true
 stage_manager_loaders.workspace = true
 stage_manager_remote.workspace = true
 
