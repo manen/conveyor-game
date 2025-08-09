@@ -36,3 +36,24 @@ pub fn text_with_actions<P: Clone + 'static>(
 	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
 	RemoteStageChange::simple(div)
 }
+
+/// doesn't use wrapped text
+pub fn text_with_actions_fullscreen<P: Clone + 'static>(
+	text: impl Into<Cow<'static, str>>,
+	actions: impl IntoIterator<Item = Action<P>>,
+) -> RemoteStageChange {
+	let text = sui::comp::Text::new(text, 24).margin(4);
+
+	let actions = actions
+		.into_iter()
+		.map(|action| action.into_button().margin_h(4))
+		.map(sui::custom_only_debug);
+	let actions = sui::div(actions.collect::<Vec<_>>()).margin_v(8);
+
+	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
+
+	let div = crate::comp::FullscreenWrap::new(div.centered());
+	let div = div.with_background(sui::comp::Color::new(sui::color(0, 0, 0, 200)));
+
+	RemoteStageChange::simple(div)
+}

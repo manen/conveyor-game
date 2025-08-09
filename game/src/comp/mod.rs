@@ -6,3 +6,5 @@ mod game;
 pub use game::*;
 mod tooltip_on_hover;
 pub use tooltip_on_hover::*;
+mod fullscreen_wrap;
+pub use fullscreen_wrap::*;

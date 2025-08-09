@@ -65,7 +65,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 		controller::controller(channels)
 	});
 
-	game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));
+	// game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));
 
 	Ok(game)
 }
