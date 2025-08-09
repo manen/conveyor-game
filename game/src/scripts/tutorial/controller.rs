@@ -63,7 +63,7 @@ impl Channels {
 		&mut self,
 		text: impl Into<Cow<'static, str>>,
 	) -> anyhow::Result<()> {
-		self.simple_page_with_named_continue(text, t!("continue"))
+		self.simple_page_with_named_continue(text, t!("tutorial.continue"))
 			.await
 	}
 	pub async fn simple_page_with_named_continue(
@@ -132,10 +132,10 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.stage_tx
 		.send(text_with_actions_fullscreen(
-			t!("welcome-to-conveyor-game"),
+			t!("tutorial.welcome-to-conveyor-game"),
 			[
-				action(t!("what-is-this"), TooltipPage::WhatIsThis),
-				action(t!("lets-get-started"), TooltipPage::GetStarted),
+				action(t!("tutorial.what-is-this"), TooltipPage::WhatIsThis),
+				action(t!("tutorial.lets-get-started"), TooltipPage::GetStarted),
 			],
 		))
 		.await
@@ -162,8 +162,8 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.send_stage_change(text_with_actions_fullscreen(
-			t!("tutorial-game-about"),
-			[action(t!("okay-sure"), TooltipPage::Reset)],
+			t!("tutorial.game-about"),
+			[action(t!("tutorial.okay-sure"), TooltipPage::Reset)],
 		))
 		.await?;
 
@@ -184,8 +184,8 @@ pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.send_stage_change(text_with_actions_fullscreen(
-			t!("the-main-challenge-timer"),
-			[action(t!("continue"), TooltipPage::Continue)],
+			t!("tutorial.the-main-challenge-timer"),
+			[action(t!("tutorial.continue"), TooltipPage::Continue)],
 		))
 		.await?;
 
@@ -197,8 +197,8 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 
 	channels
 		.send_stage_change(text_with_actions_fullscreen(
-			t!("lets-get-started-end-fullscreen"),
-			[action(t!("continue"), TooltipPage::Continue)],
+			t!("tutorial.lets-get-started-end-fullscreen"),
+			[action(t!("tutorial.continue"), TooltipPage::Continue)],
 		))
 		.await?;
 
@@ -222,16 +222,16 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
-		.simple_page_with_continue(t!("resources-are-extracted-using-extractors"))
+		.simple_page_with_continue(t!("tutorial.resources-are-extracted-using-extractors"))
 		.await?;
 
 	channels
 		.send_stage_change(text_with_actions(
-			t!("select-the-small-extractor"),
+			t!("tutorial.select-the-small-extractor"),
 			[
-				action(t!("go-back"), TooltipPage::Reset),
+				action(t!("tutorial.go-back"), TooltipPage::Reset),
 				action(
-					t!("what-am-i-supposed-to-do"),
+					t!("tutorial.what-am-i-supposed-to-do"),
 					TooltipPage::WhatAmISupposedToDo,
 				),
 			],
@@ -265,10 +265,10 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			res = back_pressed => match res {
 				1 => return Ok(()),
 				2 => {
-					channels.simple_page_with_continue(t!("to-make-anything")).await?;
+					channels.simple_page_with_continue(t!("tutorial.to-make-anything")).await?;
 
-					channels.send_stage_change(text_with_actions(t!("to-continue-the-tutorial"), [
-						action(t!("go-back"), TooltipPage::Reset)
+					channels.send_stage_change(text_with_actions(t!("tutorial.to-continue-the-tutorial"), [
+						action(t!("tutorial.go-back"), TooltipPage::Reset)
 					])).await?;
 
 					continue;
@@ -297,7 +297,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 			// player put the extractor over fucking stone
 			channels
 				.send_stage_change(text_with_actions::<TooltipPage>(
-					t!("extractors-placed-over-stone"),
+					t!("tutorial.extractors-placed-over-stone"),
 					[],
 				))
 				.await?;
@@ -308,25 +308,29 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	};
 
 	channels
-		.simple_page_with_continue(
-			t!("this-extractor-will-begin-mining", tile_resource_at => tile_resource_name),
-		)
+		.simple_page_with_continue(t!(
+			"tutorial.this-extractor-will-begin-mining",
+			resource_name = tile_resource_name
+		))
 		.await?;
 
 	channels
-		.simple_page_with_continue(t!("before-we-do-that"))
+		.simple_page_with_continue(t!("tutorial.before-we-do-that"))
 		.await?;
 	channels
-		.simple_page_with_named_continue(t!("in-the-middle-of-the-screen"), t!("yes-what-about-it"))
+		.simple_page_with_named_continue(
+			t!("tutorial.in-the-middle-of-the-screen"),
+			t!("tutorial.yes-what-about-it"),
+		)
 		.await?;
 	channels
-		.simple_page_with_continue(t!("this-is-the-central-building"))
+		.simple_page_with_continue(t!("tutorial.this-is-the-central-building"))
 		.await?;
 
 	channels
 		.simple_page_with_named_continue(
-			t!("resources-are-moved-using-conveyors"),
-			t!("okay-im-ready"),
+			t!("tutorial.resources-are-moved-using-conveyors"),
+			t!("tutorial.okay-im-ready"),
 		)
 		.await?;
 

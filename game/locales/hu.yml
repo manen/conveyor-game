@@ -1,31 +1,31 @@
 _version: 1
 
-welcome-to-conveyor-game: "üdvözöllek a futószalag-játékban!"
-what-is-this: "ez mi"
-lets-get-started: "álljunk neki!"
+tutorial.welcome-to-conveyor-game: "üdvözöllek a futószalag-játékban!"
+tutorial.what-is-this: "ez mi"
+tutorial.lets-get-started: "álljunk neki!"
 
-tutorial-game-about: "ez a játék, nevéből adódóan, futószalagokról és gyárakról szól.\nhasználd az elérhető épületeket hogy kibányássz, kisüss, és előállíts különböző anyagokat.\nez a bevezető fogja megtanítani neked a játék alapjait."
-okay-sure: "oké"
+tutorial.game-about: "ez a játék, nevéből adódóan, futószalagokról és gyárakról szól.\nhasználd az elérhető épületeket hogy kibányássz, kisüss, és előállíts különböző anyagokat.\nez a bevezető fogja megtanítani neked a játék alapjait."
+tutorial.okay-sure: "oké"
 
-the-main-challenge-timer: "a játék fő kihivása az időzítő, aminek a letelte előtt kell előállítanod a megadott anyagokat.\naz óra kezdésnél meg van állítva, és ajánlott, hogy csak akkor kapcsold be, amikor elkészítetted a gyárad."
-continue: "következő"
+tutorial.the-main-challenge-timer: "a játék fő kihivása az időzítő, aminek a letelte előtt kell előállítanod a megadott anyagokat.\naz óra kezdésnél meg van állítva, és ajánlott, hogy csak akkor kapcsold be, amikor elkészítetted a gyárad."
+tutorial.continue: "következő"
 
-lets-get-started-end-fullscreen: "kezdjünk el építkezni!\na folytatás gomb megnyomása után a tutorial a bal alsó sarokban lesz található."
-resources-are-extracted-using-extractors: "nyersanyagokat kibányászni az extractor-ral tudunk. az elérhető épületeket a képernyő tetején található eszköztárban tudod elérni."
+tutorial.lets-get-started-end-fullscreen: "kezdjünk el építkezni!\na folytatás gomb megnyomása után a tutorial a bal alsó sarokban lesz található."
+tutorial.resources-are-extracted-using-extractors: "nyersanyagokat kibányászni az extractor-ral tudunk. az elérhető épületeket a képernyő tetején található eszköztárban tudod elérni."
 
-select-the-small-extractor: "válaszd ki a képernyő tetején található eszköztárból a small extractor-t, és bal klikkel helyezd le egy nyersanyag fölé."
-go-back: "vissza"
-what-am-i-supposed-to-do: "mit kéne csinálnom?"
+tutorial.select-the-small-extractor: "válaszd ki a képernyő tetején található eszköztárból a small extractor-t, és bal klikkel helyezd le egy nyersanyag fölé."
+tutorial.go-back: "vissza"
+tutorial.what-am-i-supposed-to-do: "mit kéne csinálnom?"
 
-to-make-anything: "ahhoz, hogy anyagokat hozzunk létre, először nyersanyagokat kell kibányásznunk a földből. ezt a kis bányászóval, a small extractor-ral tudjuk megtenni, amit a képernyő tetején található eszköztárban tudsz kiválasztani."
-to-continue-the-tutorial: "a tutorial folytatásához válaszd ki a small extractor-t az eszköztárból, és helyezd egy olyan nyersanyag fölé, amit ki szeretnél bányászni"
+tutorial.to-make-anything: "ahhoz, hogy anyagokat hozzunk létre, először nyersanyagokat kell kibányásznunk a földből. ezt a kis bányászóval, a small extractor-ral tudjuk megtenni, amit a képernyő tetején található eszköztárban tudsz kiválasztani."
+tutorial.to-continue-the-tutorial: "a tutorial folytatásához válaszd ki a small extractor-t az eszköztárból, és helyezd egy olyan nyersanyag fölé, amit ki szeretnél bányászni"
 
-extractors-placed-over-stone: "a kőre helyezett bányászgép semmi hasznosat nem tud kibányászni. a bányász haszálatához helyezd el a pályán található vasércre vagy szénre."
-this-extractor-will-begin-mining: "szép munka! ez a bányászgép %{}-t fog bányászni, amint a játék elindul."
-before-we-do-that: "mielőtt elindítjuk a bányászást, biztosítanunk kell, hogy a kibányászott nyersanyagok tudnak valahova menni."
-in-the-middle-of-the-screen: "a pálya közepén találsz 4 épületet, piros ponttal a közepükön..."
-yes-what-about-it: "igen, mi van vele?"
-this-is-the-central-building: "ez a központi épület, amibe a kisütött, végleges anyagokat vezetni fogjuk."
+tutorial.extractors-placed-over-stone: "a kőre helyezett bányászgép semmi hasznosat nem tud kibányászni. a bányász haszálatához helyezd el a pályán található vasércre vagy szénre."
+tutorial.this-extractor-will-begin-mining: "szép munka! ez a bányászgép %{resource_name}-t fog bányászni, amint a játék elindul."
+tutorial.before-we-do-that: "mielőtt elindítjuk a bányászást, biztosítanunk kell, hogy a kibányászott nyersanyagok tudnak valahova menni."
+tutorial.in-the-middle-of-the-screen: "a pálya közepén találsz 4 épületet, piros ponttal a közepükön..."
+tutorial.yes-what-about-it: "igen, mi van vele?"
+tutorial.this-is-the-central-building: "ez a központi épület, amibe a kisütött, végleges anyagokat vezetni fogjuk."
 
-resources-are-moved-using-conveyors: "a különböző anyagokat futószalagokkal tudod mozgatni, amit az eszköztáron megtalálsz. a tutorial befejezéséhez az imént letett bányászgépet kell bekötnöd a központi gyűjtő épületbe."
-okay-im-ready: "rendben, készenállok"
+tutorial.resources-are-moved-using-conveyors: "a különböző anyagokat futószalagokkal tudod mozgatni, amit az eszköztáron megtalálsz. a tutorial befejezéséhez az imént letett bányászgépet kell bekötnöd a központi gyűjtő épületbe."
+tutorial.okay-im-ready: "rendben, készenállok"
