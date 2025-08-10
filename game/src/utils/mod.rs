@@ -3,6 +3,9 @@ use sui::{Layable, core::ReturnEvent};
 mod multimap;
 pub use multimap::MultiMap;
 
+mod show_mouse;
+pub use show_mouse::ShowMouse;
+
 /// a layable that'll indiscriminantly return every event it's passed
 #[derive(Clone, Debug)]
 pub struct ReturnEvents;

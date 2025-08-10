@@ -10,7 +10,12 @@ pub struct Action<P: Clone + 'static> {
 }
 impl<P: Clone + 'static> Action<P> {
 	fn into_button(self) -> impl Layable + Debug {
-		let button = sui::text(self.name, 16).clickable(move |_| RemoteEvent(self.page.clone()));
+		let button = 
+			// crate::utils::ShowMouse::new
+		// (
+			(sui::text(self.name, 16)).clickable_fallback(move |_| RemoteEvent(self.page.clone()))
+		// )
+		;
 		button
 	}
 }
@@ -46,14 +51,24 @@ pub fn text_with_actions_fullscreen<P: Clone + 'static>(
 
 	let actions = actions
 		.into_iter()
-		.map(|action| action.into_button().margin_h(4))
+		.map(|action| {
+			// action.into_button().margin(2).margin_h(2).centered();
+			let button = action.into_button();
+			let button = button.margin(2).margin_h(2);
+			let button = button.centered();
+
+			button
+		})
 		.map(sui::custom_only_debug);
 	let actions = sui::div(actions.collect::<Vec<_>>()).margin_v(8);
 
 	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
 
 	let div = crate::comp::FullscreenWrap::new(div.center_y());
+	let div = div.margin(16);
+
 	let div = div.with_background(sui::comp::Color::new(sui::color(0, 0, 0, 200)));
+	// let div = crate::utils::ShowMouse::new(div);
 
 	RemoteStageChange::simple(div)
 }
