@@ -9,4 +9,4 @@ this directory will be loaded from (in order):
 
 ---
 
-font is [Google Sans Code](https://fonts.google.com/specimen/Google+Sans+Code)
+font is [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)

@@ -27,9 +27,10 @@ pub async fn start() {
 		let mut handle = sui::Handle::new_unfocused(d, &thread);
 
 		let assets = GameAssets::default();
-		let font = asset_provider_font::load_font(&assets, "font.ttf", &mut handle)
-			.await
-			.expect("failed to font");
+		let font =
+			asset_provider_font::load_font_explicit(&assets, "font.ttf", &mut handle, 32, 1.5)
+				.await
+				.expect("failed to font");
 
 		font.set_as_global();
 	};
