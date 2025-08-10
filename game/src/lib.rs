@@ -20,6 +20,19 @@ pub async fn start() {
 	println!("Hello, world!");
 	// rust_i18n::set_locale("hu");
 
+	let locale = sys_locale::get_locale();
+	println!("sys-locale reported {locale:?}");
+	// let locale = locale.unwrap_or_else(|| std::env::args().next().unwrap_or_else(|| "en".into()));
+
+	let locale = match locale {
+		Some(a) => a.split('-').next().map(Into::into),
+		None => std::env::args().next(),
+	};
+	let locale = locale.unwrap_or_else(|| "en".into());
+	println!("using locale {locale}");
+
+	rust_i18n::set_locale(&locale);
+
 	let (mut rl, thread) = sui_runner::rl();
 
 	{
