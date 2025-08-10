@@ -73,8 +73,8 @@ impl TimerRenderable for Timer {
 	fn render<'a>(&'a self) -> impl Layable + Debug + 'static {
 		let font_size = 32;
 
-		let millis = self.target - self.elapsed;
-		let millis = millis.as_millis() as u64;
+		let millis = self.target.as_millis() as i64 - self.elapsed.as_millis() as i64;
+		let millis = millis.max(0); // rendering can't go into the negatives but the underlying data can
 
 		let total_secs = millis / 1000;
 		let total_mins = total_secs / 60;
