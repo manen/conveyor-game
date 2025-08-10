@@ -166,6 +166,28 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
 		.send_stage_change(text_with_actions_fullscreen(
+			t!("tutorial.tutorial-explainer"),
+			[action(t!("tutorial.okay-sure"), TooltipPage::Continue)],
+		))
+		.await?;
+
+	let event = channels
+		.stage_rx
+		.recv()
+		.await
+		.with_context(|| format!("what_is_this didn't receive anything"))?;
+
+	match event {
+		TooltipPage::Continue => Ok(()),
+		_ => Err(anyhow!(
+			"unexpected page {event:?} received in what_is_this"
+		)),
+	}
+}
+
+pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
+	channels
+		.send_stage_change(text_with_actions_fullscreen(
 			t!("tutorial.game-about"),
 			[action(t!("tutorial.okay-sure"), TooltipPage::Reset)],
 		))
@@ -182,22 +204,7 @@ pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 		_ => Err(anyhow!(
 			"unexpected page {event:?} received in what_is_this"
 		)),
-	}
-}
-
-pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
-	channels
-		.send_stage_change(text_with_actions_fullscreen(
-			t!("tutorial.the-main-challenge-timer"),
-			[action(t!("tutorial.continue"), TooltipPage::Continue)],
-		))
-		.await?;
-
-	let event = channels.receive_stage_event().await?;
-	match event {
-		TooltipPage::Continue => {}
-		_ => return Err(anyhow!("incorrect tooltippage {event:?} received")),
-	}
+	}?;
 
 	channels
 		.send_stage_change(text_with_actions_fullscreen(

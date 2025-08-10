@@ -4,10 +4,10 @@ tutorial.welcome-to-conveyor-game: "welcome to conveyor game!"
 tutorial.what-is-this: "what is this"
 tutorial.lets-get-started: "let's get started!"
 
+tutorial.tutorial-explainer: "this is the tutorial. it teaches you the basics of the game in a few minutes, and it's required to complete in order to play the rest of the game"
 tutorial.game-about: "conveyor-game is a game about factories and resources.\nuse the buildings available to extract, smelt, and produce resources.\nthe rest of the tutorial will teach you all about playing the game."
-tutorial.okay-sure: "okay sure"
 
-tutorial.the-main-challenge-timer: "the main challenge of this game is the timer. you have to finish producing the resources required before the timer reaches zero.\nthe game starts with the timer stopped, and it's recommended to only start the timer once you've finished building."
+tutorial.okay-sure: "okay sure"
 tutorial.continue: "continue"
 
 tutorial.lets-get-started-end-fullscreen: "let's get started!\nwhen you click continue, the tutorial will be moved to the bottom-left corner of the screen."

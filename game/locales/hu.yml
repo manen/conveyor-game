@@ -4,10 +4,10 @@ tutorial.welcome-to-conveyor-game: "üdvözöllek a futószalag-játékban!"
 tutorial.what-is-this: "ez mi"
 tutorial.lets-get-started: "álljunk neki!"
 
+tutorial.tutorial-explainer: "ez a tutorial. kötelező a játék elkezdéséhez, de csak pár percet vesz igénybe, és megtanítja a játék alapjait."
 tutorial.game-about: "ez a játék, nevéből adódóan, futószalagokról és gyárakról szól.\nhasználd az elérhető épületeket hogy kibányássz, kisüss, és előállíts különböző anyagokat.\nez a bevezető fogja megtanítani neked a játék alapjait."
-tutorial.okay-sure: "oké"
 
-tutorial.the-main-challenge-timer: "a játék fő kihivása az időzítő, aminek a letelte előtt kell előállítanod a megadott anyagokat.\naz óra kezdésnél meg van állítva, és ajánlott, hogy csak akkor kapcsold be, amikor elkészítetted a gyárad."
+tutorial.okay-sure: "oké"
 tutorial.continue: "következő"
 
 tutorial.lets-get-started-end-fullscreen: "kezdjünk el építkezni!\na folytatás gomb megnyomása után a tutorial a bal alsó sarokban lesz található."
