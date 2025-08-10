@@ -102,7 +102,8 @@ pub trait Building {
 	/// even though this can return any number as a relative, if it's not a direction it will not go through by
 	/// the current implementation
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
+		// &[(0, 1), (0, -1), (1, 0), (-1, 0)]
+		&[]
 	}
 	/// lets the building pick which target candidate it'd like to pass resources to
 	fn confirm_pass_relatives(

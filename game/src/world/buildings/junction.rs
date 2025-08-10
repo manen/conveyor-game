@@ -88,4 +88,7 @@ impl Building for Junction {
 			None => None,
 		}
 	}
+	fn pass_relatives(&self) -> &'static [(i32, i32)] {
+		Direction::all_rel_array()
+	}
 }

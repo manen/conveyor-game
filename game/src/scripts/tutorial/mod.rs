@@ -43,8 +43,9 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 
 	let level = Level::load_from_assets(&assets, &levels.campaign.tutorial).await?;
 	let tilemap = level.into_tilemap()?;
+	let tilemap_size = tilemap.size();
 
-	let mut buildings = BuildingsMap::new(tilemap.width(), tilemap.height());
+	let mut buildings = BuildingsMap::new(tilemap_size.0, tilemap_size.1);
 
 	let (mut consumer, resource_rx) = ChannelConsumer::new();
 	consumer.protected = true;
@@ -57,6 +58,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let tool_use_rx = game.subscribe_to_tool_use();
 	game.enable_tips(|tx, rx| {
 		let channels = controller::Channels {
+			stage_size: tilemap_size,
 			stage_tx: tx,
 			stage_rx: rx,
 			tool_use_rx,
@@ -70,7 +72,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	Ok(game)
 }
 
-fn place_at_center(buildings: &mut BuildingsMap, building: EBuilding) {
+pub(self) fn place_at_center(buildings: &mut BuildingsMap, building: EBuilding) {
 	let (w, h) = buildings.size();
 
 	let (center_x, center_y) = (w as f32 / 2.0, h as f32 / 2.0);

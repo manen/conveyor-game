@@ -13,7 +13,8 @@ use tokio::sync::{
 use crate::{
 	game::{Game, GameCommand, Tool},
 	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
-	world::{EResource, Resource, buildings::EBuilding},
+	utils::CheckConnection,
+	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap},
 };
 
 #[derive(Clone, Debug)]
@@ -31,6 +32,8 @@ pub struct Channels {
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
 	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
 	pub game_tx: mpsc::Sender<crate::game::GameCommand>,
+
+	pub stage_size: (usize, usize),
 }
 impl Channels {
 	pub async fn send_stage<L: Layable + Debug + 'static>(
@@ -331,6 +334,61 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		.simple_page_with_named_continue(
 			t!("tutorial.resources-are-moved-using-conveyors"),
 			t!("tutorial.okay-im-ready"),
+		)
+		.await?;
+
+	channels
+		.send_stage_change(text_with_actions::<TooltipPage>(
+			t!("tutorial.place-conveyors"),
+			[],
+		))
+		.await?;
+
+	{
+		// this block contains the code used to check if the miner's connected to the center building or nah
+
+		let mut test_buildmap = BuildingsMap::new(channels.stage_size.0, channels.stage_size.1);
+		super::place_at_center(&mut test_buildmap, EBuilding::debug_consumer());
+
+		let targets = test_buildmap
+			.iter()
+			.filter_map(|(c, b)| match b {
+				EBuilding::DebugConsumer(_) => Some(c),
+				_ => None,
+			})
+			.collect::<Vec<_>>();
+		std::mem::drop(test_buildmap);
+
+		loop {
+			tokio::time::sleep(Duration::from_millis(750)).await;
+
+			let data = channels
+				.game_with_return(|game| game.data().clone())
+				.await
+				.with_context(|| {
+					format!("while cloning the Game's data to the controller thread")
+				})?;
+
+			let is_connected = data.is_connected(pos, targets.as_ref());
+			let is_connected = match is_connected {
+				Ok(a) => a,
+				Err(err) => {
+					eprintln!("connection checker error: {err:?}");
+					false
+				}
+			};
+			println!("targets were: {targets:?}");
+
+			if is_connected {
+				break;
+			}
+		}
+	}
+
+	channels
+		.simple_page_with_named_continue(
+			"fuck yeah",
+			"this is the end for now so pressing this will take you back to the start",
 		)
 		.await?;
 

@@ -6,6 +6,9 @@ pub use multimap::MultiMap;
 mod show_mouse;
 pub use show_mouse::ShowMouse;
 
+mod connected;
+pub use connected::*;
+
 /// a layable that'll indiscriminantly return every event it's passed
 #[derive(Clone, Debug)]
 pub struct ReturnEvents;
@@ -110,5 +113,8 @@ impl Direction {
 
 	pub fn all() -> impl Iterator<Item = Self> {
 		[Self::Right, Self::Bottom, Self::Left, Self::Top].into_iter()
+	}
+	pub fn all_rel_array() -> &'static [(i32, i32)] {
+		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
 	}
 }

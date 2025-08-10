@@ -151,6 +151,16 @@ impl Game {
 		self.data.tile_resource_at(pos)
 	}
 
+	pub fn data(&self) -> &GameData {
+		&self.data
+	}
+	pub fn buildings(&self) -> &BuildingsMap {
+		&self.data.buildings
+	}
+	pub fn tiles(&self) -> &Tilemap {
+		&self.data.tilemap
+	}
+
 	pub fn tips_det(&self, det: Details) -> Option<Details> {
 		if let Some(tips) = &self.tips {
 			let (_, h) = tips.size();
