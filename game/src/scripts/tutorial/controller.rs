@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt::Debug, sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
+use futures::future::Either;
 use rust_i18n::t;
 use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
@@ -266,29 +267,44 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			}
 		};
 
-		tokio::select! {
-			res = back_pressed => match res {
-				1 => return Ok(()),
-				2 => {
-					channels.simple_page_with_continue(t!("tutorial.to-make-anything")).await?;
+		let back_pressed = Box::pin(back_pressed);
+		let extractor_placed = Box::pin(extractor_placed);
 
-					channels.send_stage_change(text_with_actions(t!("tutorial.to-continue-the-tutorial"), [
-						action(t!("tutorial.go-back"), TooltipPage::Reset)
-					])).await?;
+		let first = tokio::select! {
+			res = back_pressed => Either::Left(res),
+			res = extractor_placed => Either::Right(res)
+		};
+		match first {
+			Either::Left(1) => return Ok(()),
+			Either::Left(2) => {
+				channels
+					.simple_page_with_continue(t!("tutorial.to-make-anything"))
+					.await?;
 
+				channels
+					.send_stage_change(text_with_actions(
+						t!("tutorial.to-continue-the-tutorial"),
+						[action(t!("tutorial.go-back"), TooltipPage::Reset)],
+					))
+					.await?;
+
+				continue;
+			}
+
+			Either::Right(Some(pos)) => {
+				let repeat = mined(channels, pos).await?;
+				if repeat {
 					continue;
-				}
-				invalid => return Err(anyhow!("invalid return value {invalid} received from back_pressed"))
-			},
-			res = extractor_placed => if let Some(pos) = res {
-				let again = mined(channels, pos).await?;
-				if again {
-					continue;
-				} else {
-					break Ok(());
 				}
 			}
-		};
+
+			Either::Left(invalid) => {
+				return Err(anyhow!(
+					"invalid return value {invalid} received from back_pressed"
+				));
+			}
+			Either::Right(None) => return Err(anyhow!("building place channel is broken")),
+		}
 	}
 }
 
@@ -300,12 +316,14 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	let tile_resource_name = match tile_resource {
 		None => {
 			// player put the extractor over fucking stone
+
 			channels
 				.send_stage_change(text_with_actions::<TooltipPage>(
 					t!("tutorial.extractors-placed-over-stone"),
 					[],
 				))
 				.await?;
+			tokio::time::sleep(Duration::from_millis(400)).await;
 
 			return Ok(true);
 		}

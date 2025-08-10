@@ -20,7 +20,7 @@ tutorial.what-am-i-supposed-to-do: "what am i supposed to do again?"
 tutorial.to-make-anything: "to make anything, we need to start by extracting raw materials from the ground. we can do that using the small extractor, found on the toolbar at the top of the screen."
 tutorial.to-continue-the-tutorial: "to continue the tutorial, select the small extractor from the toolbar and place it over a resource you'd like to mine"
 
-tutorial.extractors-placed-over-stone: "extractors placed over stone don't extract anything useful. to use the extractor, place it over the iron or coal found on the level."
+tutorial.extractors-placed-over-stone: "extractors placed over stone don't produce anything useful. to mine resources, place the extractor over the iron or coal found on the level."
 tutorial.this-extractor-will-begin-mining: "good job! this extractor will begin mining %{resource_name} when the game is unpaused."
 tutorial.before-we-do-that: "before we do that, we need to make sure the extracted resources are collected."
 tutorial.in-the-middle-of-the-screen: "in the middle of the scene, you can see 4 buildings with red dots in the middle..."
