@@ -48,6 +48,7 @@ pub struct Game {
 
 	timer: Option<Timer>,
 	paused: bool,
+	can_toggle_time: bool,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -78,6 +79,7 @@ impl Game {
 			tips: None,
 			timer: None,
 			paused: false,
+			can_toggle_time: true,
 			data,
 			tool: Default::default(),
 			tool_use_tx,
@@ -125,6 +127,11 @@ impl Game {
 	}
 	pub fn disable_timer(&mut self) {
 		self.timer = None;
+	}
+
+	/// sets whether the user can toggle the passage of time with the spacebar
+	pub fn set_can_toggle_time(&mut self, can_switch_time: bool) {
+		self.can_toggle_time = can_switch_time;
 	}
 
 	pub fn pause_time(&mut self) {
@@ -448,7 +455,9 @@ impl Layable for Game {
 					self.camera_velocity.0 += move_amount;
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed(' ')) => {
-					self.toggle_time();
+					if self.can_toggle_time {
+						self.toggle_time();
+					}
 				}
 
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {

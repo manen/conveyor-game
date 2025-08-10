@@ -213,8 +213,10 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 
 	channels
 		.game(|game| {
+			// sets a timer that the user can't touch (yet)
 			game.enable_timer(Duration::from_secs(60 * 5));
 			game.pause_time();
+			game.set_can_toggle_time(false);
 		})
 		.await?;
 
