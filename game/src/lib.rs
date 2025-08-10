@@ -16,21 +16,36 @@ pub async fn start_with_rt() {
 	start().await;
 }
 
+fn get_locale() -> String {
+	let from_args = std::env::args().nth(1);
+	match from_args {
+		Some(a) => {
+			println!("using locale from cli args: {a}");
+			return a;
+		}
+		None => (),
+	};
+
+	let locale = sys_locale::get_locale();
+	println!("sys-locale reported {locale:?}");
+
+	let locale = match locale {
+		Some(a) => a.split('-').next().map(String::from),
+		None => None,
+	};
+	let locale = locale.unwrap_or_else(|| "en".into());
+
+	locale
+}
+
 pub async fn start() {
 	println!("Hello, world!");
 	// rust_i18n::set_locale("hu");
 
-	let locale = sys_locale::get_locale();
-	println!("sys-locale reported {locale:?}");
 	// let locale = locale.unwrap_or_else(|| std::env::args().next().unwrap_or_else(|| "en".into()));
 
-	let locale = match locale {
-		Some(a) => a.split('-').next().map(Into::into),
-		None => std::env::args().next(),
-	};
-	let locale = locale.unwrap_or_else(|| "en".into());
+	let locale = get_locale();
 	println!("using locale {locale}");
-
 	rust_i18n::set_locale(&locale);
 
 	let (mut rl, thread) = sui_runner::rl();

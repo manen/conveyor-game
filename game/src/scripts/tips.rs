@@ -42,7 +42,7 @@ pub fn text_with_actions_fullscreen<P: Clone + 'static>(
 	text: impl Into<Cow<'static, str>>,
 	actions: impl IntoIterator<Item = Action<P>>,
 ) -> RemoteStageChange {
-	let text = sui::comp::Text::new(text, 24).margin(4);
+	let text = sui::comp::text::wrapped_text::CenteredWrappedText::new(text, 24).margin(4);
 
 	let actions = actions
 		.into_iter()
@@ -52,7 +52,7 @@ pub fn text_with_actions_fullscreen<P: Clone + 'static>(
 
 	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
 
-	let div = crate::comp::FullscreenWrap::new(div.centered());
+	let div = crate::comp::FullscreenWrap::new(div.center_y());
 	let div = div.with_background(sui::comp::Color::new(sui::color(0, 0, 0, 200)));
 
 	RemoteStageChange::simple(div)
