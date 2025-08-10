@@ -65,7 +65,7 @@ impl CheckConnection for GameData {
 		let mut source = source;
 
 		for i in 0.. {
-			println!("checking {source:?}");
+			// println!("checking {source:?}");
 
 			if cache.contains(&source) {
 				// we've been here before and it's false
@@ -93,7 +93,7 @@ impl CheckConnection for GameData {
 					let rel = relatives[0];
 					let pos = (source.0 + rel.0, source.1 + rel.1);
 					source = pos;
-					println!("single direction building passing to {pos:?}");
+					// println!("single direction building passing to {pos:?}");
 
 					continue;
 				}
@@ -101,7 +101,7 @@ impl CheckConnection for GameData {
 					// we have to do recursion
 					for pos in relatives.iter().copied() {
 						let pos = (source.0 + pos.0, source.1 + pos.1);
-						println!("multireturn building passing to {pos:?}");
+						// println!("multireturn building passing to {pos:?}");
 
 						let is_connected =
 							match self.is_connected_internal(pos, target.clone(), cache) {

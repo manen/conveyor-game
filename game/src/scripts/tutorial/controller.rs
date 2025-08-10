@@ -377,7 +377,6 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 					false
 				}
 			};
-			println!("targets were: {targets:?}");
 
 			if is_connected {
 				break;
@@ -392,9 +391,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		)
 		.await?;
 
-	// TODO connection checker utility
-	// we should poll the game like twice a second to check if the miner we placed has a way to go into any of the collector buildings
-	// if yes, continue
+	// ! ---
 
 	tokio::time::sleep(Duration::from_millis(5000)).await;
 	Ok(false)
