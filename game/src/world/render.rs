@@ -78,7 +78,7 @@ pub fn draw_buildings(
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
-	const DEBUG: bool = true;
+	const DEBUG: bool = false;
 
 	let mut tooltip = Option::<((i32, i32), Cow<'static, str>)>::None;
 	for x in 0..buildings.width() {

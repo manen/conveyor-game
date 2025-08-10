@@ -295,6 +295,8 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 				let repeat = mined(channels, pos).await?;
 				if repeat {
 					continue;
+				} else {
+					return Ok(());
 				}
 			}
 
@@ -405,15 +407,41 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	}
 
 	channels
-		.simple_page_with_named_continue(
-			"fuck yeah",
-			"this is the end for now so pressing this will take you back to the start",
-		)
+		.simple_page_with_continue(t!("tutorial.extractor-wired-up"))
 		.await?;
 
-	// ! ---
+	channels
+		.simple_page_with_continue(t!("tutorial.its-paused-lets-start"))
+		.await?;
 
-	tokio::time::sleep(Duration::from_millis(5000)).await;
+	// enable time change by user
+	channels
+		.game(|game| {
+			game.set_can_toggle_time(true);
+			game.pause_time();
+		})
+		.await?;
+
+	channels
+		.send_stage_change(text_with_actions::<TooltipPage>(
+			t!("tutorial.start-time-by-pressing-space"),
+			[],
+		))
+		.await?;
+
+	loop {
+		let is_paused = channels.game_with_return(|game| game.is_paused()).await?;
+		if !is_paused {
+			break;
+		}
+
+		tokio::time::sleep(Duration::from_millis(150)).await;
+	}
+
+	channels.simple_page_with_continue("ott is van").await?;
+
+	// ---
+
 	Ok(false)
 }
 

@@ -30,3 +30,7 @@ tutorial.this-is-the-central-building: "ez a központi épület, amibe a kisüt�
 tutorial.resources-are-moved-using-conveyors: "a különböző anyagokat futószalagokkal tudod mozgatni, amit az eszköztáron megtalálsz. a tutorial befejezéséhez az imént letett bányászgépet kell bekötnöd a központi gyűjtő épületbe."
 tutorial.okay-im-ready: "rendben, készenállok"
 tutorial.place-conveyors: "az eszköztáron található futószalagokból építs utat a nyersanyagoknak az új bányászgéptől a központi épületekig"
+
+tutorial.extractor-wired-up: "szép munka! az új masinád be van kötve, de még nem indult el."
+tutorial.its-paused-lets-start: "jelenleg azért nem működik, mert az idő meg van állítva a játék elején. ha elindítjuk az időt, a bányászgép is el fog indulni!"
+tutorial.start-time-by-pressing-space: "a SZÓKÖZ lenyomásával bármikor el tudod indítani, és meg tudod állítani az időt (és vele együtt az időzítőt is)"

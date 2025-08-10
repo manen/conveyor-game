@@ -153,6 +153,9 @@ impl Game {
 			self.pause_time();
 		}
 	}
+	pub fn is_paused(&self) -> bool {
+		self.paused
+	}
 
 	pub fn tile_resource_at(&self, pos: (i32, i32)) -> Option<EResource> {
 		self.data.tile_resource_at(pos)
