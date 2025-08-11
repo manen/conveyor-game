@@ -9,7 +9,7 @@ use controller::controller;
 use crate::{
 	assets::GameAssets,
 	comp::handle_result,
-	game::{Game, GameRunner},
+	game::{Game, GameRunner, Goal, goal::ResourceCounter},
 	levels::{Level, Levels},
 	scripts::tutorial,
 	textures,
@@ -47,7 +47,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 
 	let mut buildings = BuildingsMap::new(tilemap_size.0, tilemap_size.1);
 
-	let (mut consumer, resource_rx) = ChannelConsumer::new();
+	let (mut consumer, resources_rx) = ChannelConsumer::new();
 	consumer.protected = true;
 	let consumer = EBuilding::ChannelConsumer(consumer);
 	place_at_center(&mut buildings, consumer);
@@ -58,12 +58,15 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let tool_use_rx = game.subscribe_to_tool_use();
 	game.enable_tips(|tx, rx| {
 		let channels = controller::Channels {
+			goal: ResourceCounter::new(Goal::new([]), resources_rx),
+
 			stage_size: tilemap_size,
 			stage_tx: tx,
 			stage_rx: rx,
 			tool_use_rx,
 			game_tx,
 		};
+
 		controller::controller(channels)
 	});
 

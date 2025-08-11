@@ -31,6 +31,8 @@ pub use timer::Timer;
 use timer::TimerRenderable;
 mod runner;
 pub use runner::*;
+pub mod goal;
+pub use goal::Goal;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
@@ -49,6 +51,8 @@ pub struct Game {
 	timer: Option<Timer>,
 	paused: bool,
 	can_toggle_time: bool,
+
+	goal_display: Option<DynamicLayable<'static>>,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -78,6 +82,7 @@ impl Game {
 			textures,
 			tips: None,
 			timer: None,
+			goal_display: None,
 			paused: false,
 			can_toggle_time: true,
 			data,
@@ -106,6 +111,26 @@ impl Game {
 		self.tips = Some(remote);
 	}
 	pub fn disable_tips(&mut self) {
+		self.tips = None;
+	}
+
+	pub fn enable_goal_display<
+		T: Send + Debug + 'static,
+		F: Future<Output = ()> + Send + 'static,
+	>(
+		&mut self,
+		controller: impl FnOnce(
+			tokio::sync::mpsc::Sender<stage_manager_remote::RemoteStageChange>,
+			tokio::sync::mpsc::Receiver<T>,
+		) -> F
+		+ Send,
+	) {
+		let remote = stage_manager_remote::RemoteStage::new(controller);
+		let remote = DynamicLayable::new_only_debug(remote);
+
+		self.tips = Some(remote);
+	}
+	pub fn disable_goal_display(&mut self) {
 		self.tips = None;
 	}
 
@@ -185,6 +210,31 @@ impl Game {
 			None
 		}
 	}
+	pub fn goal_display_det(&self, det: Details) -> Option<Details> {
+		if let Some(goal_display) = &self.goal_display {
+			let (w, _) = goal_display.size();
+			// on the right side of the screen, between the toolbar and the tips
+
+			let start_x = det.aw - w;
+			let start_y = self.toolbar.size().1;
+
+			let aw = w;
+			let ah = self
+				.tips_det(det)
+				.map(|tips_det| tips_det.y - start_y)
+				.unwrap_or_else(|| det.ah - start_y);
+
+			let l_det = Details {
+				x: start_x,
+				y: start_y,
+				aw,
+				ah,
+			};
+			Some(l_det)
+		} else {
+			None
+		}
+	}
 
 	fn gen_toolbar(&self) -> DynamicLayable<'static> {
 		DynamicLayable::new(toolbar(&self.textures))
@@ -240,6 +290,11 @@ impl Layable for Game {
 			let l_det = self.tips_det(det).unwrap();
 
 			tips.render(d, l_det, 1.0);
+		}
+		if let Some(goal_display) = &self.goal_display {
+			let l_det = self.goal_display_det(det).unwrap();
+
+			goal_display.render(d, l_det, 1.0);
 		}
 	}
 

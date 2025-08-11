@@ -12,10 +12,10 @@ use tokio::sync::{
 };
 
 use crate::{
-	game::{Game, GameCommand, Tool},
+	game::{Game, GameCommand, Goal, Tool, goal::ResourceCounter},
 	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
 	utils::CheckConnection,
-	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap},
+	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap, tile},
 };
 
 #[derive(Clone, Debug)]
@@ -29,6 +29,8 @@ pub enum TooltipPage {
 
 #[derive(Debug)]
 pub struct Channels {
+	pub goal: ResourceCounter,
+
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
 	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
@@ -322,10 +324,10 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	let tile_resource = channels
 		.game_with_return(move |game| game.tile_resource_at(pos))
 		.await?;
-	let tile_resource_name = match tile_resource {
+
+	let tile_resource = match tile_resource {
 		None => {
 			// player put the extractor over fucking stone
-
 			channels
 				.send_stage_change(text_with_actions::<TooltipPage>(
 					t!("tutorial.extractors-placed-over-stone"),
@@ -336,8 +338,9 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 
 			return Ok(true);
 		}
-		Some(res) => res.name(),
+		Some(res) => res,
 	};
+	let tile_resource_name = tile_resource.name();
 
 	channels
 		.simple_page_with_continue(t!(
@@ -345,6 +348,9 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 			resource_name = tile_resource_name
 		))
 		.await?;
+
+	// set the goal to some of the resource we placed an extractor over
+	channels.goal.set_goal(Goal::new([(tile_resource, 10)]));
 
 	channels
 		.simple_page_with_continue(t!("tutorial.before-we-do-that"))
