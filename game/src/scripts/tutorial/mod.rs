@@ -52,12 +52,13 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let consumer = EBuilding::ChannelConsumer(consumer);
 	place_at_center(&mut buildings, consumer);
 
-	let game = Game::from_maps(textures, tilemap, buildings);
+	let game = Game::from_maps(textures.clone(), tilemap, buildings);
 	let (mut game, game_tx) = GameRunner::new(game);
 
 	let tool_use_rx = game.subscribe_to_tool_use();
-	game.enable_tips(|tx, rx| {
+	game.enable_tips_spawn(|tx, rx| {
 		let channels = controller::Channels {
+			textures: Some(textures),
 			goal: ResourceCounter::new(Goal::new([]), resources_rx),
 
 			stage_size: tilemap_size,

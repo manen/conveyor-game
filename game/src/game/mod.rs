@@ -1,4 +1,5 @@
 use anyhow::{Context, anyhow};
+use stage_manager_remote::{RemoteStage, RemoteStageChange};
 use std::{
 	fmt::Debug,
 	time::{Duration, Instant},
@@ -8,7 +9,7 @@ use sui::{
 	core::{Event, KeyboardEvent, MouseEvent, ReturnEvent},
 	raylib::ffi::KeyboardKey,
 };
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, mpsc};
 
 use crate::{
 	comp::{SelectTool, toolbar},
@@ -97,7 +98,7 @@ impl Game {
 		}
 	}
 
-	pub fn enable_tips<T: Send + Debug + 'static, F: Future<Output = ()> + Send + 'static>(
+	pub fn enable_tips_spawn<T: Send + Debug + 'static, F: Future<Output = ()> + Send + 'static>(
 		&mut self,
 		controller: impl FnOnce(
 			tokio::sync::mpsc::Sender<stage_manager_remote::RemoteStageChange>,
@@ -105,16 +106,24 @@ impl Game {
 		) -> F
 		+ Send,
 	) {
-		let remote = stage_manager_remote::RemoteStage::new(controller);
+		let remote = stage_manager_remote::RemoteStage::spawn_new(controller);
 		let remote = DynamicLayable::new_only_debug(remote);
 
 		self.tips = Some(remote);
+	}
+	pub fn enable_tips<T: Send + Debug + 'static>(
+		&mut self,
+	) -> (mpsc::Sender<RemoteStageChange>, mpsc::Receiver<T>) {
+		let ((stage_tx, events_rx), stage) = RemoteStage::new();
+		self.tips = Some(sui::custom_only_debug(stage));
+
+		(stage_tx, events_rx)
 	}
 	pub fn disable_tips(&mut self) {
 		self.tips = None;
 	}
 
-	pub fn enable_goal_display<
+	pub fn enable_goal_display_spawn<
 		T: Send + Debug + 'static,
 		F: Future<Output = ()> + Send + 'static,
 	>(
@@ -125,13 +134,23 @@ impl Game {
 		) -> F
 		+ Send,
 	) {
-		let remote = stage_manager_remote::RemoteStage::new(controller);
+		let remote = stage_manager_remote::RemoteStage::spawn_new(controller);
 		let remote = DynamicLayable::new_only_debug(remote);
 
 		self.tips = Some(remote);
 	}
+	pub fn enable_goal_display<T: Send + Debug + 'static>(
+		&mut self,
+	) -> (mpsc::Sender<RemoteStageChange>, mpsc::Receiver<T>) {
+		let ((stage_tx, events_rx), stage) =
+			// RemoteStage::new_explicit(sui::comp::Color::new(sui::Color::PURPLE).fix_wh_square(400));
+			RemoteStage::new();
+		self.goal_display = Some(sui::custom_only_debug(stage));
+
+		(stage_tx, events_rx)
+	}
 	pub fn disable_goal_display(&mut self) {
-		self.tips = None;
+		self.goal_display = None;
 	}
 
 	pub fn subscribe_to_tool_use(
@@ -353,6 +372,9 @@ impl Layable for Game {
 
 		if let Some(tips) = &mut self.tips {
 			tips.tick();
+		}
+		if let Some(goal_display) = &mut self.goal_display {
+			goal_display.tick();
 		}
 		self.last_tick = Instant::now();
 	}

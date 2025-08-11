@@ -14,6 +14,7 @@ use tokio::sync::{
 use crate::{
 	game::{Game, GameCommand, Goal, Tool, goal::ResourceCounter},
 	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
+	textures::Textures,
 	utils::CheckConnection,
 	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap, tile},
 };
@@ -30,6 +31,7 @@ pub enum TooltipPage {
 #[derive(Debug)]
 pub struct Channels {
 	pub goal: ResourceCounter,
+	pub textures: Option<Textures>,
 
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
@@ -352,6 +354,24 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	// set the goal to some of the resource we placed an extractor over
 	channels.goal.set_goal(Goal::new([(tile_resource, 10)]));
 
+	// enable the goal ui
+	let display_tx = channels
+		.game_with_return(|game| {
+			game.disable_goal_display();
+			game.enable_goal_display::<()>().0
+		})
+		.await?;
+
+	channels.goal.enable_display_tx(
+		channels
+			.textures
+			.take()
+			.expect("texture has been taken already"),
+		display_tx,
+	);
+
+	channels.goal.render_tick().await?;
+
 	channels
 		.simple_page_with_continue(t!("tutorial.before-we-do-that"))
 		.await?;
@@ -451,7 +471,18 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		tokio::time::sleep(Duration::from_millis(150)).await;
 	}
 
-	channels.simple_page_with_continue("ott is van").await?;
+	channels
+		.send_stage_change(text_with_actions::<TooltipPage>("ott is van", []))
+		.await?;
+
+	while !channels.goal.is_reached() {
+		channels.goal.tick_next().await?;
+		channels.goal.render_tick().await?;
+	}
+
+	channels
+		.simple_page_with_continue("nyertel yippieee")
+		.await?;
 
 	// ---
 

@@ -1,5 +1,7 @@
 _version: 1
 
+ui.resource-bank: "resource bank"
+
 tutorial.welcome-to-conveyor-game: "welcome to conveyor game!"
 tutorial.what-is-this: "what is this"
 tutorial.lets-get-started: "let's get started!"

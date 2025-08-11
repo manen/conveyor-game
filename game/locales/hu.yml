@@ -1,5 +1,7 @@
 _version: 1
 
+ui.resource-bank: "nyersanyagok"
+
 tutorial.welcome-to-conveyor-game: "üdvözöllek a futószalag-játékban!"
 tutorial.what-is-this: "ez mi"
 tutorial.lets-get-started: "álljunk neki!"
