@@ -12,6 +12,7 @@ use tokio::sync::{
 };
 
 use crate::{
+	comp::main_menu,
 	game::{Game, GameCommand, Goal, Tool, goal::ResourceCounter},
 	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
 	textures::Textures,
@@ -33,6 +34,7 @@ pub struct Channels {
 	pub goal: ResourceCounter,
 	pub textures: Option<Textures>,
 
+	pub master_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
 	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
@@ -472,7 +474,10 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	}
 
 	channels
-		.send_stage_change(text_with_actions::<TooltipPage>("ott is van", []))
+		.send_stage_change(text_with_actions::<TooltipPage>(
+			t!("tutorial.time-started"),
+			[],
+		))
 		.await?;
 
 	while !channels.goal.is_reached() {
@@ -481,8 +486,15 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	}
 
 	channels
-		.simple_page_with_continue("nyertel yippieee")
+		.simple_page_with_continue(t!("tutorial.you-win"))
 		.await?;
+
+	let menu = main_menu();
+	channels
+		.master_tx
+		.send(RemoteStageChange::simple_only_debug(menu))
+		.await
+		.map_err(|err| anyhow!("{err}"))?;
 
 	// ---
 

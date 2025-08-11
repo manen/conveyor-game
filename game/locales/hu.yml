@@ -36,3 +36,6 @@ tutorial.place-conveyors: "az eszköztáron található futószalagokból épít
 tutorial.extractor-wired-up: "szép munka! az új masinád be van kötve, de még nem indult el."
 tutorial.its-paused-lets-start: "jelenleg azért nem működik, mert az idő meg van állítva a játék elején. ha elindítjuk az időt, a bányászgép is el fog indulni!"
 tutorial.start-time-by-pressing-space: "a SZÓKÖZ lenyomásával bármikor el tudod indítani, és meg tudod állítani az időt (és vele együtt az időzítőt is)"
+
+tutorial.time-started: "ott is van! a jobb oldali panelon láthatod, hogy melyik nyersanyagból mennyit kell előállítanod, és eddig mennyit állítottál elő."
+tutorial.you-win: "nyertél!"

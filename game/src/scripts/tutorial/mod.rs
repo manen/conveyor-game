@@ -1,10 +1,14 @@
+use std::fmt::Debug;
+
 use stage_manager::StageChange;
 use stage_manager_loaders::Loader;
-use sui::{DynamicLayable, LayableExt};
+use stage_manager_remote::StageSyncWrap;
+use sui::{DynamicLayable, Layable, LayableExt};
 // use tokio::sync::mpsc::{Receiver, Sender};
 
 mod controller;
 use controller::controller;
+use tokio::sync::mpsc;
 
 use crate::{
 	assets::GameAssets,
@@ -37,7 +41,9 @@ pub async fn tutorial() -> DynamicLayable<'static> {
 	DynamicLayable::new_only_debug(loader)
 }
 
-pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<GameRunner> {
+pub async fn assemble_tutorial(
+	textures: textures::Textures,
+) -> anyhow::Result<impl Layable + Debug> {
 	let assets = GameAssets::default();
 	let levels = Levels::load(&assets).await?;
 
@@ -46,6 +52,8 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 	let tilemap_size = tilemap.size();
 
 	let mut buildings = BuildingsMap::new(tilemap_size.0, tilemap_size.1);
+
+	let (master_tx, master_rx) = mpsc::channel(5);
 
 	let (mut consumer, resources_rx) = ChannelConsumer::new();
 	consumer.protected = true;
@@ -60,6 +68,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 		let channels = controller::Channels {
 			textures: Some(textures),
 			goal: ResourceCounter::new(Goal::new([]), resources_rx),
+			master_tx,
 
 			stage_size: tilemap_size,
 			stage_tx: tx,
@@ -71,8 +80,7 @@ pub async fn assemble_tutorial(textures: textures::Textures) -> anyhow::Result<G
 		controller::controller(channels)
 	});
 
-	// game.enable_timer(std::time::Duration::from_secs(60 * 3 + 30));
-
+	let game = StageSyncWrap::assemble(game, master_rx);
 	Ok(game)
 }
 

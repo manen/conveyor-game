@@ -36,3 +36,6 @@ tutorial.place-conveyors: "use the conveyors on the toolbar at the top to wire u
 tutorial.extractor-wired-up: "that's it! let's see if your new machine is working!"
 tutorial.its-paused-lets-start: "right now it's not outputting anything, because time is stopped. let's start it to see it work!"
 tutorial.start-time-by-pressing-space: "you can toggle whether time (and thus the timer) is paused by pressing SPACE"
+
+tutorial.time-started: "that's it! you can use the panel on the right to track the amount of resources collected, and the amount required."
+tutorial.you-win: "you won!"

@@ -56,6 +56,7 @@ pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
 
 pub fn main_menu() -> impl Layable + Debug {
 	let title = sui::text("conveyor-game", 32);
+
 	let load_game = sui::text("load into game", 16).clickable(|_| game());
 
 	let container = sui::div([sui::custom(title), sui::custom_only_debug(load_game)]);
