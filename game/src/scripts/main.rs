@@ -16,14 +16,11 @@ use crate::{
 };
 
 pub async fn main() -> DynamicLayable<'static> {
-	// let game_state = GameState::load().await;
+	let main_menu = main_menu().await;
 
-	// if !game_state.tutorial_completed {
-	// 	tutorial::tutorial().await
-	// } else {
-	// 	DynamicLayable::new_only_debug(main_menu())
-	// }
-	sui::custom_only_debug(main_menu().await)
+	let main = main_menu;
+	let main = sui::custom_only_debug(main);
+	main
 }
 
 pub async fn level_by_id<A: Assets + Send + Sync + 'static>(

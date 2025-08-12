@@ -15,6 +15,9 @@ mod texture_id;
 pub use texture_id::*;
 
 pub(self) static INTERNAL_CACHE: OnceLock<Textures> = OnceLock::new();
+pub fn is_cached() -> bool {
+	INTERNAL_CACHE.get().is_some()
+}
 
 /// contains all the logic for storing textures \
 /// cheap to clone, and cached after the first load
