@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use anyhow::Context;
 use asset_provider::Assets;
 use stage_manager::StageChange;
-use sui::{DynamicLayable, Layable, LayableExt};
+use sui::{DynamicLayable, Layable, LayableExt, core::ReturnEvent};
 
 use crate::{
 	assets::GameAssets,
@@ -16,13 +16,14 @@ use crate::{
 };
 
 pub async fn main() -> DynamicLayable<'static> {
-	let game_state = GameState::load().await;
+	// let game_state = GameState::load().await;
 
-	if !game_state.tutorial_completed {
-		tutorial::tutorial().await
-	} else {
-		DynamicLayable::new_only_debug(main_menu())
-	}
+	// if !game_state.tutorial_completed {
+	// 	tutorial::tutorial().await
+	// } else {
+	// 	DynamicLayable::new_only_debug(main_menu())
+	// }
+	sui::custom_only_debug(main_menu())
 }
 
 pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
@@ -55,13 +56,24 @@ pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
 }
 
 pub fn main_menu() -> impl Layable + Debug {
-	let title = sui::text("conveyor-game", 32);
+	let title = sui::Text::new("conveyor-game", 32);
+	let title = title.margin(32);
+	let title = title.center_x();
 
-	let load_game = sui::text("load into game", 16).clickable(|_| game());
+	let button_disabled =
+		crate::comp::button_explicit("start tutorial", true, || ReturnEvent::new(4));
+	let button_enabled =
+		crate::comp::button_explicit("start tutorial", false, || ReturnEvent::new(4));
 
-	let container = sui::div([sui::custom(title), sui::custom_only_debug(load_game)]);
+	let buttons = sui::div([
+		sui::custom_only_debug(button_disabled),
+		sui::custom_only_debug(button_enabled),
+	]);
+	let buttons = buttons.restrict_to_size().center_x();
+	let buttons = buttons.center_y();
 
-	container.centered()
+	let page = buttons.overlay(title);
+	page
 }
 
 pub fn game() -> StageChange<'static> {
