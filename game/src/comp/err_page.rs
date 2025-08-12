@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use stage_manager::StageChange;
 use sui::{DynamicLayable, Layable, LayableExt};
 
-use crate::comp::main_menu;
+use crate::scripts::main::main_menu;
 
 pub fn err_page_customizable<E: Debug + Display>(
 	err: E,
@@ -30,7 +30,12 @@ pub fn err_page_customizable<E: Debug + Display>(
 }
 
 pub fn err_page<E: Debug + Display>(err: E) -> impl Layable + Debug + 'static {
-	err_page_customizable(err, Some(StageChange::simple_only_debug(main_menu())))
+	let main_menu = main_menu();
+	let main_menu = stage_manager_loaders::Loader::new_invisible(main_menu, |a| {
+		StageChange::simple_only_debug(a)
+	});
+
+	err_page_customizable(err, Some(main_menu))
 }
 
 pub fn handle_result<E: Debug + Display, T: Layable + Debug + 'static>(

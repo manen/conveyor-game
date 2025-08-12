@@ -544,7 +544,7 @@ impl Layable for Game {
 					// *self.tilemap.tiles_mut() = worldgen::gen_tiles();
 					// TODO reimplement
 
-					let future = async { crate::comp::main().await };
+					let future = async { crate::scripts::main::main().await };
 					let loader = stage_manager_loaders::Loader::new_overlay(
 						sui::comp::Space::new(10, 10),
 						future,

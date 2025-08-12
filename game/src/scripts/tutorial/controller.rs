@@ -12,9 +12,12 @@ use tokio::sync::{
 };
 
 use crate::{
-	comp::main_menu,
 	game::{Game, GameCommand, Goal, Tool, goal::ResourceCounter},
-	scripts::tips::{action, text_with_actions, text_with_actions_fullscreen},
+	levels::GameState,
+	scripts::{
+		main::main_menu,
+		tips::{action, text_with_actions, text_with_actions_fullscreen},
+	},
 	textures::Textures,
 	utils::CheckConnection,
 	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap, tile},
@@ -485,11 +488,18 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		channels.goal.render_tick().await?;
 	}
 
+	let mut game_state = GameState::load().await;
+	game_state.tutorial_completed = true;
+	game_state
+		.save()
+		.await
+		.with_context(|| format!("while saving tutorial completion"))?;
+
 	channels
 		.simple_page_with_continue(t!("tutorial.you-win"))
 		.await?;
 
-	let menu = main_menu();
+	let menu = main_menu().await;
 	channels
 		.master_tx
 		.send(RemoteStageChange::simple_only_debug(menu))

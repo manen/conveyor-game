@@ -23,7 +23,7 @@ use crate::{
 	},
 };
 
-pub async fn tutorial() -> DynamicLayable<'static> {
+pub fn tutorial() -> DynamicLayable<'static> {
 	let loader = textures::load_as_layable(GameAssets::default(), |textures| {
 		let f = move || {
 			let textures = textures?;

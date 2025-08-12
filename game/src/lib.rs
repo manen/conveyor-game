@@ -63,7 +63,7 @@ pub async fn start() {
 		font.set_as_global();
 	};
 
-	let stage = stage_manager::Stage::from_dyn_layable(comp::main().await);
+	let stage = stage_manager::Stage::from_dyn_layable(scripts::main::main().await);
 	let mut ctx = sui_runner::Context::new(stage, rl, thread);
 
 	ctx.start();
