@@ -9,6 +9,9 @@ pub use show_mouse::ShowMouse;
 mod connected;
 pub use connected::*;
 
+mod nodebug;
+pub use nodebug::*;
+
 /// a layable that'll indiscriminantly return every event it's passed
 #[derive(Clone, Debug)]
 pub struct ReturnEvents;

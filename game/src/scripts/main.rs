@@ -84,8 +84,17 @@ pub async fn main_menu() -> impl Layable + Debug {
 
 pub fn game() -> StageChange<'static> {
 	textures::load_as_scene(GameAssets::default(), |tex| {
-		let tex = tex.expect("fuck"); // TODO
+		let tex = tex.expect("fuck");
 
-		sui::custom_only_debug(Game::new(tex))
+		let mut game = Game::new(tex);
+
+		let save_handler = async move |game_data| {
+			println!("{game_data:?}");
+		};
+		game.enable_save_handler(move |game_data| {
+			tokio::spawn(save_handler(game_data));
+		});
+
+		sui::custom_only_debug(game)
 	})
 }

@@ -14,7 +14,7 @@ use tokio::sync::{broadcast, mpsc};
 use crate::{
 	comp::{SelectTool, toolbar},
 	textures::Textures,
-	utils::ReturnEvents,
+	utils::{NoDebug, ReturnEvents},
 	world::{
 		EResource, Resource,
 		buildings::BuildingsMap,
@@ -37,7 +37,9 @@ pub use goal::Goal;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
-/// Singleplayer, self-contained game renderer
+/// Singleplayer, self-contained game renderer \
+/// quite versatile now, many features are available opt-in, so `Game` can be used
+/// to render both the most primitive, and the most complex remote-controlled game too
 #[derive(Debug)]
 pub struct Game {
 	textures: Textures,
@@ -45,6 +47,7 @@ pub struct Game {
 
 	toolbar: DynamicLayable<'static>,
 	tips: Option<DynamicLayable<'static>>,
+	goal_display: Option<DynamicLayable<'static>>,
 
 	tool: Tool,
 	tool_use_tx: broadcast::Sender<((i32, i32), Tool)>,
@@ -53,7 +56,7 @@ pub struct Game {
 	paused: bool,
 	can_toggle_time: bool,
 
-	goal_display: Option<DynamicLayable<'static>>,
+	save_handler: Option<NoDebug<Box<dyn FnMut(GameData) + Send>>>,
 
 	/// camera center position in world coordinates
 	camera_at: (f32, f32),
@@ -66,8 +69,7 @@ pub struct Game {
 }
 impl Game {
 	pub fn new(textures: Textures) -> Self {
-		let tilemap = Tilemap::new(SIZE, SIZE); // this causes a multiply overflow in perlin2d for some fucking reason
-		// let tilemap = Tilemap::stone(SIZE, SIZE);
+		let tilemap = Tilemap::new(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
 		Self::from_maps(textures, tilemap, buildings)
@@ -89,6 +91,7 @@ impl Game {
 			data,
 			tool: Default::default(),
 			tool_use_tx,
+			save_handler: None,
 			camera_at: (width as f32 / 2.0, height as f32 / 2.0),
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
@@ -157,6 +160,13 @@ impl Game {
 		&mut self,
 	) -> tokio::sync::broadcast::Receiver<((i32, i32), Tool)> {
 		self.tool_use_tx.subscribe()
+	}
+
+	pub fn enable_save_handler<F: FnMut(GameData) + Send + 'static>(&mut self, handler: F) {
+		self.save_handler = Some(NoDebug::new(Box::new(handler)));
+	}
+	pub fn disable_save_handler(&mut self) {
+		self.save_handler = None;
 	}
 
 	/// sets and starts the timer if the game is started; use self.pause_time() to spawn in paused
@@ -414,6 +424,9 @@ impl Layable for Game {
 			}};
 		}
 
+		let mut ctrl = false;
+		let mut s = false;
+
 		let move_amount = 0.1;
 		for event in events {
 			match event {
@@ -527,6 +540,7 @@ impl Layable for Game {
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_S)) => {
 					self.camera_velocity.1 += move_amount;
+					s = true;
 				}
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_A)) => {
 					self.camera_velocity.0 -= move_amount;
@@ -534,6 +548,11 @@ impl Layable for Game {
 				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_D)) => {
 					self.camera_velocity.0 += move_amount;
 				}
+
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_LEFT_CONTROL)) => {
+					ctrl = true;
+				}
+
 				Event::KeyboardEvent(_, KeyboardEvent::CharPressed(' ')) => {
 					if self.can_toggle_time {
 						self.toggle_time();
@@ -557,6 +576,12 @@ impl Layable for Game {
 					// println!("{event:?}")
 				}
 			};
+
+			if ctrl && s {
+				if let Some(handler) = &mut self.save_handler {
+					handler(self.data.clone())
+				}
+			}
 		}
 	}
 }

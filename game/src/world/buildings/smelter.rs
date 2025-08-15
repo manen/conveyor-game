@@ -92,6 +92,7 @@ impl Building for Smelter {
 					output_resource: out_resource,
 				};
 
+				self.fuel -= smelt_duration;
 				self.smelting = Some(smelt_data);
 				return;
 			}
