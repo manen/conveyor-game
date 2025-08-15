@@ -17,6 +17,7 @@ pub fn tools() -> impl Iterator<Item = Tool> {
 			Tool::PlaceBuilding(EBuilding::debug_consumer()),
 			Tool::PlaceBuilding(EBuilding::junction()),
 			Tool::PlaceBuilding(EBuilding::router()),
+			Tool::PlaceBuilding(EBuilding::smelter()),
 		])
 }
 

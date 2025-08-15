@@ -20,10 +20,14 @@ pub enum TextureID {
 
 	Coal,
 	RawIron,
+	Iron,
 
 	ConveyorTop,
 	Junction,
 	Router,
+
+	Furnace,
+	FurnaceOn,
 }
 impl TextureID {
 	/// none just becomes transparent
@@ -38,15 +42,21 @@ impl TextureID {
 			TextureID::Stone => Cow::Borrowed("textures/stone.png"),
 			TextureID::IronOre => Cow::Borrowed("textures/iron_ore.png"),
 			TextureID::CoalOre => Cow::Borrowed("textures/coal_ore.png"),
+
 			TextureID::Coal => Cow::Borrowed(
 				"https://static.wikia.nocookie.net/minecraft/images/a/a7/Coal.png/revision/latest/scale-to-width/360?cb=20200814153155",
 			),
 			TextureID::RawIron => Cow::Borrowed(
 				"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d2/Raw_Iron_JE3_BE2.png/revision/latest?cb=20210421181435",
 			),
+			TextureID::Iron => Cow::Borrowed("textures/iron.png"),
+
 			TextureID::ConveyorTop => Cow::Borrowed("textures/conveyor-top.png"),
 			TextureID::Junction => Cow::Borrowed("textures/junction.png"),
 			TextureID::Router => Cow::Borrowed("textures/router.png"),
+
+			TextureID::Furnace => Cow::Borrowed("textures/furnace_front.png"),
+			TextureID::FurnaceOn => Cow::Borrowed("textures/furnace_front_on.png"),
 		}
 	}
 }

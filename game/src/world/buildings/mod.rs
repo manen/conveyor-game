@@ -23,6 +23,8 @@ mod debug_consumer;
 pub use debug_consumer::*;
 mod channel_consumer;
 pub use channel_consumer::*;
+mod smelter;
+pub use smelter::*;
 
 pub use super::maps::BuildingsMap;
 
@@ -102,8 +104,8 @@ pub trait Building {
 	/// even though this can return any number as a relative, if it's not a direction it will not go through by
 	/// the current implementation
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		// &[(0, 1), (0, -1), (1, 0), (-1, 0)]
-		&[]
+		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
+		// &[]
 	}
 	/// lets the building pick which target candidate it'd like to pass resources to
 	fn confirm_pass_relatives(
@@ -128,6 +130,8 @@ pub enum EBuilding {
 	Conveyor(Conveyor),
 	Junction(Junction),
 	Router(Router),
+
+	Smelter(Smelter),
 }
 impl EBuilding {
 	pub const fn nothing() -> Self {
@@ -148,6 +152,9 @@ impl EBuilding {
 	pub fn router() -> Self {
 		Self::Router(Router::default())
 	}
+	pub fn smelter() -> Self {
+		Self::Smelter(Smelter::default())
+	}
 }
 impl Default for EBuilding {
 	fn default() -> Self {
@@ -164,6 +171,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.name(),
 			Self::Junction(a) => a.name(),
 			Self::Router(a) => a.name(),
+			Self::Smelter(a) => a.name(),
 		}
 	}
 	fn texture_id(&self) -> TextureID {
@@ -175,6 +183,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.texture_id(),
 			Self::Junction(a) => a.texture_id(),
 			Self::Router(a) => a.texture_id(),
+			Self::Smelter(a) => a.texture_id(),
 		}
 	}
 
@@ -187,6 +196,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => sui::custom(a.render(textures)),
 			Self::Junction(a) => sui::custom(a.render(textures)),
 			Self::Router(a) => sui::custom(a.render(textures)),
+			Self::Smelter(a) => sui::custom(a.render(textures)),
 		}
 	}
 	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
@@ -198,6 +208,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => sui::custom(a.tool_icon_render(textures)),
 			Self::Junction(a) => sui::custom(a.tool_icon_render(textures)),
 			Self::Router(a) => sui::custom(a.tool_icon_render(textures)),
+			Self::Smelter(a) => sui::custom(a.tool_icon_render(textures)),
 		}
 	}
 
@@ -210,6 +221,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.can_receive(from),
 			Self::Junction(a) => a.can_receive(from),
 			Self::Router(a) => a.can_receive(from),
+			Self::Smelter(a) => a.can_receive(from),
 		}
 	}
 	fn capacity_for(&self, resource: &EResource, from: Option<Direction>) -> i32 {
@@ -221,6 +233,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.capacity_for(resource, from),
 			Self::Junction(a) => a.capacity_for(resource, from),
 			Self::Router(a) => a.capacity_for(resource, from),
+			Self::Smelter(a) => a.capacity_for(resource, from),
 		}
 	}
 	fn receive(&mut self, resource: EResource, from: Option<Direction>) {
@@ -232,6 +245,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.receive(resource, from),
 			Self::Junction(a) => a.receive(resource, from),
 			Self::Router(a) => a.receive(resource, from),
+			Self::Smelter(a) => a.receive(resource, from),
 		}
 	}
 
@@ -244,6 +258,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.needs_poll(),
 			Self::Junction(a) => a.needs_poll(),
 			Self::Router(a) => a.needs_poll(),
+			Self::Smelter(a) => a.needs_poll(),
 		}
 	}
 	fn resource_sample(
@@ -259,6 +274,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.resource_sample(tile_resource, to),
 			Self::Junction(a) => a.resource_sample(tile_resource, to),
 			Self::Router(a) => a.resource_sample(tile_resource, to),
+			Self::Smelter(a) => a.resource_sample(tile_resource, to),
 		}
 	}
 	fn poll_resource(
@@ -274,6 +290,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.poll_resource(tile_resource, to),
 			Self::Junction(a) => a.poll_resource(tile_resource, to),
 			Self::Router(a) => a.poll_resource(tile_resource, to),
+			Self::Smelter(a) => a.poll_resource(tile_resource, to),
 		}
 	}
 
@@ -286,6 +303,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.pass_relatives(),
 			Self::Junction(a) => a.pass_relatives(),
 			Self::Router(a) => a.pass_relatives(),
+			Self::Smelter(a) => a.pass_relatives(),
 		}
 	}
 	fn confirm_pass_relatives(&mut self, dirs: &[(i32, i32)]) -> Option<(i32, i32)> {
@@ -297,6 +315,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.confirm_pass_relatives(dirs),
 			Self::Junction(a) => a.confirm_pass_relatives(dirs),
 			Self::Router(a) => a.confirm_pass_relatives(dirs),
+			Self::Smelter(a) => a.confirm_pass_relatives(dirs),
 		}
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
@@ -308,6 +327,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
 			Self::Junction(a) => a.rank_pass_source(relative_pos),
 			Self::Router(a) => a.rank_pass_source(relative_pos),
+			Self::Smelter(a) => a.rank_pass_source(relative_pos),
 		}
 	}
 
@@ -320,6 +340,7 @@ impl Building for EBuilding {
 			Self::Conveyor(a) => a.is_protected(),
 			Self::Junction(a) => a.is_protected(),
 			Self::Router(a) => a.is_protected(),
+			Self::Smelter(a) => a.is_protected(),
 		}
 	}
 }
@@ -340,5 +361,9 @@ impl Building for Nothing {
 
 	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {
 		textures.texture_for(TextureID::Eraser).cloned()
+	}
+
+	fn pass_relatives(&self) -> &'static [(i32, i32)] {
+		&[]
 	}
 }

@@ -85,6 +85,7 @@ pub async fn main_menu() -> impl Layable + Debug {
 pub fn game() -> StageChange<'static> {
 	textures::load_as_scene(GameAssets::default(), |tex| {
 		let tex = tex.expect("fuck"); // TODO
+
 		sui::custom_only_debug(Game::new(tex))
 	})
 }

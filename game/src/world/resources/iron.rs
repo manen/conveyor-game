@@ -14,6 +14,17 @@ impl Resource for RawIron {
 	}
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Iron;
+impl Resource for Iron {
+	fn name(&self) -> std::borrow::Cow<'static, str> {
+		"iron".into()
+	}
+	fn texture_id(&self) -> TextureID {
+		TextureID::Iron
+	}
+}
+
 use std::borrow::Cow;
 
 #[derive(Copy, Clone, Debug, Hash, Default, bincode::Encode, bincode::Decode)]

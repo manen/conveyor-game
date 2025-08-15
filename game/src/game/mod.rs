@@ -66,8 +66,8 @@ pub struct Game {
 }
 impl Game {
 	pub fn new(textures: Textures) -> Self {
-		// let tilemap = Tilemap::new(SIZE, SIZE); // this causes a multiply overflow in perlin2d for some fucking reason
-		let tilemap = Tilemap::stone(SIZE, SIZE);
+		let tilemap = Tilemap::new(SIZE, SIZE); // this causes a multiply overflow in perlin2d for some fucking reason
+		// let tilemap = Tilemap::stone(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
 		Self::from_maps(textures, tilemap, buildings)
