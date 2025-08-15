@@ -21,7 +21,6 @@ strum.workspace = true
 bincode = { workspace = true, features = ["serde"] }
 
 reqwest = "0.12.22"
-perlin2d = "0.2.6"
 glissade = "0.2.6"
 include_dir = "0.7.4"
 heapless.git = "https://github.com/rust-embedded/heapless"
@@ -31,3 +30,4 @@ toml = "0.9.4"
 dirs = "6.0.0"
 rust-i18n = "3.1.5"
 sys-locale = "0.3.2"
+fastnoise-lite = "1.1.1"

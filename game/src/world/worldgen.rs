@@ -1,6 +1,9 @@
-use std::time::{Duration, SystemTime};
+use std::{
+	rc::Rc,
+	time::{Duration, SystemTime},
+};
 
-use perlin2d::PerlinNoise2D;
+use fastnoise_lite::{FastNoiseLite, NoiseType};
 
 use crate::world::ETile;
 
@@ -9,11 +12,16 @@ pub fn gen_tiles_from_seed_iter(
 	width: usize,
 	height: usize,
 ) -> impl Iterator<Item = impl Iterator<Item = ETile>> {
-	let perlin = PerlinNoise2D::new(6, 10.0, 0.5, 1.0, 2.0, (20.0, 20.0), 0.5, seed);
-	let perlin = std::sync::Arc::new(perlin);
+	let mut noise = FastNoiseLite::new();
+	noise.seed = seed;
+	noise.set_noise_type(Some(NoiseType::Perlin));
+	let noise = Rc::new(noise);
 
 	let f = move |x, y| {
-		let noise = perlin.get_noise(x as f64, y as f64);
+		let noise = noise.get_noise_2d(x as f32, y as f32);
+		println!("{noise:?}");
+
+		let noise = noise * 10000000.0;
 
 		let noise_adj = noise % 8.0;
 		match noise_adj {
