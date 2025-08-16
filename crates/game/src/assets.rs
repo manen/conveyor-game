@@ -4,7 +4,7 @@ use anyhow::{Context, anyhow};
 use asset_provider::{Asset, Assets};
 
 use include_dir::{Dir, include_dir};
-static ASSETS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../assets");
+static ASSETS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../assets");
 
 pub struct GameAssets {
 	client: reqwest::Client,

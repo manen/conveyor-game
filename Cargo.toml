@@ -10,8 +10,7 @@ members = [
 	"sui/stage_manager_loaders",
 	"sui/stage_manager_remote",
 
-	"game",
-	"level_editor"
+	"crates/*"
 ]
 
 [workspace.dependencies]
@@ -26,8 +25,8 @@ stage_manager.path = "./sui/stage_manager"
 stage_manager_loaders.path = "./sui/stage_manager_loaders"
 stage_manager_remote.path = "./sui/stage_manager_remote"
 
-game.path = "./game"
-level_editor.path = "./level_editor"
+game.path = "./crates/game"
+level_editor.path = "./crates/level_editor"
 
 tokio = "1.46.1"
 futures = "0.3.31"
