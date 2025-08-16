@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::Deref, sync::Arc};
+use std::{fmt::Debug, ops::Deref, path::PathBuf, sync::Arc};
 
 use anyhow::Context;
 use asset_provider::Assets;
@@ -102,6 +102,27 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 	let save_handler = async move |game_data| {
 		use rfd::AsyncFileDialog;
 
+		// the actual serialization takes place on another thread while the player's choosing
+		// the save location
+		let (tx, rx) = tokio::sync::oneshot::channel();
+		tokio::task::spawn(async move {
+			let f = || {
+				let save = GameDataSave::new(&game_data)?;
+				let save = bincode::serde::encode_to_vec(&save, bincode::config::standard())?;
+				anyhow::Ok(save)
+			};
+			let save = f();
+			let res = tx.send(save);
+			match res {
+				Ok(_) => {}
+				Err(_) => {
+					eprintln!(
+						"failed to push serialized save into oneshot channel (something's broken)"
+					);
+				}
+			}
+		});
+
 		let files = AsyncFileDialog::new()
 			.add_filter("save file", &["cgs"])
 			.set_directory(std::env::current_dir()?)
@@ -111,14 +132,20 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 			.await;
 		let files = files.with_context(|| format!("file dialog didn't return anthing"))?;
 		let path = files.path();
+		let path = PathBuf::from(path);
 
-		// TODO: convert to Vec<u8> in a different task, use oneshot channel
-		let save = GameDataSave::new(&game_data)?;
-		let save = bincode::serde::encode_to_vec(&save, bincode::config::standard())?;
+		let save = rx
+			.await
+			.map(|serialization_err| {
+				serialization_err.with_context(|| "failed to serialize GameData")
+			})
+			.with_context(|| {
+				format!("failed to receive from oneshot channel (something's broken)")
+			});
+		let save = save??;
 
-		tokio::fs::write(path, &save).await?;
-
-		anyhow::Ok(())
+		tokio::fs::write(&path, &save).await?;
+		anyhow::Ok(path)
 	};
 
 	let executor = move |game_data: GameData| {
@@ -139,7 +166,9 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 
 		let handle = tokio::task::spawn(async move {
 			match future.await {
-				Ok(_) => {}
+				Ok(save_path) => {
+					println!("saved to {}", save_path.display())
+				}
 				Err(err) => {
 					eprintln!("failed to save: {err:?}")
 				}
