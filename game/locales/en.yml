@@ -38,4 +38,17 @@ tutorial.its-paused-lets-start: "right now it's not outputting anything, because
 tutorial.start-time-by-pressing-space: "you can toggle whether time (and thus the timer) is paused by pressing SPACE"
 
 tutorial.time-started: "that's it! you can use the panel on the right to track the amount of resources collected, and the amount required."
+tutorial.goal-reached: "you just collected your first raw resources! extrators will be a necessity throughout the game."
+
+# ---
+
+tutorial.unsmelted-resources: "even though we now have resources, %{resource_name} isn't very useful in itself."
+tutorial.smelting: "to use our new resources for something useful, we need to run it through some machine that'll shape it into something more to our use.\nsmelting is a process where we use fuel to smelt a raw resource into a new, refined resource."
+
+tutorial.we-need-coal: "to begin smelting, we'll need to have coal available for use as fuel. mine some coal!"
+tutorial.we-need-iron: "to begin smelting, we need something to smelt. collect some of the raw iron found on the map!"
+
+tutorial.incorrect-resource: "we don't need more %{incorrect}! mine the %{correct} found on the map."
+tutorial.incorrect-resource-wrong-tool: "to mine %{correct_resource}, you need to use the %{correct_tool} tool, found at the toolbar on the top."
+
 tutorial.you-win: "you won!"

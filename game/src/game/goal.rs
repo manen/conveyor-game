@@ -27,6 +27,10 @@ impl Goal {
 	pub fn from_hashmap(resources: HashMap<EResource, i32>) -> Self {
 		Self { resources }
 	}
+
+	pub fn resources(&self) -> &HashMap<EResource, i32> {
+		&self.resources
+	}
 }
 
 #[derive(Debug)]
@@ -177,6 +181,9 @@ impl ResourceCounter {
 		Ok(())
 	}
 
+	pub fn goal(&self) -> &Goal {
+		&self.goal
+	}
 	pub fn set_goal(&mut self, goal: Goal) {
 		self.goal = goal;
 	}

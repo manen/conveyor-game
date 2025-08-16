@@ -99,6 +99,33 @@ impl Channels {
 		Ok(())
 	}
 
+	pub async fn fullscreen_page_with_continue(
+		&mut self,
+		text: impl Into<Cow<'static, str>>,
+	) -> anyhow::Result<()> {
+		self.fullscreen_page_with_named_continue(text, t!("tutorial.continue"))
+			.await
+	}
+	pub async fn fullscreen_page_with_named_continue(
+		&mut self,
+		text: impl Into<Cow<'static, str>>,
+		continue_name: impl Into<Cow<'static, str>>,
+	) -> anyhow::Result<()> {
+		self.send_stage_change(text_with_actions_fullscreen(
+			text,
+			[action(continue_name, TooltipPage::Continue)],
+		))
+		.await
+		.map_err(|err| anyhow!("{err}"))?;
+
+		let event = self.receive_stage_event().await?;
+		match event {
+			TooltipPage::Continue => {}
+			_ => return Err(anyhow!("invalid tooltippage received in mined: {event:?}")),
+		}
+		Ok(())
+	}
+
 	/// does NOT wait for the GameRunner to execute the Fn
 	pub async fn game<F: FnOnce(&mut Game) + Send + 'static>(
 		&mut self,
@@ -357,7 +384,9 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		.await?;
 
 	// set the goal to some of the resource we placed an extractor over
-	channels.goal.set_goal(Goal::new([(tile_resource, 10)]));
+	channels
+		.goal
+		.set_goal(Goal::new([(tile_resource.clone(), 10)]));
 
 	// enable the goal ui
 	let display_tx = channels
@@ -488,6 +517,111 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		channels.goal.render_tick().await?;
 	}
 
+	// ---
+
+	channels.game(|game| game.pause_time()).await?;
+	channels
+		.fullscreen_page_with_continue(t!("tutorial.goal-reached"))
+		.await?;
+
+	channels
+		.fullscreen_page_with_continue(t!(
+			"tutorial.unsmelted-resources",
+			resource_name = tile_resource_name
+		))
+		.await?;
+
+	channels
+		.fullscreen_page_with_continue(t!("tutorial.smelting"))
+		.await?;
+
+	smelting_start(channels, tile_resource).await?;
+
+	// channels.simple_
+
+	Ok(false)
+}
+
+async fn smelting_start(
+	channels: &mut Channels,
+	already_mined_tile_resource: EResource,
+) -> anyhow::Result<()> {
+	let (next_mine_text, next_mine) = match already_mined_tile_resource {
+		EResource::RawIron(_) => (t!("tutorial.we-need-coal"), EResource::coal()),
+		EResource::Coal(_) => (t!("tutorial.we-need-iron"), EResource::raw_iron()),
+		_ => {
+			return Err(anyhow!(
+				"in this part of the tutorial you're only supposed to be able to mine raw iron and coal but the user mined {already_mined_tile_resource:?}"
+			));
+		}
+	};
+
+	// same text, first fullscreen with continue, second non-fullscreen without continue, with event listening
+	channels
+		.fullscreen_page_with_continue(next_mine_text.clone())
+		.await?;
+	channels
+		.send_stage_change(text_with_actions::<TooltipPage>(next_mine_text.clone(), []))
+		.await?;
+
+	// position of the miner on the resource determined by next_mine
+	let pos = loop {
+		let tool_use = channels.tool_use_rx.recv().await.with_context(|| {
+			format!("tool_use_rx channel broke while collecting {next_mine_text}")
+		})?;
+		match tool_use {
+			(pos, Tool::PlaceBuilding(EBuilding::SmallExtractor(_))) => {
+				let tile_resource = channels
+					.game_with_return(move |game| game.tile_resource_at(pos))
+					.await?;
+
+				match tile_resource {
+					Some(mined) if next_mine == mined => {
+						break pos;
+					}
+					_ => {
+						let mined_name = tile_resource
+							.map(|a| a.name())
+							.unwrap_or_else(|| "stone".into());
+
+						channels
+							.send_stage_change(text_with_actions::<TooltipPage>(
+								t!(
+									"tutorial.incorrect-resource",
+									incorrect = mined_name,
+									correct = next_mine.name()
+								),
+								[],
+							))
+							.await?;
+					}
+				}
+			}
+			(_, _) => {
+				let correct_tool = Tool::PlaceBuilding(EBuilding::small_extractor());
+				let correct_tool = correct_tool.name();
+
+				channels
+					.send_stage_change(text_with_actions::<TooltipPage>(
+						t!(
+							"tutorial.incorrect-resource-wrong-tool",
+							correct_tool = correct_tool,
+							correct_resource = next_mine.name(),
+						),
+						[],
+					))
+					.await?;
+			}
+		}
+	};
+
+	// place a furnace, wire both the old miner and the new miner into the furnace, wire the furnace into the main buildings.
+	// this shit boutta take ages and like 300 more lines
+
+	Ok(())
+}
+
+async fn won(channels: &mut Channels) -> anyhow::Result<()> {
 	let mut game_state = GameState::load().await;
 	game_state.tutorial_completed = true;
 	game_state
@@ -505,10 +639,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		.send(RemoteStageChange::simple_only_debug(menu))
 		.await
 		.map_err(|err| anyhow!("{err}"))?;
-
-	// ---
-
-	Ok(false)
+	Ok(())
 }
 
 fn drain_broadcast<T: Clone>(rx: &mut broadcast::Receiver<T>) {
