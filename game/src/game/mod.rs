@@ -75,8 +75,11 @@ impl Game {
 		Self::from_maps(textures, tilemap, buildings)
 	}
 	pub fn from_maps(textures: Textures, tilemap: Tilemap, buildings: BuildingsMap) -> Self {
-		let (width, height) = tilemap.size();
 		let data = GameData::new(tilemap, buildings);
+		Self::from_data(textures, data)
+	}
+	pub fn from_data(textures: Textures, game_data: GameData) -> Self {
+		let (width, height) = game_data.tilemap.size();
 
 		let (tool_use_tx, _rx) = broadcast::channel(10);
 
@@ -88,7 +91,7 @@ impl Game {
 			goal_display: None,
 			paused: false,
 			can_toggle_time: true,
-			data,
+			data: game_data,
 			tool: Default::default(),
 			tool_use_tx,
 			save_handler: None,

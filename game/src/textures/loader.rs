@@ -36,7 +36,7 @@ mod basic {
 	pub fn load_as_layable_explicit<A: Assets + Send + Sync + 'static>(
 		assets: A,
 		loading_screen: DynamicLayable<'static>,
-		post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
+		post_process: impl FnOnce(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
 	) -> DynamicLayable<'static>
 // ConstructiveLoader<
 		// 	anyhow::Result<HashMap<TextureID, Texture>>,
@@ -114,7 +114,7 @@ mod cached {
 	pub fn load_as_layable_explicit<A: Assets + Send + Sync + 'static>(
 		assets: A,
 		loading_screen: DynamicLayable<'static>,
-		post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
+		post_process: impl FnOnce(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
 	) -> DynamicLayable<'static> {
 		match INTERNAL_CACHE.get() {
 			Some(cached) => {
@@ -155,7 +155,7 @@ pub fn load_as_layable<A: Assets + Send + Sync + 'static>(
 
 pub fn load_as_scene<A: Assets + Send + Sync + 'static>(
 	assets: A,
-	post_process: impl Fn(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
+	post_process: impl FnOnce(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
 ) -> StageChange<'static> {
 	StageChange::swapper(move |old_stage| {
 		let loading_screen = sui::custom(old_stage.overlay(loading_screen()));
