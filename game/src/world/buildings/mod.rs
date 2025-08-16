@@ -121,15 +121,16 @@ pub trait Building {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum EBuilding {
 	Nothing(Nothing),
 	SmallExtractor(SmallExtractor),
 	DebugConsumer(DebugConsumer),
-	ChannelConsumer(ChannelConsumer),
 	Conveyor(Conveyor),
 	Junction(Junction),
 	Router(Router),
+	#[serde(skip)]
+	ChannelConsumer(ChannelConsumer),
 
 	Smelter(Smelter),
 }
@@ -345,7 +346,7 @@ impl Building for EBuilding {
 	}
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Nothing;
 impl Building for Nothing {
 	fn name(&self) -> Cow<'static, str> {

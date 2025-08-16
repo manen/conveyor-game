@@ -24,9 +24,11 @@ fn fuel(resource: &EResource) -> Option<Duration> {
 
 pub const MAX_FUEL: Duration = Duration::from_secs(10);
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Smelter {
 	fuel: Duration,
+
+	#[serde(skip, default)]
 	smelting: Option<SmeltData>,
 }
 impl Building for Smelter {

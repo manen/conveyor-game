@@ -32,7 +32,9 @@ impl Layable for ReturnEvents {
 	}
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(
+	Copy, Clone, PartialEq, Eq, Hash, Debug, serde::Serialize, serde::Deserialize, Default,
+)]
 pub enum Direction {
 	Right,
 	Bottom,

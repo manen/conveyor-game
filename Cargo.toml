@@ -34,3 +34,4 @@ futures = "0.3.31"
 anyhow = "1.0.98"
 strum = { version = "0.27.2", features = ["derive"] }
 bincode = "2.0.1"
+rfd = { version = "0.15.4", features = ["tokio", "xdg-portal"], default-features = false }

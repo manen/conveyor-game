@@ -1,14 +1,16 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref, sync::Arc};
 
 use anyhow::Context;
 use asset_provider::Assets;
 use stage_manager::StageChange;
+use stage_manager_remote::RemoteStage;
 use sui::{DynamicLayable, Layable, LayableExt, core::ReturnEvent};
+use tokio::sync::Mutex;
 
 use crate::{
 	assets::GameAssets,
 	comp::{handle_err, handle_result_dyn},
-	game::Game,
+	game::{Game, GameData, GameDataSave},
 	levels::{GameState, Level},
 	scripts::tutorial,
 	textures,
@@ -87,14 +89,63 @@ pub fn game() -> StageChange<'static> {
 		let tex = tex.expect("fuck");
 
 		let mut game = Game::new(tex);
-
-		let save_handler = async move |game_data| {
-			println!("{game_data:?}");
-		};
-		game.enable_save_handler(move |game_data| {
-			tokio::spawn(save_handler(game_data));
-		});
+		game.enable_save_handler(save_handler());
 
 		sui::custom_only_debug(game)
 	})
+}
+
+fn save_handler() -> impl FnMut(GameData) + Send + 'static {
+	let saving: Option<tokio::task::JoinHandle<()>> = None;
+	let mut saving = Arc::new(Mutex::new(saving));
+
+	let save_handler = async move |game_data| {
+		use rfd::AsyncFileDialog;
+
+		let files = AsyncFileDialog::new()
+			.add_filter("save file", &["cgs"])
+			.set_directory(std::env::current_dir()?)
+			.set_title("saving")
+			.set_file_name("new-game.cgs")
+			.save_file()
+			.await;
+		let files = files.with_context(|| format!("file dialog didn't return anthing"))?;
+		let path = files.path();
+
+		// TODO: convert to Vec<u8> in a different task, use oneshot channel
+		let save = GameDataSave::new(&game_data)?;
+		let save = bincode::serde::encode_to_vec(&save, bincode::config::standard())?;
+
+		tokio::fs::write(path, &save).await?;
+
+		anyhow::Ok(())
+	};
+
+	let executor = move |game_data: GameData| {
+		let mut guard = match saving.try_lock() {
+			Ok(a) => a,
+			Err(_) => return,
+		};
+		match guard.deref() {
+			Some(handle) => {
+				if !handle.is_finished() {
+					return;
+				}
+			}
+			None => {}
+		};
+
+		let future = save_handler(game_data);
+
+		let handle = tokio::task::spawn(async move {
+			match future.await {
+				Ok(_) => {}
+				Err(err) => {
+					eprintln!("failed to save: {err:?}")
+				}
+			}
+		});
+		*guard = Some(handle);
+	};
+	executor
 }

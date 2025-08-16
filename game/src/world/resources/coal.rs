@@ -5,7 +5,7 @@ use crate::{
 	world::{EResource, Resource, tile::Tile},
 };
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Coal;
 impl Resource for Coal {
 	fn name(&self) -> Cow<'static, str> {
@@ -16,7 +16,17 @@ impl Resource for Coal {
 	}
 }
 
-#[derive(Copy, Clone, Debug, Hash, Default, bincode::Encode, bincode::Decode)]
+#[derive(
+	Copy,
+	Clone,
+	Debug,
+	Hash,
+	Default,
+	bincode::Encode,
+	bincode::Decode,
+	serde::Serialize,
+	serde::Deserialize,
+)]
 pub struct CoalOre;
 impl Tile for CoalOre {
 	fn name(&self) -> Cow<'static, str> {

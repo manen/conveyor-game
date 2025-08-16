@@ -6,7 +6,7 @@ use crate::{
 
 use super::conveyor::CONVEYOR_CAPACITY;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Junction {
 	up: heapless::Deque<EResource, CONVEYOR_CAPACITY>,
 	down: heapless::Deque<EResource, CONVEYOR_CAPACITY>,

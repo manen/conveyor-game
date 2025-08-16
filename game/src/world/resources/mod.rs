@@ -12,7 +12,7 @@ pub trait Resource {
 	fn texture_id(&self) -> TextureID;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum EResource {
 	Coal(Coal),
 	RawIron(RawIron),

@@ -11,7 +11,7 @@ use crate::{
 
 pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Router {
 	// (received_from, resource)
 	holding: heapless::Deque<(Direction, EResource), ROUTER_CAPACITY>,

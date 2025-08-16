@@ -19,11 +19,12 @@ futures.workspace = true
 anyhow.workspace = true
 strum.workspace = true
 bincode = { workspace = true, features = ["serde"] }
+rfd.workspace = true
 
 reqwest = "0.12.22"
 glissade = "0.2.6"
 include_dir = "0.7.4"
-heapless.git = "https://github.com/rust-embedded/heapless"
+heapless = { git = "https://github.com/rust-embedded/heapless", features = ["serde"] }
 tokio-util = { version = "0.7.15", features = ["compat", "io-util"] }
 serde = { version = "1.0.219", features = ["derive"] }
 toml = "0.9.4"

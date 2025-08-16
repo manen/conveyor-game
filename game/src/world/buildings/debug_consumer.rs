@@ -1,6 +1,6 @@
 use crate::{textures::TextureID, utils::Direction, world::buildings::Building};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DebugConsumer;
 impl Building for DebugConsumer {
 	fn name(&self) -> std::borrow::Cow<'static, str> {

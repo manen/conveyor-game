@@ -11,7 +11,7 @@ use crate::{
 pub const CONVEYOR_CAPACITY: usize = 3;
 // pub const CONVEYOR_SPEED: Duration = Duration::from_millis(200);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Conveyor {
 	pub dir: Direction,
 

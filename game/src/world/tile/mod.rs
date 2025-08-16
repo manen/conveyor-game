@@ -27,7 +27,16 @@ pub trait Tile: Clone + Debug {
 }
 
 /// tile enum contains the vanilla tiles for performance and ease of use
-#[derive(Clone, Debug, Hash, strum::EnumIter, bincode::Encode, bincode::Decode)]
+#[derive(
+	Clone,
+	Debug,
+	Hash,
+	strum::EnumIter,
+	bincode::Encode,
+	bincode::Decode,
+	serde::Serialize,
+	serde::Deserialize,
+)]
 pub enum ETile {
 	Stone(Stone),
 	IronOre(IronOre),

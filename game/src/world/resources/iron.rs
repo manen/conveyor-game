@@ -3,7 +3,7 @@ use crate::{
 	world::{EResource, Resource, Tile},
 };
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct RawIron;
 impl Resource for RawIron {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
@@ -14,7 +14,7 @@ impl Resource for RawIron {
 	}
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Iron;
 impl Resource for Iron {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
@@ -27,7 +27,17 @@ impl Resource for Iron {
 
 use std::borrow::Cow;
 
-#[derive(Copy, Clone, Debug, Hash, Default, bincode::Encode, bincode::Decode)]
+#[derive(
+	Copy,
+	Clone,
+	Debug,
+	Hash,
+	Default,
+	bincode::Encode,
+	bincode::Decode,
+	serde::Serialize,
+	serde::Deserialize,
+)]
 pub struct IronOre;
 impl Tile for IronOre {
 	fn name(&self) -> Cow<'static, str> {

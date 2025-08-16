@@ -829,6 +829,7 @@ dependencies = [
  "heapless",
  "include_dir",
  "reqwest",
+ "rfd",
  "rust-i18n",
  "serde",
  "stage_manager",
@@ -991,6 +992,7 @@ version = "0.9.0"
 source = "git+https://github.com/rust-embedded/heapless#2db884445a784783a8d0f2ce37a1b8a73982e7a1"
 dependencies = [
  "hash32",
+ "serde",
  "stable_deref_trait",
 ]
 

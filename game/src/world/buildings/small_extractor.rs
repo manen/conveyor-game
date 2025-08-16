@@ -6,8 +6,9 @@ use crate::{
 	world::{EResource, buildings::Building},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SmallExtractor {
+	#[serde(skip, default = "Instant::now")]
 	last_extract: Instant,
 }
 impl SmallExtractor {
