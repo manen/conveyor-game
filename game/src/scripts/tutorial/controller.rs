@@ -30,6 +30,9 @@ pub enum TooltipPage {
 	GetStarted,
 	Continue,
 	WhatAmISupposedToDo,
+
+	// generic args
+	Opt1,
 }
 
 #[derive(Debug)]
@@ -535,7 +538,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		.fullscreen_page_with_continue(t!("tutorial.smelting"))
 		.await?;
 
-	smelting_start(channels, tile_resource).await?;
+	smelting_start(channels, tile_resource, pos).await?;
 
 	// channels.simple_
 
@@ -545,6 +548,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 async fn smelting_start(
 	channels: &mut Channels,
 	already_mined_tile_resource: EResource,
+	already_mined_pos: (i32, i32),
 ) -> anyhow::Result<()> {
 	let (next_mine_text, next_mine) = match already_mined_tile_resource {
 		EResource::RawIron(_) => (t!("tutorial.we-need-coal"), EResource::coal()),
@@ -564,6 +568,7 @@ async fn smelting_start(
 		.send_stage_change(text_with_actions::<TooltipPage>(next_mine_text.clone(), []))
 		.await?;
 
+	drain_mpsc(&mut channels.stage_rx);
 	// position of the miner on the resource determined by next_mine
 	let pos = loop {
 		let tool_use = channels.tool_use_rx.recv().await.with_context(|| {
@@ -615,8 +620,26 @@ async fn smelting_start(
 		}
 	};
 
+	channels
+		.send_stage_change(text_with_actions(
+			"hello bello we have both resources",
+			[action("open link in browser", TooltipPage::Opt1)],
+		))
+		.await?;
+	loop {
+		match channels.stage_rx.recv().await {
+			Some(TooltipPage::Opt1) => {
+				break opener::open("https://google.com/search?q=hello+browser")?;
+			}
+			_ => {}
+		};
+	}
+
 	// place a furnace, wire both the old miner and the new miner into the furnace, wire the furnace into the main buildings.
 	// this shit boutta take ages and like 300 more lines
+
+	// we should probably give reference images to the user too, loading them into Textures would be wasteful so maybe just a
+	// help button that opens an image in the browser
 
 	Ok(())
 }
