@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc, sync::Arc};
 
 use sui::{
 	Color, Layable,
@@ -57,25 +57,32 @@ impl AsyncTextureState {
 
 #[derive(Debug)]
 pub struct AsyncTexture {
-	state: Rc<RefCell<AsyncTextureState>>,
+	state: Arc<std::sync::Mutex<AsyncTextureState>>,
 }
 impl AsyncTexture {
 	pub fn from_channel(rx: oneshot::Receiver<(Vec<u8>, (i32, i32))>) -> Self {
 		let state = AsyncTextureState::Loading(rx);
-		let state = Rc::new(RefCell::new(state));
+		// let state = Rc::new(RefCell::new(state));
+		let state = Arc::new(std::sync::Mutex::new(state));
 		AsyncTexture { state }
 	}
 }
 impl AsyncTexture {
 	/// doesn't update itself
 	fn with_texture_no_update<T, F: FnOnce(&Texture) -> T>(&self, f: F) -> Option<T> {
-		let state = self.state.borrow();
+		let state = self.state.try_lock().ok()?;
 		let tex = state.with_texture_no_update();
 		tex.map(f)
 	}
 	/// updates itself
 	pub fn update_self(&self, d: &mut sui::Handle) -> Result<(), LoadTextureError> {
-		let mut state = self.state.borrow_mut();
+		let mut state = match self.state.try_lock() {
+			Ok(a) => a,
+			Err(err) => {
+				eprintln!("failed to lock AsyncTexture state Mutex: {err:?}");
+				return Ok(());
+			}
+		};
 		state.update_self(d)
 	}
 	fn update_self_or_log(&self, d: &mut sui::Handle) {
@@ -92,7 +99,7 @@ impl AsyncTexture {
 		d: &mut sui::Handle,
 		f: F,
 	) -> Option<T> {
-		let mut state = self.state.borrow_mut();
+		let mut state = self.state.try_lock().ok()?;
 		state.update_self_or_log(d);
 		state.with_texture_no_update().map(f)
 	}
@@ -158,8 +165,28 @@ pub fn background_loaded<F: Future<Output = (Vec<u8>, (i32, i32))> + Send + 'sta
 
 	tokio::spawn(async move {
 		let out = loader.await;
-		tx.send(out)
+		let _ = tx.send(out);
 	});
 
 	AsyncTexture::from_channel(rx)
+}
+
+/// creates a new AsyncTexture with its image data already loaded, so it will be
+/// loaded into a Texture as soon as the first render call is made
+pub fn from_rgba8(pixels: Vec<u8>, pos: (i32, i32)) -> AsyncTexture {
+	let (tx, rx) = oneshot::channel();
+	let _ = tx.send((pixels, pos));
+
+	AsyncTexture::from_channel(rx)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn has_to_be_send<T: Send>() {}
+	#[test]
+	fn test_send() {
+		has_to_be_send::<AsyncTexture>();
+	}
 }
