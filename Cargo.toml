@@ -27,6 +27,7 @@ stage_manager_remote.path = "./sui/stage_manager_remote"
 
 game.path = "./crates/game"
 level_editor.path = "./crates/level_editor"
+async_texture.path = "./crates/async_texture"
 
 tokio = "1.46.1"
 futures = "0.3.31"

@@ -1,0 +1,10 @@
+[package]
+name = "async_texture"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+asset_provider.workspace = true
+asset_provider_image.workspace = true
+sui.workspace = true
+tokio.workspace = true
