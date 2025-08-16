@@ -112,7 +112,7 @@ pub fn game(game_data: Option<GameData>) -> StageChange<'static> {
 
 fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 	let saving: Option<tokio::task::JoinHandle<()>> = None;
-	let mut saving = Arc::new(Mutex::new(saving));
+	let saving = Arc::new(Mutex::new(saving));
 
 	let save_handler = async move |game_data| {
 		use rfd::AsyncFileDialog;

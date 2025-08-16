@@ -61,7 +61,20 @@ impl ResourceCounter {
 	fn progress_into_component(&self) -> Option<impl Layable + Debug + Clone + 'static> {
 		match &self.render_data {
 			Some(render_data) => {
-				let rows = self.goal.resources.iter().map(|(resource, target)| {
+				let non_target_resources = self.resources.iter().filter_map(|(res, count)| {
+					if !self.goal.resources.contains_key(res) {
+						Some((res, count))
+					} else {
+						None
+					}
+				});
+				let target_resources = self.goal.resources.iter();
+
+				let non_target_resources = non_target_resources.map(|(res, _)| (res, None));
+				let target_resources = target_resources.map(|(res, count)| (res, Some(count)));
+				let all_resources = target_resources.chain(non_target_resources);
+
+				let rows = all_resources.map(|(resource, target)| {
 					let received = self.resources.get(resource).copied().unwrap_or_default();
 
 					let texture = render_data.textures.texture_for(resource.texture_id());
@@ -75,7 +88,11 @@ impl ResourceCounter {
 					let texture = texture.fix_wh_square(16);
 					let texture = texture.margin(2);
 
-					let count = format!("{received} / {target}");
+					let target = match target {
+						Some(target) => format!(" / {target}"),
+						None => format!(""),
+					};
+					let count = format!("{received}{target}");
 					let count = sui::Text::new(count, 18);
 					let count = count.centered().margin(2);
 
