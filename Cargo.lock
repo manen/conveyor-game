@@ -862,6 +862,7 @@ dependencies = [
  "sui",
  "sui_runner",
  "sys-locale",
+ "textures",
  "tokio",
  "tokio-util",
  "toml 0.9.5",
@@ -2782,6 +2783,21 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "textures"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "asset_provider",
+ "asset_provider_image",
+ "futures",
+ "stage_manager",
+ "stage_manager_loaders",
+ "strum",
+ "sui",
+ "tokio",
 ]
 
 [[package]]

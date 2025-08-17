@@ -1,0 +1,15 @@
+[package]
+name = "textures"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+asset_provider.workspace = true
+asset_provider_image.workspace = true
+futures.workspace = true
+stage_manager.workspace = true
+stage_manager_loaders.workspace = true
+strum.workspace = true
+sui.workspace = true
+tokio.workspace = true

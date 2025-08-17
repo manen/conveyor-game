@@ -14,6 +14,9 @@ members = [
 ]
 
 [workspace.dependencies]
+
+# sui crates
+
 sui.path = "./sui/sui"
 sui_runner.path = "./sui/sui_runner"
 
@@ -24,6 +27,10 @@ asset_provider_font.path = "./sui/asset_provider_font"
 stage_manager.path = "./sui/stage_manager"
 stage_manager_loaders.path = "./sui/stage_manager_loaders"
 stage_manager_remote.path = "./sui/stage_manager_remote"
+
+# game parts
+
+textures.path = "./crates/textures"
 
 game.path = "./crates/game"
 level_editor.path = "./crates/level_editor"
