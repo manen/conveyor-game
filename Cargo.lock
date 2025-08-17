@@ -425,6 +425,7 @@ checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 name = "comp_extra"
 version = "0.1.0"
 dependencies = [
+ "stage_manager",
  "sui",
 ]
 
@@ -1447,6 +1448,7 @@ dependencies = [
  "arc-swap",
  "asset_provider",
  "bincode",
+ "comp_extra",
  "game",
  "rfd",
  "stage_manager",

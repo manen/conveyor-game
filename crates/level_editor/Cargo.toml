@@ -16,3 +16,4 @@ rfd.workspace = true
 stage_manager.workspace = true
 stage_manager_loaders.workspace = true
 arc-swap = "1.7.1"
+comp_extra.workspace = true
