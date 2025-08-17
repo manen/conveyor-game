@@ -590,6 +590,7 @@ async fn smelting_start(
 		.await?;
 
 	drain_mpsc(&mut channels.stage_rx);
+	drain_broadcast(&mut channels.tool_use_rx);
 	// position of the miner on the resource determined by next_mine
 	let pos = loop {
 		let tool_use = channels.tool_use_rx.recv().await.with_context(|| {

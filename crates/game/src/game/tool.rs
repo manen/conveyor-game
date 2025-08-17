@@ -45,17 +45,12 @@ impl Tool {
 
 	pub fn r#use(&mut self, game: &mut GameData, pos: (i32, i32)) {
 		match self {
-			Self::PlaceBuilding(EBuilding::Nothing(_)) => {
-				if let Some(existing) = game.buildings.at_mut(pos) {
-					if !existing.is_protected() {
-						*existing = EBuilding::nothing();
-					}
-				}
-			}
 			Self::PlaceBuilding(building) => match building {
 				_ => {
-					if let Some(r) = game.buildings.at_mut(pos) {
-						*r = building.clone()
+					if let Some(existing) = game.buildings.at_mut(pos) {
+						if !existing.is_protected() {
+							*existing = building.clone()
+						}
 					} else {
 						eprintln!("placing building on invalid position: {pos:?}")
 					}
