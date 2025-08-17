@@ -314,10 +314,9 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
-	let extractor_introduction = tips::text_with_actions_l(
-		t!("tutorial.resources-are-extracted-using-extractors"),
-		[action(t!("tutorial.continue"), TooltipPage::Continue)],
-	);
+	channels
+		.simple_page_with_continue(t!("tutorial.resources-are-extracted-using-extractors"))
+		.await?;
 
 	// load the extractor texture from the textures
 	let extractor_tex = channels
@@ -326,32 +325,22 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 		.cloned();
 	let extractor_tex = extractor_tex.fix_wh_square(64).margin(4);
 
-	// let extractor_introduction = sui::div_h([
-	// 	sui::custom(extractor_tex),
-	// 	sui::custom(extractor_introduction),
-	// ]);
-	let extractor_introduction = comp_extra::Two::new(extractor_tex, extractor_introduction);
+	// --
+
+	let select_tip = tips::text_with_actions_l(
+		t!("tutorial.select-the-small-extractor"),
+		[
+			action(t!("tutorial.go-back"), TooltipPage::Reset),
+			action(
+				t!("tutorial.what-am-i-supposed-to-do"),
+				TooltipPage::WhatAmISupposedToDo,
+			),
+		],
+	);
+	let extractor_introduction = comp_extra::Two::new(extractor_tex.clone(), select_tip);
+
 	channels
 		.send_stage_change(RemoteStageChange::simple(extractor_introduction))
-		.await?;
-
-	let event = channels.receive_stage_event().await?;
-	match event {
-		TooltipPage::Continue => {}
-		_ => return Err(anyhow!("expected Continue got {event:?}")),
-	}
-
-	channels
-		.send_stage_change(text_with_actions(
-			t!("tutorial.select-the-small-extractor"),
-			[
-				action(t!("tutorial.go-back"), TooltipPage::Reset),
-				action(
-					t!("tutorial.what-am-i-supposed-to-do"),
-					TooltipPage::WhatAmISupposedToDo,
-				),
-			],
-		))
 		.await?;
 	loop {
 		let back_pressed = async {
@@ -391,11 +380,14 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 					.simple_page_with_continue(t!("tutorial.to-make-anything"))
 					.await?;
 
+				let select_tip = tips::text_with_actions_l(
+					t!("tutorial.to-continue-the-tutorial"),
+					[action(t!("tutorial.go-back"), TooltipPage::Reset)],
+				);
+				let select_tip = comp_extra::Two::new(extractor_tex.clone(), select_tip);
+
 				channels
-					.send_stage_change(text_with_actions(
-						t!("tutorial.to-continue-the-tutorial"),
-						[action(t!("tutorial.go-back"), TooltipPage::Reset)],
-					))
+					.send_stage_change(RemoteStageChange::simple(select_tip))
 					.await?;
 
 				continue;
