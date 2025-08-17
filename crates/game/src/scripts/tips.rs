@@ -79,7 +79,7 @@ pub fn text_with_actions_fullscreen_l<P: Clone + 'static>(
 
 	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
 
-	let div = crate::comp::FullscreenWrap::new(div.center_y());
+	let div = comp_extra::FullscreenWrap::new(div.center_y());
 	let div = div.margin(16);
 
 	let div = div.with_background(sui::comp::Color::new(sui::color(0, 0, 0, 200)));
