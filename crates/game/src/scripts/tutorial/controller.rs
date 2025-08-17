@@ -326,10 +326,11 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 		.cloned();
 	let extractor_tex = extractor_tex.fix_wh_square(64).margin(4);
 
-	let extractor_introduction = sui::div_h([
-		sui::custom(extractor_tex),
-		sui::custom(extractor_introduction),
-	]);
+	// let extractor_introduction = sui::div_h([
+	// 	sui::custom(extractor_tex),
+	// 	sui::custom(extractor_introduction),
+	// ]);
+	let extractor_introduction = comp_extra::Two::new(extractor_tex, extractor_introduction);
 	channels
 		.send_stage_change(RemoteStageChange::simple(extractor_introduction))
 		.await?;

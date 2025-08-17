@@ -34,3 +34,4 @@ sys-locale = "0.3.2"
 fastnoise-lite = "1.1.1"
 opener = "0.8.2"
 async_texture.workspace = true
+comp_extra.workspace = true
