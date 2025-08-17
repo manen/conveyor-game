@@ -3,15 +3,13 @@ use std::{collections::HashMap, fmt::Debug};
 use sui::Layable;
 
 use crate::{
-	textures::Textures,
-	utils::{Direction, MultiMap},
-	world::{
-		EResource, Map,
-		buildings::{Building, EBuilding},
-		maps::SIZE,
-		render::{self, TILE_RENDER_SIZE},
-	},
+	EResource, Map,
+	buildings::{Building, EBuilding},
+	maps::SIZE,
+	render::{self, TILE_RENDER_SIZE},
 };
+use textures::Textures;
+use utils::{Direction, MultiMap};
 
 #[derive(Clone, Debug)]
 /// BuildingsMap isn't just a type and an Ext type, but can be taken with [Self::take]

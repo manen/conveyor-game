@@ -1,10 +1,8 @@
 use std::time::{Duration, Instant};
 
-use crate::{
-	textures::TextureID,
-	utils::Direction,
-	world::{EResource, buildings::Building},
-};
+use crate::{EResource, buildings::Building};
+use textures::TextureID;
+use utils::Direction;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SmallExtractor {

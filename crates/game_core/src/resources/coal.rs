@@ -1,9 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{
-	textures::TextureID,
-	world::{EResource, Resource, tile::Tile},
-};
+use crate::{EResource, Resource, tile::Tile};
+use textures::TextureID;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Coal;

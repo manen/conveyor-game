@@ -847,6 +847,7 @@ dependencies = [
  "dirs",
  "fastnoise-lite",
  "futures",
+ "game_core",
  "glissade",
  "heapless",
  "include_dir",
@@ -866,6 +867,23 @@ dependencies = [
  "tokio",
  "tokio-util",
  "toml 0.9.5",
+ "utils",
+]
+
+[[package]]
+name = "game_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "fastnoise-lite",
+ "heapless",
+ "serde",
+ "strum",
+ "sui",
+ "textures",
+ "tokio",
+ "utils",
 ]
 
 [[package]]
@@ -1013,7 +1031,7 @@ checksum = "5971ac85611da7067dbfcabef3c70ebb5606018acd9e2a3903a0da507521e0d5"
 [[package]]
 name = "heapless"
 version = "0.9.0"
-source = "git+https://github.com/rust-embedded/heapless#2db884445a784783a8d0f2ce37a1b8a73982e7a1"
+source = "git+https://github.com/rust-embedded/heapless#692e8e013ca0dc70f66d20a0f1519f196d8a6e2f"
 dependencies = [
  "hash32",
  "serde",
@@ -3157,6 +3175,13 @@ name = "utf8_iter"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "v_frame"

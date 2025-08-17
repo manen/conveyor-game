@@ -1,9 +1,7 @@
 use sui::Layable;
 
-use crate::{
-	textures::Textures,
-	world::{ETile, render::TILE_RENDER_SIZE, worldgen},
-};
+use crate::{ETile, render::TILE_RENDER_SIZE, worldgen};
+use textures::Textures;
 
 /// world size in tiles
 pub const SIZE: usize = 32;
@@ -66,7 +64,7 @@ impl<'a> Layable for TilemapRenderer<'a> {
 		(size, size)
 	}
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		crate::world::render::draw_tilemap(
+		crate::render::draw_tilemap(
 			d,
 			&self.tilemap,
 			&self.textures,

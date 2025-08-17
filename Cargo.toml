@@ -30,6 +30,8 @@ stage_manager_remote.path = "./sui/stage_manager_remote"
 
 # game parts
 
+game_core.path = "./crates/game_core"
+utils.path = "./crates/utils"
 textures.path = "./crates/textures"
 
 game.path = "./crates/game"

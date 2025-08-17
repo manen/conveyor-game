@@ -2,11 +2,9 @@
 
 use sui::{Layable, LayableExt, raylib::prelude::RaylibDraw, tex::Texture};
 
-use crate::{
-	textures::{TextureID, Textures},
-	utils::Direction,
-	world::{EResource, Resource, buildings::Building, render::TILE_RENDER_SIZE},
-};
+use crate::{EResource, Resource, buildings::Building, render::TILE_RENDER_SIZE};
+use textures::{TextureID, Textures};
+use utils::Direction;
 
 pub const CONVEYOR_CAPACITY: usize = 3;
 // pub const CONVEYOR_SPEED: Duration = Duration::from_millis(200);

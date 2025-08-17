@@ -3,13 +3,11 @@ use std::borrow::Cow;
 use sui::{Color, Details, Layable, comp::text::Font, raylib::prelude::RaylibDraw};
 
 use crate::{
-	textures::{TextureID, Textures},
-	world::{
-		Tile,
-		buildings::{Building, BuildingsMap},
-		maps::Tilemap,
-	},
+	Tile,
+	buildings::{Building, BuildingsMap},
+	maps::Tilemap,
 };
+use textures::{TextureID, Textures};
 
 pub const TILE_RENDER_SIZE: i32 = 32;
 

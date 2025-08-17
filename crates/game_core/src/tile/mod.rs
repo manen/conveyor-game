@@ -6,7 +6,7 @@ mod stone;
 
 pub mod tiles {
 	use super::*;
-	use crate::world::resources;
+	use crate::resources;
 
 	pub use resources::CoalOre;
 	pub use resources::IronOre;
@@ -14,7 +14,8 @@ pub mod tiles {
 }
 use tiles::*;
 
-use crate::{textures::TextureID, world::EResource};
+use crate::EResource;
+use textures::TextureID;
 
 pub trait Tile: Clone + Debug {
 	fn name(&self) -> Cow<'static, str>;

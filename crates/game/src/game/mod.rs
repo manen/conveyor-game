@@ -14,7 +14,7 @@ use tokio::sync::{broadcast, mpsc};
 use crate::{
 	comp::{SelectTool, toolbar},
 	textures::Textures,
-	utils::{NoDebug, ReturnEvents},
+	utils::ReturnEvents,
 	world::{
 		EResource,
 		buildings::BuildingsMap,
@@ -22,6 +22,7 @@ use crate::{
 		render::TILE_RENDER_SIZE,
 	},
 };
+use utils::NoDebug;
 
 mod tool;
 pub use tool::*;

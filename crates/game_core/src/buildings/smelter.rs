@@ -1,10 +1,8 @@
 use std::time::{Duration, Instant};
 
-use crate::{
-	textures::TextureID,
-	utils::Direction,
-	world::{EResource, buildings::Building},
-};
+use crate::{EResource, buildings::Building};
+use textures::TextureID;
+use utils::Direction;
 
 // raw resource -> (output resource, smelt duration)
 fn smelt(resource: &EResource) -> Option<(EResource, Duration)> {
@@ -41,7 +39,7 @@ impl Building for Smelter {
 
 	fn render<'a>(
 		&'a self,
-		textures: &'a crate::textures::Textures,
+		textures: &'a textures::Textures,
 	) -> impl sui::Layable + Clone + std::fmt::Debug + 'a {
 		let tid = if self.smelting.is_some() {
 			TextureID::FurnaceOn

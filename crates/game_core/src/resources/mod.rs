@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::textures::TextureID;
+use textures::TextureID;
 
 mod iron;
 pub use iron::*;

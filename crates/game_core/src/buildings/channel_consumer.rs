@@ -1,10 +1,8 @@
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::{
-	textures::TextureID,
-	utils::Direction,
-	world::{EResource, buildings::Building},
-};
+use crate::{EResource, buildings::Building};
+use textures::TextureID;
+use utils::Direction;
 
 #[derive(Clone, Debug)]
 pub struct ChannelConsumer {

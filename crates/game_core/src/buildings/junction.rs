@@ -1,8 +1,6 @@
-use crate::{
-	textures::TextureID,
-	utils::Direction,
-	world::{EResource, buildings::Building},
-};
+use crate::{EResource, buildings::Building};
+use textures::TextureID;
+use utils::Direction;
 
 use super::conveyor::CONVEYOR_CAPACITY;
 

@@ -5,11 +5,10 @@ use std::{borrow::Cow, fmt::Debug};
 
 use sui::{Layable, LayableExt};
 
-use crate::{
-	textures::{TextureID, Textures},
-	utils::Direction,
-	world::{EResource, render::TILE_RENDER_SIZE},
-};
+use textures::{TextureID, Textures};
+use utils::Direction;
+
+use crate::{EResource, render::TILE_RENDER_SIZE};
 
 mod conveyor;
 pub use conveyor::*;

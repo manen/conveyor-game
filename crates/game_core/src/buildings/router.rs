@@ -1,13 +1,11 @@
 use std::cmp::Ordering;
 
 use crate::{
-	textures::TextureID,
-	utils::Direction,
-	world::{
-		EResource,
-		buildings::{Building, CONVEYOR_CAPACITY},
-	},
+	EResource,
+	buildings::{Building, CONVEYOR_CAPACITY},
 };
+use textures::TextureID;
+use utils::Direction;
 
 pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 
@@ -22,7 +20,7 @@ impl Router {
 	fn get_available_i_for(&self, to: Direction) -> Option<usize> {
 		let mut selected_i = None;
 		for i in 0..self.holding.len() {
-			match self.holding.get(i) {
+			match self.holding.iter().nth(i) {
 				Some((dir, _)) => {
 					if *dir == to {
 						// we won't pass to where we got the resource

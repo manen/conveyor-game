@@ -36,3 +36,5 @@ opener = "0.8.2"
 async_texture.workspace = true
 comp_extra.workspace = true
 textures.workspace = true
+game_core.workspace = true
+utils.workspace = true

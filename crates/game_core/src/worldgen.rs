@@ -3,9 +3,8 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
+use crate::ETile;
 use fastnoise_lite::{FastNoiseLite, NoiseType};
-
-use crate::world::ETile;
 
 pub fn gen_tiles_from_seed_iter(
 	seed: i32,

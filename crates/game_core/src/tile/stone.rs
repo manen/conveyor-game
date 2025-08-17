@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{textures::TextureID, world::tile::Tile};
+use textures::TextureID;
+
+use crate::tile::Tile;
 
 #[derive(
 	Copy,

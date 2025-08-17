@@ -6,8 +6,8 @@ pub mod game;
 pub mod levels;
 pub mod scripts;
 pub mod utils;
-pub mod world;
 
+pub use game_core as world;
 pub use textures;
 
 rust_i18n::i18n!("locales", fallback = "en");

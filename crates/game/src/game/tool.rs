@@ -3,9 +3,9 @@ use std::borrow::Cow;
 use crate::{
 	game::GameData,
 	textures::TextureID,
-	utils::Direction,
 	world::buildings::{Building, EBuilding, Nothing},
 };
+use utils::Direction;
 
 pub fn tools() -> impl Iterator<Item = Tool> {
 	use std::iter;
