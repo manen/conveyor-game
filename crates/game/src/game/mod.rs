@@ -34,6 +34,8 @@ mod runner;
 pub use runner::*;
 pub mod goal;
 pub use goal::Goal;
+mod provider;
+pub use provider::*;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
