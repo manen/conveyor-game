@@ -30,6 +30,13 @@ pub fn text_with_actions<P: Clone + 'static>(
 	text: impl Into<Cow<'static, str>>,
 	actions: impl IntoIterator<Item = Action<P>>,
 ) -> RemoteStageChange {
+	let l = text_with_actions_l(text, actions);
+	RemoteStageChange::simple(l)
+}
+pub fn text_with_actions_l<P: Clone + 'static>(
+	text: impl Into<Cow<'static, str>>,
+	actions: impl IntoIterator<Item = Action<P>>,
+) -> impl Layable + Debug + Clone + 'static {
 	let text = sui::comp::WrappedText::new(text, 24).margin(4);
 
 	let actions = actions
@@ -39,7 +46,8 @@ pub fn text_with_actions<P: Clone + 'static>(
 	let actions = sui::div(actions.collect::<Vec<_>>());
 
 	let div = sui::div([sui::custom(text), sui::custom_only_debug(actions)]);
-	RemoteStageChange::simple(div)
+
+	div
 }
 
 /// doesn't use wrapped text
@@ -47,6 +55,13 @@ pub fn text_with_actions_fullscreen<P: Clone + 'static>(
 	text: impl Into<Cow<'static, str>>,
 	actions: impl IntoIterator<Item = Action<P>>,
 ) -> RemoteStageChange {
+	let l = text_with_actions_fullscreen_l(text, actions);
+	RemoteStageChange::simple(l)
+}
+pub fn text_with_actions_fullscreen_l<P: Clone + 'static>(
+	text: impl Into<Cow<'static, str>>,
+	actions: impl IntoIterator<Item = Action<P>>,
+) -> impl Layable + Debug + Clone + 'static {
 	let text = sui::comp::text::wrapped_text::CenteredWrappedText::new(text, 24).margin(4);
 
 	let actions = actions
@@ -68,7 +83,5 @@ pub fn text_with_actions_fullscreen<P: Clone + 'static>(
 	let div = div.margin(16);
 
 	let div = div.with_background(sui::comp::Color::new(sui::color(0, 0, 0, 200)));
-	// let div = crate::utils::ShowMouse::new(div);
-
-	RemoteStageChange::simple(div)
+	div
 }

@@ -65,3 +65,15 @@ impl Assets for GameAssets {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn has_to_be_send<T: Send>() {}
+
+	#[test]
+	fn test_name() {
+		has_to_be_send::<GameAssets>();
+	}
+}
