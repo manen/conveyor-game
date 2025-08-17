@@ -10,11 +10,14 @@ use crate::{
 pub struct SmallExtractor {
 	#[serde(skip, default = "Instant::now")]
 	last_extract: Instant,
+
+	protected: bool,
 }
 impl SmallExtractor {
 	pub fn new() -> Self {
 		Self {
 			last_extract: Instant::now(),
+			protected: false,
 		}
 	}
 }
@@ -50,5 +53,13 @@ impl Building for SmallExtractor {
 	}
 	fn pass_relatives(&self) -> &'static [(i32, i32)] {
 		Direction::all_rel_array()
+	}
+
+	fn is_protected(&self) -> bool {
+		self.protected
+	}
+	fn set_protected(&mut self, protected: bool) -> Result<(), ()> {
+		self.protected = protected;
+		Ok(())
 	}
 }

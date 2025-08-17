@@ -44,4 +44,8 @@ impl Building for ChannelConsumer {
 	fn is_protected(&self) -> bool {
 		self.protected
 	}
+	fn set_protected(&mut self, protected: bool) -> Result<(), ()> {
+		self.protected = protected;
+		Ok(())
+	}
 }

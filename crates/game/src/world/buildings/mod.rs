@@ -119,6 +119,10 @@ pub trait Building {
 	fn is_protected(&self) -> bool {
 		false
 	}
+	/// attemtps to protect this building. isn't implemented by all building types
+	fn set_protected(&mut self, protected: bool) -> Result<(), ()> {
+		Err(())
+	}
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -342,6 +346,18 @@ impl Building for EBuilding {
 			Self::Junction(a) => a.is_protected(),
 			Self::Router(a) => a.is_protected(),
 			Self::Smelter(a) => a.is_protected(),
+		}
+	}
+	fn set_protected(&mut self, protected: bool) -> Result<(), ()> {
+		match self {
+			Self::Nothing(a) => a.set_protected(protected),
+			Self::SmallExtractor(a) => a.set_protected(protected),
+			Self::DebugConsumer(a) => a.set_protected(protected),
+			Self::ChannelConsumer(a) => a.set_protected(protected),
+			Self::Conveyor(a) => a.set_protected(protected),
+			Self::Junction(a) => a.set_protected(protected),
+			Self::Router(a) => a.set_protected(protected),
+			Self::Smelter(a) => a.set_protected(protected),
 		}
 	}
 }

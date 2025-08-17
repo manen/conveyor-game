@@ -20,7 +20,12 @@ use crate::{
 	},
 	textures::Textures,
 	utils::CheckConnection,
-	world::{EResource, Resource, buildings::EBuilding, maps::BuildingsMap, tile},
+	world::{
+		EResource, Resource,
+		buildings::{Building, EBuilding},
+		maps::BuildingsMap,
+		tile,
+	},
 };
 
 #[derive(Clone, Debug)]
@@ -157,6 +162,23 @@ impl Channels {
 
 		let ret = rx.await?;
 		Ok(ret)
+	}
+
+	pub async fn set_as_protected(&mut self, pos: (i32, i32)) -> anyhow::Result<()> {
+		self.game(move |game| {
+			if let Some(miner) = game.data_mut().buildings.at_mut(pos) {
+				let protection_res = miner.set_protected(true);
+				if let Err(_) = protection_res {
+					eprintln!("failed to set {miner:?} as protected");
+				}
+			} else {
+				eprintln!(
+					"the miner we just placed actually doesn't exist so this is basically impossible"
+				)
+			}
+		})
+		.await?;
+		Ok(())
 	}
 }
 
@@ -400,6 +422,9 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	};
 	let tile_resource_name = tile_resource.name();
 
+	// make the new miner protected since it's needed to finish the tutorial
+	channels.set_as_protected(pos).await?;
+
 	channels
 		.simple_page_with_continue(t!(
 			"tutorial.this-extractor-will-begin-mining",
@@ -641,6 +666,9 @@ async fn smelting_start(
 			}
 		}
 	};
+
+	// set this one as protected too
+	channels.set_as_protected(pos).await?;
 
 	channels
 		.send_stage_change(text_with_actions(

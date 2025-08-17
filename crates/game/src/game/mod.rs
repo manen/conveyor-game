@@ -221,6 +221,9 @@ impl Game {
 	pub fn data(&self) -> &GameData {
 		&self.data
 	}
+	pub fn data_mut(&mut self) -> &mut GameData {
+		&mut self.data
+	}
 	pub fn buildings(&self) -> &BuildingsMap {
 		&self.data.buildings
 	}
