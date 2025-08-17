@@ -1,6 +1,6 @@
 use anyhow::{Context, anyhow};
 
-use crate::world::{
+use crate::{
 	EResource, ETile, Tile,
 	buildings::EBuilding,
 	maps::{BuildingsMap, Tilemap, TilemapExt},

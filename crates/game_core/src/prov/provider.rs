@@ -1,4 +1,4 @@
-use crate::game::GameData;
+use crate::GameData;
 
 /// provides the game \
 /// this is so `Game` can have a blanket implementation over `GameProvider`s so \

@@ -26,17 +26,14 @@ use utils::NoDebug;
 
 mod tool;
 pub use tool::*;
-mod data;
-pub use data::*;
 pub mod timer;
 pub use timer::Timer;
 use timer::TimerRenderable;
 mod runner;
 pub use runner::*;
 pub mod goal;
+pub use game_core::prov::*;
 pub use goal::Goal;
-mod provider;
-pub use provider::*;
 
 pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 
