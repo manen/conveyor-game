@@ -2,8 +2,9 @@ use std::fmt::Debug;
 
 use sui::{Layable, LayableExt};
 
+use comp_extra::{TooltipData, TooltipProvider};
+
 use crate::{
-	comp::{TooltipData, TooltipProvider},
 	game::{Tool, tools},
 	textures::Textures,
 	world::buildings::Building,
@@ -38,7 +39,7 @@ pub fn toolbar_from_tools(
 
 		let texture = texture.fix_wh_square(64);
 		let texture = texture.margin(4);
-		let texture = super::TooltipOnHover::new(tool.name(), tooltip_data.clone(), texture);
+		let texture = comp_extra::TooltipOnHover::new(tool.name(), tooltip_data.clone(), texture);
 
 		// sui::Text::new(tool.name(), 24)
 		texture.clickable(move |_| SelectTool(tool.clone()))
