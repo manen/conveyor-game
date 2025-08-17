@@ -62,15 +62,15 @@ pub async fn main_menu() -> impl Layable + Debug {
 	let title = title.margin(32);
 	let title = title.center_x();
 
-	let start_tutorial = crate::comp::button_explicit("start tutorial", false, || {
+	let start_tutorial = comp_extra::button_explicit("start tutorial", false, || {
 		let tutorial = tutorial::tutorial();
 		ReturnEvent::new(StageChange::Simple(tutorial))
 	});
-	let start_freeplay = crate::comp::button_explicit("free play", only_allow_tutorial, || {
+	let start_freeplay = comp_extra::button_explicit("free play", only_allow_tutorial, || {
 		ReturnEvent::new(game(None))
 	});
 	let load_freeplay =
-		crate::comp::button_explicit("load save file", only_allow_tutorial, freeplay_loader);
+		comp_extra::button_explicit("load save file", only_allow_tutorial, freeplay_loader);
 
 	let buttons = sui::div([
 		sui::custom_only_debug(start_tutorial),
