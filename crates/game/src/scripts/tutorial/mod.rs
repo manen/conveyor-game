@@ -66,7 +66,7 @@ pub async fn assemble_tutorial(
 	let tool_use_rx = game.subscribe_to_tool_use();
 	game.enable_tips_spawn(|tx, rx| {
 		let channels = controller::Channels {
-			textures: Some(textures),
+			textures,
 			goal: ResourceCounter::new(Goal::new([]), resources_rx),
 			master_tx,
 

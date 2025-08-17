@@ -16,9 +16,9 @@ use crate::{
 	levels::GameState,
 	scripts::{
 		main::main_menu,
-		tips::{action, text_with_actions, text_with_actions_fullscreen},
+		tips::{self, action, text_with_actions, text_with_actions_fullscreen},
 	},
-	textures::Textures,
+	textures::{TextureID, Textures},
 	utils::CheckConnection,
 	world::{
 		EResource, Resource,
@@ -43,7 +43,7 @@ pub enum TooltipPage {
 #[derive(Debug)]
 pub struct Channels {
 	pub goal: ResourceCounter,
-	pub textures: Option<Textures>,
+	pub textures: Textures,
 
 	pub master_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
@@ -193,28 +193,26 @@ pub async fn controller(mut channels: Channels) {
 	}
 }
 
-pub async fn async_texture_test() -> anyhow::Result<impl Layable + Debug> {
-	let assets = crate::GameAssets::default();
+// pub async fn async_texture_test() -> anyhow::Result<impl Layable + Debug> {
+// 	let assets = crate::GameAssets::default();
 
-	let furnace_off = async_texture::from_asset(&assets, "textures/furnace_front.png");
-	let furnace_on = async_texture::from_asset(&assets, "textures/furnace_front_on.png");
+// 	let furnace_off = async_texture::from_asset(&assets, "textures/furnace_front.png");
+// 	let furnace_on = async_texture::from_asset(&assets, "textures/furnace_front_on.png");
 
-	let (furnace_off, furnace_on) = tokio::join!(furnace_off, furnace_on);
-	let (furnace_off, furnace_on) = (furnace_off?, furnace_on?);
+// 	let (furnace_off, furnace_on) = tokio::join!(furnace_off, furnace_on);
 
-	let furnaces = [furnace_off, furnace_on].map(|tex| tex.fix_wh_square(64).margin(4));
-	let furnaces_div = sui::div_h(furnaces);
+// 	let (furnace_off, furnace_on) = (furnace_off?, furnace_on?);
 
-	let text = sui::Text::new("these fuckers were loaded on another thread", 32);
-	let div = sui::div([sui::custom(text), sui::custom_only_debug(furnaces_div)]);
+// 	let furnaces = [furnace_off, furnace_on].map(|tex| tex.fix_wh_square(64).margin(4));
+// 	let furnaces_div = sui::div_h(furnaces);
 
-	Ok(div)
-}
+// 	let text = sui::Text::new("these fuckers were loaded on another thread", 32);
+// 	let div = sui::div([sui::custom(text), sui::custom_only_debug(furnaces_div)]);
+
+// 	Ok(div)
+// }
 
 pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
-	channels.send_stage(async_texture_test().await?).await?;
-	tokio::time::sleep(Duration::from_secs(5)).await;
-
 	channels
 		.stage_tx
 		.send(text_with_actions_fullscreen(
@@ -316,9 +314,31 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 }
 
 pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
+	let extractor_introduction = tips::text_with_actions_l(
+		t!("tutorial.resources-are-extracted-using-extractors"),
+		[action(t!("tutorial.continue"), TooltipPage::Continue)],
+	);
+
+	// load the extractor texture from the textures
+	let extractor_tex = channels
+		.textures
+		.texture_for(TextureID::SmallExtractor)
+		.cloned();
+	let extractor_tex = extractor_tex.fix_wh_square(64).margin(4);
+
+	let extractor_introduction = sui::div_h([
+		sui::custom(extractor_tex),
+		sui::custom(extractor_introduction),
+	]);
 	channels
-		.simple_page_with_continue(t!("tutorial.resources-are-extracted-using-extractors"))
+		.send_stage_change(RemoteStageChange::simple(extractor_introduction))
 		.await?;
+
+	let event = channels.receive_stage_event().await?;
+	match event {
+		TooltipPage::Continue => {}
+		_ => return Err(anyhow!("expected Continue got {event:?}")),
+	}
 
 	channels
 		.send_stage_change(text_with_actions(
@@ -445,13 +465,9 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 		})
 		.await?;
 
-	channels.goal.enable_display_tx(
-		channels
-			.textures
-			.take()
-			.expect("texture has been taken already"),
-		display_tx,
-	);
+	channels
+		.goal
+		.enable_display_tx(channels.textures.clone(), display_tx);
 
 	channels.goal.render_tick().await?;
 

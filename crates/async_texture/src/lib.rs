@@ -187,7 +187,10 @@ pub fn from_rgba8(pixels: Vec<u8>, size: (i32, i32)) -> AsyncTexture {
 use asset_provider_image::AssetsExt;
 
 /// only returns once the image has been loaded and converted into rgba8
-pub async fn from_asset<A: Assets + Sync>(assets: &A, key: &str) -> anyhow::Result<AsyncTexture> {
+pub async fn from_asset<A: Assets + Send + Sync>(
+	assets: &A,
+	key: &str,
+) -> anyhow::Result<AsyncTexture> {
 	let image = assets.asset_image(key).await?;
 	let rgba = image.to_rgba8();
 
