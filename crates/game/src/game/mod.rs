@@ -16,7 +16,7 @@ use crate::{
 	textures::Textures,
 	utils::{NoDebug, ReturnEvents},
 	world::{
-		EResource, Resource,
+		EResource,
 		buildings::BuildingsMap,
 		maps::{SIZE, Tilemap, TilemapExt},
 		render::TILE_RENDER_SIZE,
@@ -244,7 +244,7 @@ impl Game {
 	}
 	pub fn goal_display_det(&self, det: Details) -> Option<Details> {
 		if let Some(goal_display) = &self.goal_display {
-			let (w, _) = goal_display.size();
+			let (w, h) = goal_display.size();
 			// on the right side of the screen, between the toolbar and the tips
 
 			let start_x = det.aw - w;
@@ -255,6 +255,11 @@ impl Game {
 				.tips_det(det)
 				.map(|tips_det| tips_det.y - start_y)
 				.unwrap_or_else(|| det.ah - start_y);
+
+			if aw < w / 2 || ah < h / 2 {
+				// if there's less than half the space needed, don't bother rendering
+				return None;
+			}
 
 			let l_det = Details {
 				x: start_x,
@@ -324,9 +329,9 @@ impl Layable for Game {
 			tips.render(d, l_det, 1.0);
 		}
 		if let Some(goal_display) = &self.goal_display {
-			let l_det = self.goal_display_det(det).unwrap();
-
-			goal_display.render(d, l_det, 1.0);
+			if let Some(l_det) = self.goal_display_det(det) {
+				goal_display.render(d, l_det, 1.0);
+			}
 		}
 	}
 

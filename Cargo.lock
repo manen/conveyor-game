@@ -161,6 +161,7 @@ dependencies = [
 name = "async_texture"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "asset_provider",
  "asset_provider_image",
  "sui",
@@ -832,6 +833,7 @@ dependencies = [
  "asset_provider",
  "asset_provider_font",
  "asset_provider_image",
+ "async_texture",
  "bincode",
  "dirs",
  "fastnoise-lite",

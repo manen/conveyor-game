@@ -171,7 +171,28 @@ pub async fn controller(mut channels: Channels) {
 	}
 }
 
+pub async fn async_texture_test() -> anyhow::Result<impl Layable + Debug> {
+	let assets = crate::GameAssets::default();
+
+	let furnace_off = async_texture::from_asset(&assets, "textures/furnace_front.png");
+	let furnace_on = async_texture::from_asset(&assets, "textures/furnace_front_on.png");
+
+	let (furnace_off, furnace_on) = tokio::join!(furnace_off, furnace_on);
+	let (furnace_off, furnace_on) = (furnace_off?, furnace_on?);
+
+	let furnaces = [furnace_off, furnace_on].map(|tex| tex.fix_wh_square(64).margin(4));
+	let furnaces_div = sui::div_h(furnaces);
+
+	let text = sui::Text::new("these fuckers were loaded on another thread", 32);
+	let div = sui::div([sui::custom(text), sui::custom_only_debug(furnaces_div)]);
+
+	Ok(div)
+}
+
 pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
+	channels.send_stage(async_texture_test().await?).await?;
+	tokio::time::sleep(Duration::from_secs(5)).await;
+
 	channels
 		.stage_tx
 		.send(text_with_actions_fullscreen(

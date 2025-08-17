@@ -1,5 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc, sync::Arc};
 
+use asset_provider::Assets;
 use sui::{
 	Color, Layable,
 	raylib::{
@@ -56,6 +57,9 @@ impl AsyncTextureState {
 }
 
 #[derive(Debug)]
+/// a texture variant that is valid uninitialized, can be initialized by \
+/// sending the image data though a tokio oneshot channel.
+/// initialized on the first render call where the image data can be received
 pub struct AsyncTexture {
 	state: Arc<std::sync::Mutex<AsyncTextureState>>,
 }
@@ -173,11 +177,25 @@ pub fn background_loaded<F: Future<Output = (Vec<u8>, (i32, i32))> + Send + 'sta
 
 /// creates a new AsyncTexture with its image data already loaded, so it will be
 /// loaded into a Texture as soon as the first render call is made
-pub fn from_rgba8(pixels: Vec<u8>, pos: (i32, i32)) -> AsyncTexture {
+pub fn from_rgba8(pixels: Vec<u8>, size: (i32, i32)) -> AsyncTexture {
 	let (tx, rx) = oneshot::channel();
-	let _ = tx.send((pixels, pos));
+	let _ = tx.send((pixels, size));
 
 	AsyncTexture::from_channel(rx)
+}
+
+use asset_provider_image::AssetsExt;
+
+/// only returns once the image has been loaded and converted into rgba8
+pub async fn from_asset<A: Assets + Sync>(assets: &A, key: &str) -> anyhow::Result<AsyncTexture> {
+	let image = assets.asset_image(key).await?;
+	let rgba = image.to_rgba8();
+
+	let (w, h) = rgba.dimensions();
+	let pixels = rgba.into_raw();
+	let size = (w as i32, h as i32);
+
+	Ok(from_rgba8(pixels, size))
 }
 
 #[cfg(test)]
@@ -190,3 +208,6 @@ mod tests {
 		has_to_be_send::<AsyncTexture>();
 	}
 }
+
+// ennek ugye az a lenyege hogy legyen a tutorialban kis preview hogy hogy kene kineznie a kovi lepesnek
+// pl a kemence bekotesnel ez geci fontos lenne hogy valami vizualis cue is legyen
