@@ -3,7 +3,6 @@ use std::{fmt::Debug, ops::Deref, path::PathBuf, sync::Arc};
 use anyhow::Context;
 use asset_provider::Assets;
 use stage_manager::StageChange;
-use stage_manager_remote::RemoteStage;
 use sui::{DynamicLayable, Layable, LayableExt, core::ReturnEvent};
 use tokio::sync::Mutex;
 

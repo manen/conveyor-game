@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::hash::DefaultHasher;
 
 use anyhow::anyhow;
 use rust_i18n::t;

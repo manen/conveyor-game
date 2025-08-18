@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use stage_manager::StageChange;
-use sui::{DynamicLayable, Layable, LayableExt};
+use sui::{Layable, LayableExt};
 
 pub fn err_page_customizable<E: Debug + Display>(
 	err: E,

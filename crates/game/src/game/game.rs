@@ -79,7 +79,7 @@ impl<G: GameProvider> Game<G> {
 	/// creates a new Game instance with the game provider given
 	pub fn new(textures: Textures, game: G) -> Self {
 		let (width, height) = game.data().world_size();
-		let (tool_use_tx, tool_use_rx) = broadcast::channel(2);
+		let tool_use_tx = broadcast::Sender::new(2);
 
 		Self {
 			toolbar: sui::custom(toolbar(&textures)),
@@ -265,9 +265,6 @@ impl<G: GameProvider> Game<G> {
 		}
 	}
 
-	fn gen_toolbar(&self) -> DynamicLayable<'static> {
-		DynamicLayable::new(toolbar(&self.textures))
-	}
 	fn wrap_as_world<L: Layable + Debug + Clone>(
 		&self,
 		layable: L,
@@ -434,7 +431,7 @@ impl<G: GameProvider> Layable for Game<G> {
 		for event in events {
 			match event {
 				Event::MouseEvent(m_event) => {
-					let (mouse_x, mouse_y) = m_event.at();
+					let (_, mouse_y) = m_event.at();
 
 					let mut pass_to_tips = false;
 					if let Some(tips) = &self.tips {
@@ -464,7 +461,7 @@ impl<G: GameProvider> Layable for Game<G> {
 							MouseEvent::Scroll { amount, .. } => {
 								self.scale_velocity += amount / 2.0
 							}
-							MouseEvent::MouseClick { x, y } => {
+							MouseEvent::MouseClick { y, .. } => {
 								let (_, toolbar_h) = self.toolbar.size();
 
 								if y <= toolbar_h {

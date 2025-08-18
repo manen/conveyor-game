@@ -1,10 +1,6 @@
 use std::{borrow::Cow, fmt::Debug};
 
-use sui::{
-	Layable, LayableExt,
-	comp::Clickable,
-	core::{Event, MouseEvent, ReturnEvent},
-};
+use sui::{Layable, LayableExt, core::ReturnEvent};
 
 // #[derive(Clone, Debug)]
 // pub struct Button<'a> {
