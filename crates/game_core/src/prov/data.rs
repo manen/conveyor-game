@@ -80,7 +80,7 @@ impl GameDataSave {
 			self.0.iter().nth(0).map(|a| a.len()).unwrap_or_default(),
 		);
 
-		let mut tilemap = Tilemap::new(w, h);
+		let mut tilemap = Tilemap::new_worldgen(w, h);
 		let mut buildings = BuildingsMap::new(w, h);
 
 		for (x, entry) in self.0.into_iter().enumerate() {

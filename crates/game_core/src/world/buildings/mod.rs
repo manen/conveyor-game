@@ -20,8 +20,8 @@ mod small_extractor;
 pub use small_extractor::*;
 mod debug_consumer;
 pub use debug_consumer::*;
-mod channel_consumer;
-pub use channel_consumer::*;
+pub mod channel_consumer;
+pub use channel_consumer::ChannelConsumer;
 mod smelter;
 pub use smelter::*;
 
@@ -132,7 +132,6 @@ pub enum EBuilding {
 	Conveyor(Conveyor),
 	Junction(Junction),
 	Router(Router),
-	#[serde(skip)]
 	ChannelConsumer(ChannelConsumer),
 
 	Smelter(Smelter),

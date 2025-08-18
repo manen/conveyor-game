@@ -9,7 +9,7 @@ pub const SIZE: usize = 32;
 pub type Tilemap = super::Map<ETile>;
 
 pub trait TilemapExt {
-	fn new(width: usize, height: usize) -> Self;
+	fn new_worldgen(width: usize, height: usize) -> Self;
 	fn stone(width: usize, height: usize) -> Self;
 	fn from_tiles<const SIZE: usize>(tiles: [[ETile; SIZE]; SIZE]) -> Self;
 
@@ -17,7 +17,7 @@ pub trait TilemapExt {
 }
 
 impl TilemapExt for Tilemap {
-	fn new(width: usize, height: usize) -> Self {
+	fn new_worldgen(width: usize, height: usize) -> Self {
 		Self::from_vec(worldgen::gen_tiles(width, height))
 			.expect("this shouldn't be possible TilemapExt::new")
 	}

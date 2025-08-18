@@ -66,7 +66,7 @@ pub async fn main_menu() -> impl Layable + Debug {
 		ReturnEvent::new(StageChange::Simple(tutorial))
 	});
 	let start_freeplay = comp_extra::button_explicit("free play", only_allow_tutorial, || {
-		ReturnEvent::new(game(None))
+		ReturnEvent::new(free_play(None))
 	});
 	let load_freeplay =
 		comp_extra::button_explicit("load save file", only_allow_tutorial, freeplay_loader);
@@ -83,7 +83,7 @@ pub async fn main_menu() -> impl Layable + Debug {
 	page
 }
 
-pub fn game(game_data: Option<GameData>) -> StageChange<'static> {
+pub fn free_play(game_data: Option<GameData>) -> StageChange<'static> {
 	let (tx, mut rx) = tokio::sync::oneshot::channel();
 	let _ = tx.send(game_data);
 	textures::load_as_scene(GameAssets::default(), move |tex| {
@@ -100,8 +100,8 @@ pub fn game(game_data: Option<GameData>) -> StageChange<'static> {
 			}
 		};
 		let mut game = match game {
-			Some(data) => Game::new(tex, data),
-			None => Game::new_worldgen(tex),
+			Some(data) => Game::new_multithread(tex, data),
+			None => Game::new_multithread_worldgen(tex),
 		};
 		game.enable_save_handler(save_handler());
 
@@ -223,7 +223,7 @@ fn freeplay_loader() -> ReturnEvent {
 		anyhow::Ok(game_data)
 	};
 	let post_process = move |res| match res {
-		Ok(game_data) => game(Some(game_data)),
+		Ok(game_data) => free_play(Some(game_data)),
 		Err(err) => {
 			let err_page = err_page(err);
 			StageChange::simple_only_debug(err_page)

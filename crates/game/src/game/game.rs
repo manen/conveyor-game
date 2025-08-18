@@ -58,7 +58,7 @@ pub struct Game<G: GameProvider> {
 }
 impl Game<GameData> {
 	pub fn new_worldgen(textures: Textures) -> Self {
-		let tilemap = Tilemap::new(SIZE, SIZE);
+		let tilemap = Tilemap::new_worldgen(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
 		Self::from_maps(textures, tilemap, buildings)
@@ -78,6 +78,13 @@ impl Game<game_multithread::MultithreadedGame> {
 
 		let provider = game_multithread::MultithreadedGame::new(game_data, tool_rx);
 		Self::new_with_tool_use_tx(textures, provider, tool_tx)
+	}
+	pub fn new_multithread_worldgen(textures: Textures) -> Self {
+		let tilemap = Tilemap::new_worldgen(SIZE, SIZE);
+		let buildings = BuildingsMap::new(SIZE, SIZE);
+		let data = GameData::new(tilemap, buildings);
+
+		Self::new_multithread(textures, data)
 	}
 }
 

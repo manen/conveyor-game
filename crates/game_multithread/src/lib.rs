@@ -4,6 +4,7 @@ use arc_swap::ArcSwap;
 use game_core::{GAME_TICK_FREQUENCY, GameData, GameProvider, tool::Tool};
 use tokio::{sync::broadcast, task::JoinHandle};
 
+#[derive(Debug)]
 /// essentially a GameData on another thread, ticked asynchronously \
 /// uses the tool_use_rx from game to do tool events
 pub struct MultithreadedGame {
