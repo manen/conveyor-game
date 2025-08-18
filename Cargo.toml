@@ -33,6 +33,7 @@ stage_manager_remote.path = "./sui/stage_manager_remote"
 game_core.path = "./crates/game_core"
 utils.path = "./crates/utils"
 textures.path = "./crates/textures"
+game_multithread.path = "./crates/game_multithread"
 
 game.path = "./crates/game"
 level_editor.path = "./crates/level_editor"
@@ -45,3 +46,4 @@ anyhow = "1.0.98"
 strum = { version = "0.27.2", features = ["derive"] }
 bincode = "2.0.1"
 rfd = { version = "0.15.4", features = ["tokio", "xdg-portal"], default-features = false }
+serde = { version = "1.0.219", features = ["derive"] }

@@ -44,7 +44,7 @@ pub struct Channels {
 	pub master_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
-	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
+	pub tool_use_rx: broadcast::Receiver<(Tool, (i32, i32))>,
 	pub game_tx: mpsc::Sender<crate::game::GameCommand<GameData>>,
 
 	pub stage_size: (usize, usize),
@@ -353,7 +353,7 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 		let extractor_placed = async {
 			loop {
 				match channels.tool_use_rx.recv().await {
-					Ok((pos, Tool::PlaceBuilding(EBuilding::SmallExtractor(_)))) => {
+					Ok((Tool::PlaceBuilding(EBuilding::SmallExtractor(_)), pos)) => {
 						return Some(pos);
 					}
 					Err(broadcast::error::RecvError::Closed) => return None,
@@ -627,7 +627,7 @@ async fn smelting_start(
 			format!("tool_use_rx channel broke while collecting {next_mine_text}")
 		})?;
 		match tool_use {
-			(pos, Tool::PlaceBuilding(EBuilding::SmallExtractor(_))) => {
+			(Tool::PlaceBuilding(EBuilding::SmallExtractor(_)), pos) => {
 				let tile_resource = channels
 					.game_with_return(move |game| game.tile_resource_at(pos))
 					.await?;

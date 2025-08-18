@@ -848,6 +848,7 @@ dependencies = [
  "fastnoise-lite",
  "futures",
  "game_core",
+ "game_multithread",
  "glissade",
  "heapless",
  "include_dir",
@@ -884,6 +885,15 @@ dependencies = [
  "textures",
  "tokio",
  "utils",
+]
+
+[[package]]
+name = "game_multithread"
+version = "0.1.0"
+dependencies = [
+ "arc-swap",
+ "game_core",
+ "tokio",
 ]
 
 [[package]]

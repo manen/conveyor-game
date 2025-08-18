@@ -1,5 +1,5 @@
 use anyhow::{Context, anyhow};
-use game_core::{GameData, GameProvider};
+use game_core::{GAME_TICK_FREQUENCY, GameData, GameProvider};
 use stage_manager_remote::{RemoteStage, RemoteStageChange};
 use std::{
 	fmt::Debug,
@@ -27,8 +27,6 @@ use crate::{
 };
 use utils::NoDebug;
 
-pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
-
 /// Singleplayer, self-contained game renderer \
 /// quite versatile now, many features are available opt-in, so `Game` can be used
 /// to render both the most primitive, and the most complex remote-controlled game too
@@ -41,7 +39,7 @@ pub struct Game<G: GameProvider> {
 	goal_display: Option<DynamicLayable<'static>>,
 
 	tool: Tool,
-	tool_use_tx: broadcast::Sender<((i32, i32), Tool)>,
+	tool_use_tx: broadcast::Sender<(Tool, (i32, i32))>,
 
 	timer: Option<Timer>,
 	paused: bool,
@@ -74,12 +72,28 @@ impl Game<GameData> {
 		&mut self.game
 	}
 }
+impl Game<game_multithread::MultithreadedGame> {
+	pub fn new_multithread(textures: Textures, game_data: GameData) -> Self {
+		let (tool_tx, tool_rx) = broadcast::channel(2);
+
+		let provider = game_multithread::MultithreadedGame::new(game_data, tool_rx);
+		Self::new_with_tool_use_tx(textures, provider, tool_tx)
+	}
+}
 
 impl<G: GameProvider> Game<G> {
 	/// creates a new Game instance with the game provider given
 	pub fn new(textures: Textures, game: G) -> Self {
-		let (width, height) = game.data().world_size();
 		let tool_use_tx = broadcast::Sender::new(2);
+		Self::new_with_tool_use_tx(textures, game, tool_use_tx)
+	}
+	/// so you can pass it a sender that already has receivers
+	pub fn new_with_tool_use_tx(
+		textures: Textures,
+		game: G,
+		tool_use_tx: broadcast::Sender<(Tool, (i32, i32))>,
+	) -> Self {
+		let (width, height) = game.data().world_size();
 
 		Self {
 			toolbar: sui::custom(toolbar(&textures)),
@@ -159,7 +173,7 @@ impl<G: GameProvider> Game<G> {
 
 	pub fn subscribe_to_tool_use(
 		&mut self,
-	) -> tokio::sync::broadcast::Receiver<((i32, i32), Tool)> {
+	) -> tokio::sync::broadcast::Receiver<(Tool, (i32, i32))> {
 		self.tool_use_tx.subscribe()
 	}
 
@@ -505,7 +519,7 @@ impl<G: GameProvider> Layable for Game<G> {
 									&& world_pos.1 >= 0 && world_pos.1 < world_h as _
 								{
 									self.game.tool_use(&self.tool, world_pos);
-									let _ = self.tool_use_tx.send((world_pos, self.tool.clone()));
+									let _ = self.tool_use_tx.send((self.tool.clone(), world_pos));
 								}
 							}
 							_ => {}
