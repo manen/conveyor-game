@@ -1,8 +1,6 @@
-mod tool;
-pub use tool::*;
+pub use game_core::tool::*;
 pub mod timer;
 pub use timer::Timer;
-use timer::TimerRenderable;
 mod runner;
 pub use runner::*;
 pub mod goal;

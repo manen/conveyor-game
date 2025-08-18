@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use crate::{
-	game::GameData,
-	textures::TextureID,
-	world::buildings::{Building, EBuilding, Nothing},
+	GameData,
+	buildings::{Building, EBuilding, Nothing},
 };
+use textures::TextureID;
 use utils::Direction;
 
 pub fn tools() -> impl Iterator<Item = Tool> {
