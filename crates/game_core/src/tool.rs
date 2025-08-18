@@ -43,7 +43,7 @@ impl Tool {
 		}
 	}
 
-	pub fn r#use(&mut self, game: &mut GameData, pos: (i32, i32)) {
+	pub fn r#use(&self, game: &mut GameData, pos: (i32, i32)) {
 		match self {
 			Self::PlaceBuilding(building) => match building {
 				_ => {
@@ -58,6 +58,6 @@ impl Tool {
 			},
 		}
 	}
-	pub fn held(&self, game: &mut GameData, pos: (i32, i32)) {}
-	pub fn release(&mut self, game: &mut GameData, pos: (i32, i32)) {}
+	// pub fn held(&self, game: &mut GameData, pos: (i32, i32)) {}
+	// pub fn release(&mut self, game: &mut GameData, pos: (i32, i32)) {}
 }

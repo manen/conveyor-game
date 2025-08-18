@@ -22,6 +22,10 @@ impl GameData {
 		resource
 	}
 
+	pub fn world_size(&self) -> (usize, usize) {
+		self.tilemap.size()
+	}
+
 	pub fn tick(&mut self) {
 		let tile_resource_at = |pos| {
 			let tile = self.tilemap.at(pos)?;

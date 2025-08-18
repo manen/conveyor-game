@@ -3,18 +3,19 @@ use std::{
 	ops::{Deref, DerefMut},
 };
 
+use game_core::GameProvider;
 use sui::Layable;
 use tokio::sync::{mpsc, oneshot};
 
 use super::Game;
 
-pub struct GameCommand(pub Box<dyn FnOnce(&mut Game) + Send>);
-impl GameCommand {
-	pub fn new<F: FnOnce(&mut Game) + Send + 'static>(f: F) -> Self {
+pub struct GameCommand<G: GameProvider>(pub Box<dyn FnOnce(&mut Game<G>) + Send>);
+impl<G: GameProvider> GameCommand<G> {
+	pub fn new<F: FnOnce(&mut Game<G>) + Send + 'static>(f: F) -> Self {
 		Self(Box::new(f))
 	}
 
-	pub fn new_return<R: Debug + Send + 'static, F: FnOnce(&mut Game) -> R + Send + 'static>(
+	pub fn new_return<R: Debug + Send + 'static, F: FnOnce(&mut Game<G>) -> R + Send + 'static>(
 		f: F,
 	) -> (Self, oneshot::Receiver<R>) {
 		let (tx, rx) = oneshot::channel();
@@ -31,18 +32,18 @@ impl GameCommand {
 
 #[derive(Debug)]
 /// a wrapper around Game that allows you to call Game functions from another thread
-pub struct GameRunner {
-	game: Game,
-	rx: mpsc::Receiver<GameCommand>,
+pub struct GameRunner<G: GameProvider> {
+	game: Game<G>,
+	rx: mpsc::Receiver<GameCommand<G>>,
 }
-impl GameRunner {
-	pub fn new(game: Game) -> (Self, mpsc::Sender<GameCommand>) {
+impl<G: GameProvider> GameRunner<G> {
+	pub fn new(game: Game<G>) -> (Self, mpsc::Sender<GameCommand<G>>) {
 		let (tx, rx) = tokio::sync::mpsc::channel(10);
 
 		(Self { game, rx }, tx)
 	}
 }
-impl Layable for GameRunner {
+impl<G: GameProvider> Layable for GameRunner<G> {
 	fn size(&self) -> (i32, i32) {
 		self.game.size()
 	}
@@ -74,14 +75,14 @@ impl Layable for GameRunner {
 	}
 }
 
-impl Deref for GameRunner {
-	type Target = Game;
+impl<G: GameProvider> Deref for GameRunner<G> {
+	type Target = Game<G>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.game
 	}
 }
-impl DerefMut for GameRunner {
+impl<G: GameProvider> DerefMut for GameRunner<G> {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.game
 	}
@@ -90,10 +91,11 @@ impl DerefMut for GameRunner {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use game_core::GameData;
 
 	#[test]
 	fn send_test() {
-		let _ = has_to_be_send::<GameRunner>();
+		let _ = has_to_be_send::<GameRunner<GameData>>();
 	}
 
 	fn has_to_be_send<T: Send>() {}

@@ -7,7 +7,6 @@ use sui::{DynamicLayable, Layable, LayableExt};
 // use tokio::sync::mpsc::{Receiver, Sender};
 
 mod controller;
-use controller::controller;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -15,7 +14,6 @@ use crate::{
 	comp::handle_result,
 	game::{Game, GameRunner, Goal, goal::ResourceCounter},
 	levels::{Level, Levels},
-	scripts::tutorial,
 	textures,
 	world::{
 		buildings::{ChannelConsumer, EBuilding},

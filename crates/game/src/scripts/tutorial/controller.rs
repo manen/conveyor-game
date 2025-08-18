@@ -2,6 +2,7 @@ use std::{borrow::Cow, fmt::Debug, sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
 use futures::future::Either;
+use game_core::GameData;
 use rust_i18n::t;
 use stage_manager_remote::{RemoteEvent, RemoteStageChange};
 use sui::{Layable, LayableExt};
@@ -49,7 +50,7 @@ pub struct Channels {
 	pub stage_tx: mpsc::Sender<RemoteStageChange>,
 	pub stage_rx: mpsc::Receiver<TooltipPage>,
 	pub tool_use_rx: broadcast::Receiver<((i32, i32), Tool)>,
-	pub game_tx: mpsc::Sender<crate::game::GameCommand>,
+	pub game_tx: mpsc::Sender<crate::game::GameCommand<GameData>>,
 
 	pub stage_size: (usize, usize),
 }
@@ -135,7 +136,7 @@ impl Channels {
 	}
 
 	/// does NOT wait for the GameRunner to execute the Fn
-	pub async fn game<F: FnOnce(&mut Game) + Send + 'static>(
+	pub async fn game<F: FnOnce(&mut Game<GameData>) + Send + 'static>(
 		&mut self,
 		f: F,
 	) -> anyhow::Result<()> {
@@ -149,7 +150,7 @@ impl Channels {
 	/// waits for the GameRunner to actually execute the Fn sent
 	pub async fn game_with_return<
 		R: Debug + Send + 'static,
-		F: FnOnce(&mut Game) -> R + Send + 'static,
+		F: FnOnce(&mut Game<GameData>) -> R + Send + 'static,
 	>(
 		&mut self,
 		f: F,

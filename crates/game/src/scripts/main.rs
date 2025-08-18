@@ -101,8 +101,8 @@ pub fn game(game_data: Option<GameData>) -> StageChange<'static> {
 			}
 		};
 		let mut game = match game {
-			Some(data) => Game::from_data(tex, data),
-			None => Game::new(tex),
+			Some(data) => Game::new(tex, data),
+			None => Game::new_worldgen(tex),
 		};
 		game.enable_save_handler(save_handler());
 

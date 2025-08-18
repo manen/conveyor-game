@@ -1,8 +1,9 @@
 use anyhow::{Context, anyhow};
-use game_core::GameData;
+use game_core::{GameData, GameProvider};
 use stage_manager_remote::{RemoteStage, RemoteStageChange};
 use std::{
 	fmt::Debug,
+	ops::Deref,
 	time::{Duration, Instant},
 };
 use sui::{
@@ -32,10 +33,9 @@ pub const GAME_TICK_FREQUENCY: Duration = Duration::from_millis(1000 / 20);
 /// quite versatile now, many features are available opt-in, so `Game` can be used
 /// to render both the most primitive, and the most complex remote-controlled game too
 #[derive(Debug)]
-pub struct Game {
+pub struct Game<G: GameProvider> {
 	textures: Textures,
-	data: GameData,
-
+	game: G,
 	toolbar: DynamicLayable<'static>,
 	tips: Option<DynamicLayable<'static>>,
 	goal_display: Option<DynamicLayable<'static>>,
@@ -58,8 +58,8 @@ pub struct Game {
 	last_tick: Instant,
 	last_game_tick: Instant,
 }
-impl Game {
-	pub fn new(textures: Textures) -> Self {
+impl Game<GameData> {
+	pub fn new_worldgen(textures: Textures) -> Self {
 		let tilemap = Tilemap::new(SIZE, SIZE);
 		let buildings = BuildingsMap::new(SIZE, SIZE);
 
@@ -67,12 +67,19 @@ impl Game {
 	}
 	pub fn from_maps(textures: Textures, tilemap: Tilemap, buildings: BuildingsMap) -> Self {
 		let data = GameData::new(tilemap, buildings);
-		Self::from_data(textures, data)
+		Self::new(textures, data)
 	}
-	pub fn from_data(textures: Textures, game_data: GameData) -> Self {
-		let (width, height) = game_data.tilemap.size();
 
-		let (tool_use_tx, _rx) = broadcast::channel(10);
+	pub fn data_mut(&mut self) -> &mut GameData {
+		&mut self.game
+	}
+}
+
+impl<G: GameProvider> Game<G> {
+	/// creates a new Game instance with the game provider given
+	pub fn new(textures: Textures, game: G) -> Self {
+		let (width, height) = game.data().world_size();
+		let (tool_use_tx, tool_use_rx) = broadcast::channel(2);
 
 		Self {
 			toolbar: sui::custom(toolbar(&textures)),
@@ -82,7 +89,7 @@ impl Game {
 			goal_display: None,
 			paused: false,
 			can_toggle_time: true,
-			data: game_data,
+			game,
 			tool: Default::default(),
 			tool_use_tx,
 			save_handler: None,
@@ -206,20 +213,11 @@ impl Game {
 	}
 
 	pub fn tile_resource_at(&self, pos: (i32, i32)) -> Option<EResource> {
-		self.data.tile_resource_at(pos)
+		self.data().tile_resource_at(pos)
 	}
 
-	pub fn data(&self) -> &GameData {
-		&self.data
-	}
-	pub fn data_mut(&mut self) -> &mut GameData {
-		&mut self.data
-	}
-	pub fn buildings(&self) -> &BuildingsMap {
-		&self.data.buildings
-	}
-	pub fn tiles(&self) -> &Tilemap {
-		&self.data.tilemap
+	pub fn data(&self) -> impl Deref<Target = GameData> {
+		self.game.data()
 	}
 
 	pub fn tips_det(&self, det: Details) -> Option<Details> {
@@ -287,7 +285,7 @@ impl Game {
 	}
 }
 
-impl Layable for Game {
+impl<G: GameProvider> Layable for Game<G> {
 	fn size(&self) -> (i32, i32) {
 		let size = TILE_RENDER_SIZE * SIZE as i32;
 		(size, size)
@@ -295,27 +293,30 @@ impl Layable for Game {
 
 	/// we ignore scale
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-		let stage_comp = self
-			.data
-			.tilemap
-			.render(&self.textures)
-			.overlay(self.data.buildings.render(&self.textures));
-		let comp = self.wrap_as_world(stage_comp, det);
+		{
+			let data = self.data();
 
-		let timer = if let Some(timer) = &self.timer {
-			let render = sui::custom_only_debug(timer.render()); // timer.render() is already centered
-			render.into_comp()
-		} else {
-			sui::Comp::Space(sui::comp::Space::new(0, 0))
-		};
-		let ui = sui::div([
-			sui::custom(self.toolbar.immutable_wrap()).into_comp(),
-			sui::Text::new(format!("tool: {:?}", self.tool), 24).into_comp(),
-			timer,
-		]);
-		let comp = comp.overlay(ui);
+			let stage_comp = data
+				.tilemap
+				.render(&self.textures)
+				.overlay(data.buildings.render(&self.textures));
+			let world_as_comp = self.wrap_as_world(stage_comp, det);
 
-		comp.render(d, det, scale);
+			let timer = if let Some(timer) = &self.timer {
+				let render = sui::custom_only_debug(timer.render()); // timer.render() is already centered
+				render.into_comp()
+			} else {
+				sui::Comp::Space(sui::comp::Space::new(0, 0))
+			};
+			let ui = sui::div([
+				sui::custom(self.toolbar.immutable_wrap()).into_comp(),
+				sui::Text::new(format!("tool: {:?}", self.tool), 24).into_comp(),
+				timer,
+			]);
+			let comp = world_as_comp.overlay(ui);
+
+			comp.render(d, det, scale);
+		}
 
 		if let Some(tips) = &self.tips {
 			let l_det = self.tips_det(det).unwrap();
@@ -374,7 +375,7 @@ impl Layable for Game {
 
 		if !self.paused {
 			if self.last_game_tick.elapsed() >= GAME_TICK_FREQUENCY {
-				self.data.tick();
+				self.game.standard_tick();
 				self.last_game_tick = Instant::now();
 			}
 			if let Some(timer) = &mut self.timer {
@@ -501,38 +502,16 @@ impl Layable for Game {
 										continue;
 									}
 								};
+								let (world_w, world_h) = self.data().world_size();
 
-								self.tool.r#use(&mut self.data, world_pos);
-								let _ = self.tool_use_tx.send((world_pos, self.tool.clone()));
+								if world_pos.0 >= 0 && world_pos.0 < world_w as _ // .
+									&& world_pos.1 >= 0 && world_pos.1 < world_h as _
+								{
+									self.game.tool_use(&self.tool, world_pos);
+									let _ = self.tool_use_tx.send((world_pos, self.tool.clone()));
+								}
 							}
-							MouseEvent::MouseHeld { .. } => {
-								let world_pos = match world_pos!(
-									m_event,
-									"couldn't get world_pos in MouseHeld"
-								) {
-									Ok(a) => a,
-									Err(err) => {
-										eprintln!("{err}");
-										continue;
-									}
-								};
-
-								self.tool.held(&mut self.data, world_pos);
-							}
-							MouseEvent::MouseRelease { .. } => {
-								let world_pos = match world_pos!(
-									m_event,
-									"couldn't get world_pos in MouseRelease"
-								) {
-									Ok(a) => a,
-									Err(err) => {
-										eprintln!("{err}");
-										continue;
-									}
-								};
-
-								self.tool.release(&mut self.data, world_pos);
-							}
+							_ => {}
 						}
 					}
 				}
@@ -579,9 +558,10 @@ impl Layable for Game {
 				}
 			};
 
-			if ctrl && s {
+			if ctrl && s && self.save_handler.is_some() {
+				let game_data = self.data().clone();
 				if let Some(handler) = &mut self.save_handler {
-					handler(self.data.clone())
+					handler(game_data)
 				}
 			}
 		}

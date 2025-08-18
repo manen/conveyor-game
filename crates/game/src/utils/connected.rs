@@ -1,3 +1,5 @@
+use game_core::GameProvider;
+
 use crate::{
 	game::{Game, GameData},
 	world::buildings::Building,
@@ -130,7 +132,7 @@ impl CheckConnection for GameData {
 		Ok(false)
 	}
 }
-impl CheckConnection for Game {
+impl<G: GameProvider> CheckConnection for Game<G> {
 	type Cache = Vec<(i32, i32)>;
 
 	fn is_connected<T: Target>(
