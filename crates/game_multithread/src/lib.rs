@@ -83,3 +83,8 @@ impl MultithreadedGame {
 		Self { handle, data }
 	}
 }
+impl Drop for MultithreadedGame {
+	fn drop(&mut self) {
+		self.handle.abort();
+	}
+}
