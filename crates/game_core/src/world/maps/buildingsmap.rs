@@ -50,6 +50,7 @@ impl BuildingsMap {
 		// warning: self.moves_queue gets taken as moves_queue and put back into self.moves_queue at the end of this function
 		let mut moves_queue = std::mem::take(&mut self.moves_queue);
 
+		// execute the queue
 		// poll the resources from the source and push them into the target block
 		let moves_total = moves_queue.multimap_drain_total();
 		for (target_pos, source_pos) in moves_total {

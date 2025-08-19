@@ -49,8 +49,8 @@ impl Building for SmallExtractor {
 			None
 		}
 	}
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		Direction::all_rel_array()
+	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+		Direction::all_rel().collect()
 	}
 
 	fn is_protected(&self) -> bool {

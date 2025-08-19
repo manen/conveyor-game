@@ -85,6 +85,9 @@ impl Direction {
 	pub fn all() -> impl Iterator<Item = Self> {
 		[Self::Right, Self::Bottom, Self::Left, Self::Top].into_iter()
 	}
+	pub fn all_rel() -> impl Iterator<Item = (i32, i32)> {
+		Self::all().map(|dir| dir.rel())
+	}
 	pub fn all_rel_array() -> &'static [(i32, i32)] {
 		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
 	}

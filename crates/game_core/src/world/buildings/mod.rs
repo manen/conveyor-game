@@ -102,8 +102,9 @@ pub trait Building {
 
 	/// even though this can return any number as a relative, if it's not a direction it will not go through by
 	/// the current implementation
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		&[(0, 1), (0, -1), (1, 0), (-1, 0)]
+	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+		let all_directions = Direction::all().map(|dir| dir.rel());
+		all_directions.into_iter().collect()
 		// &[]
 	}
 	/// lets the building pick which target candidate it'd like to pass resources to
@@ -297,7 +298,7 @@ impl Building for EBuilding {
 		}
 	}
 
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
+	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
 		match self {
 			Self::Nothing(a) => a.pass_relatives(),
 			Self::SmallExtractor(a) => a.pass_relatives(),
@@ -378,7 +379,7 @@ impl Building for Nothing {
 		textures.texture_for(TextureID::Eraser).cloned()
 	}
 
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		&[]
+	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+		Default::default()
 	}
 }

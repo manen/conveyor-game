@@ -199,8 +199,9 @@ impl Building for Conveyor {
 		self.holding.pop_front()
 	}
 
-	fn pass_relatives(&self) -> &'static [(i32, i32)] {
-		self.dir.rel_array()
+	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+		let directions = self.dir.rel();
+		std::iter::once(directions).collect()
 	}
 	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
 		let from_dir = match Direction::from_rel(relative_pos) {
