@@ -13,7 +13,9 @@ pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 pub struct Router {
 	// (received_from, resource)
 	holding: heapless::Deque<(Direction, EResource), ROUTER_CAPACITY>,
-	pass_i: usize,
+
+	#[serde(default)]
+	pass_dir: Direction,
 }
 impl Router {
 	/// returns index in self.holding
@@ -27,12 +29,30 @@ impl Router {
 						continue;
 					} else {
 						selected_i = Some(i);
+						break;
 					}
 				}
 				None => continue,
 			}
 		}
 		selected_i
+	}
+
+	fn count(&mut self) -> Direction {
+		let dir = self.pass_dir;
+		self.pass_dir = self.pass_dir.rotate_r();
+		dir
+	}
+	fn unique_directions_in_holding(&self) -> usize {
+		let mut directions: heapless::Vec<Direction, 4> = Default::default();
+
+		for (dir, _) in self.holding.iter() {
+			if directions.contains(dir) {
+				continue;
+			}
+			let _ = directions.push(*dir);
+		}
+		directions.len()
 	}
 }
 impl Building for Router {
@@ -98,35 +118,54 @@ impl Building for Router {
 	fn confirm_pass_relatives(
 		&mut self,
 		available_directions: &[(i32, i32)],
-	) -> Option<(i32, i32)> {
-		// if self.pass_i >= available_directions.len() {
-		// 	self.pass_i = 1;
-		// 	available_directions.iter().copied().nth(0)
-		// } else {
-		// 	let dir = available_directions.iter().copied().nth(self.pass_i);
-		// 	self.pass_i += 1;
-		// 	dir
-		// }
-
-		let last_i = available_directions.len() as i32;
-		match (self.pass_i as i32).cmp(&last_i) {
-			Ordering::Less => {
-				let item = available_directions.iter().copied().nth(self.pass_i);
-				self.pass_i += 1;
-				item
-			}
-			Ordering::Equal => {
-				let last = available_directions.iter().copied().nth(self.pass_i);
-				self.pass_i = 0;
-				last
-			}
-			Ordering::Greater => {
-				self.pass_i = 1;
-				available_directions.iter().copied().next()
-			}
+	) -> heapless::Vec<(i32, i32), 4> {
+		if available_directions.is_empty() {
+			return heapless::Vec::new();
 		}
+
+		// // available directions index (the i we went up to last time)
+		// let mut last_i = 0;
+		// let next_included = || {
+		// 	let mut remaining = available_directions
+		// 		.into_iter()
+		// 		.copied()
+		// 		.enumerate()
+		// 		.skip(last_i);
+
+		// 	// this isn't likely to go infinite cause self.count cycles over Direction so 3 cycles at max
+		// 	// unless available_directions is empty
+		// 	loop {
+		// 		if last_i >= available_directions.len() - 1 {
+		// 			break None;
+		// 		}
+
+		// 		let dir = self.count();
+		// 		let rel = dir.rel();
+		// 		if let Some((i, _)) = remaining.find(|(_, available_rel)| rel == *available_rel) {
+		// 			last_i = i;
+		// 			break Some(rel);
+		// 		}
+		// 	}
+		// };
+
+		available_directions.iter().cloned().collect()
 	}
+
 	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
-		Direction::all_rel().collect()
+		let unique_in_holding = self.unique_directions_in_holding();
+		let to_exclude_dir = match unique_in_holding {
+			0 => return heapless::Vec::new(),
+			1 => {
+				let (to_exclude_dir, _) = self.holding.iter().next()
+					.expect("if there's at least 1 unique direction in holding then there's at least one element in holding");
+				Some(*to_exclude_dir)
+			}
+			1.. => None,
+		};
+
+		Direction::all()
+			.filter(|dir| Some(*dir) != to_exclude_dir)
+			.map(|dir| dir.rel())
+			.collect()
 	}
 }

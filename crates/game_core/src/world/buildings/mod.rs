@@ -111,8 +111,13 @@ pub trait Building {
 	fn confirm_pass_relatives(
 		&mut self,
 		available_directions: &[(i32, i32)],
-	) -> Option<(i32, i32)> {
-		available_directions.iter().cloned().last()
+	) -> heapless::Vec<(i32, i32), 4> {
+		available_directions
+			.iter()
+			.cloned()
+			.last()
+			.into_iter()
+			.collect()
 	}
 
 	/// if true, this building can't be removed by the standard eraser tool
@@ -310,7 +315,7 @@ impl Building for EBuilding {
 			Self::Smelter(a) => a.pass_relatives(),
 		}
 	}
-	fn confirm_pass_relatives(&mut self, dirs: &[(i32, i32)]) -> Option<(i32, i32)> {
+	fn confirm_pass_relatives(&mut self, dirs: &[(i32, i32)]) -> heapless::Vec<(i32, i32), 4> {
 		match self {
 			Self::Nothing(a) => a.confirm_pass_relatives(dirs),
 			Self::SmallExtractor(a) => a.confirm_pass_relatives(dirs),
