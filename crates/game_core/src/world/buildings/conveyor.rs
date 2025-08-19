@@ -159,10 +159,18 @@ impl Building for Conveyor {
 		}
 	}
 
-	fn can_receive(&self, _from: Option<Direction>) -> bool {
+	fn can_receive(&self, from: Option<Direction>) -> bool {
+		if from == Some(self.dir) {
+			return false;
+		}
+
 		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32 > 0
 	}
-	fn capacity_for(&self, _resource: &EResource, _from: Option<Direction>) -> i32 {
+	fn capacity_for(&self, _resource: &EResource, from: Option<Direction>) -> i32 {
+		if from == Some(self.dir) {
+			return 0;
+		}
+
 		CONVEYOR_CAPACITY as i32 - self.holding.len() as i32
 	}
 	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {

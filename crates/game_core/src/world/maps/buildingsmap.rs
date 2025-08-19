@@ -58,7 +58,7 @@ impl BuildingsMap {
 				let source = self.at(source_pos)?;
 
 				let from =
-					Direction::from_rel((target_pos.0 - source_pos.0, target_pos.1 - source_pos.1));
+					Direction::from_rel((source_pos.0 - target_pos.0, source_pos.1 - target_pos.1));
 				let to = from.map(Direction::reverse);
 
 				let tile_resource = tile_resource_at(source_pos);
@@ -115,7 +115,7 @@ impl BuildingsMap {
 
 			for target_pos in selected_target.into_iter() {
 				let from =
-					Direction::from_rel((target_pos.0 - source_pos.0, target_pos.1 - source_pos.1));
+					Direction::from_rel((source_pos.0 - target_pos.0, source_pos.1 - target_pos.1));
 
 				if self
 					.at(target_pos)
