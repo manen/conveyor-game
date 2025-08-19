@@ -26,6 +26,8 @@ pub const MAX_FUEL: Duration = Duration::from_secs(10);
 pub struct Smelter {
 	fuel: Duration,
 
+	#[serde(default)]
+	resource_queue: heapless::Deque<EResource, 2>,
 	#[serde(skip, default)]
 	smelting: Option<SmeltData>,
 }
@@ -43,8 +45,11 @@ impl Smelter {
 			0
 		};
 
-		smelting_free
+		let queue_free = self.resource_queue.capacity() as i32 - self.resource_queue.len() as i32;
+
+		smelting_free + queue_free
 	}
+
 	fn start_smelting(&mut self, resource: EResource) -> Result<(), ()> {
 		if self.smelting.is_some() {
 			return Err(());
@@ -64,6 +69,14 @@ impl Smelter {
 		self.smelting = Some(smelt_data);
 
 		Ok(())
+	}
+	fn receive_resource(&mut self, resource: EResource) -> Result<(), ()> {
+		if self.smelting.is_none() {
+			self.start_smelting(resource)
+		} else {
+			let res = self.resource_queue.push_back(resource);
+			res.map_err(|_| ())
+		}
 	}
 }
 impl Building for Smelter {
@@ -117,7 +130,7 @@ impl Building for Smelter {
 	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
 		let is_smelting = self.smelting.is_some(); // <- filter raw resources if we're already smelting
 		if !is_smelting && smelt(&resource).is_some() {
-			let _ = self.start_smelting(resource);
+			let _ = self.receive_resource(resource);
 			return;
 		}
 
