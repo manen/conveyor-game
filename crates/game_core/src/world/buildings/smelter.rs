@@ -29,6 +29,43 @@ pub struct Smelter {
 	#[serde(skip, default)]
 	smelting: Option<SmeltData>,
 }
+impl Smelter {
+	fn resources_free(&self, resource: &EResource) -> i32 {
+		let duration = match smelt(resource) {
+			Some(a) => a.1,
+			None => return 0,
+		};
+
+		let smelting_free = self.smelting.is_none() as i32;
+		let smelting_free = if duration <= self.fuel {
+			smelting_free
+		} else {
+			0
+		};
+
+		smelting_free
+	}
+	fn start_smelting(&mut self, resource: EResource) -> Result<(), ()> {
+		if self.smelting.is_some() {
+			return Err(());
+		}
+
+		let (out_resource, smelt_duration) = smelt(&resource).ok_or(())?;
+		if smelt_duration > self.fuel {
+			return Err(());
+		}
+
+		let smelt_data = SmeltData {
+			end_time: Instant::now() + smelt_duration,
+			output_resource: out_resource,
+		};
+
+		self.fuel -= smelt_duration;
+		self.smelting = Some(smelt_data);
+
+		Ok(())
+	}
+}
 impl Building for Smelter {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
 		"smelter".into()
@@ -54,20 +91,15 @@ impl Building for Smelter {
 		self.smelting.is_none() || self.fuel < MAX_FUEL
 	}
 	fn capacity_for(&self, resource: &EResource, _from: Option<Direction>) -> i32 {
-		let is_smelting = self.smelting.is_some(); // <- filter raw resources if we're already smelting
-		let smelted = if !is_smelting { smelt(resource) } else { None };
+		let is_smeltable = smelt(resource).is_some();
+		if is_smeltable {
+			let resources_free = self.resources_free(resource);
+			return dbg!(resources_free);
+		}
 
 		let fuel = fuel(resource);
-
-		match (smelted, fuel) {
-			(Some((_, smelt_duration)), _) => {
-				if self.fuel >= smelt_duration {
-					1
-				} else {
-					0
-				}
-			}
-			(_, Some(fuel)) => {
+		match fuel {
+			Some(fuel) => {
 				let current_fuel = self.fuel.as_millis() as i64;
 				let fuel_power_millis = fuel.as_millis() as i64;
 				let max_fuel_millis = MAX_FUEL.as_millis() as i64;
@@ -84,18 +116,9 @@ impl Building for Smelter {
 	}
 	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
 		let is_smelting = self.smelting.is_some(); // <- filter raw resources if we're already smelting
-		if !is_smelting {
-			let smelted = smelt(&resource);
-			if let Some((out_resource, smelt_duration)) = smelted {
-				let smelt_data = SmeltData {
-					end_time: Instant::now() + smelt_duration,
-					output_resource: out_resource,
-				};
-
-				self.fuel -= smelt_duration;
-				self.smelting = Some(smelt_data);
-				return;
-			}
+		if !is_smelting && smelt(&resource).is_some() {
+			let _ = self.start_smelting(resource);
+			return;
 		}
 
 		let fuel = fuel(&resource);
