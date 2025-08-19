@@ -116,28 +116,33 @@ mod cached {
 		loading_screen: DynamicLayable<'static>,
 		post_process: impl FnOnce(anyhow::Result<Textures>) -> DynamicLayable<'static> + 'static,
 	) -> DynamicLayable<'static> {
-		match INTERNAL_CACHE.get() {
-			Some(cached) => {
-				// when cached, we skip all the loader steps and jump right to the final layable
+		match INTERNAL_CACHE.try_lock() {
+			Ok(guard) => {
+				match guard.as_ref() {
+					Some(cached) => {
+						// when cached, we skip all the loader steps and jump right to the final layable
 
-				let cached = cached.clone();
-				let processed = post_process(Ok(cached));
-				processed
-			}
-			None => {
-				let cache_and_post_process = move |res: anyhow::Result<Textures>| match res {
-					Ok(textures) => {
-						textures.cache();
-						post_process(Ok(textures))
+						let cached = cached.clone();
+						let processed = post_process(Ok(cached));
+						return processed;
 					}
-					_ => post_process(res),
-				};
-
-				let loader =
-					basic::load_as_layable_explicit(assets, loading_screen, cache_and_post_process);
-				loader
+					None => {}
+				}
 			}
+			Err(_) => {}
 		}
+
+		let cache_and_post_process = move |res: anyhow::Result<Textures>| match res {
+			Ok(textures) => {
+				textures.cache();
+				post_process(Ok(textures))
+			}
+			_ => post_process(res),
+		};
+
+		let loader =
+			basic::load_as_layable_explicit(assets, loading_screen, cache_and_post_process);
+		loader
 	}
 }
 pub use cached::load_as_layable_explicit;

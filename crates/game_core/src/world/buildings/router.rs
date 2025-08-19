@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use crate::{
 	EResource,
 	buildings::{Building, CONVEYOR_CAPACITY},

@@ -13,10 +13,20 @@ pub mod loader;
 pub use loader::{load_as_layable, load_as_scene};
 mod texture_id;
 pub use texture_id::*;
+use tokio::sync::Mutex;
 
-pub(self) static INTERNAL_CACHE: OnceLock<Textures> = OnceLock::new();
+pub(self) static INTERNAL_CACHE_STATUS: OnceLock<()> = OnceLock::new();
+pub(self) static INTERNAL_CACHE: Mutex<Option<Textures>> = Mutex::const_new(None);
 pub fn is_cached() -> bool {
-	INTERNAL_CACHE.get().is_some()
+	// INTERNAL_CACHE.get().is_some()
+	match INTERNAL_CACHE.try_lock() {
+		Ok(a) => a.is_some(),
+		_ => false,
+	}
+}
+pub async fn clear_cache() -> Option<Textures> {
+	let mut handle = INTERNAL_CACHE.lock().await;
+	handle.take()
 }
 
 /// contains all the logic for storing textures \
@@ -35,19 +45,12 @@ impl Textures {
 	/// actually you just shouldn't have two Textures instances if you're doing any type of caching
 	pub fn cache(&self) {
 		let cache_copy = self.clone();
-		if INTERNAL_CACHE.get().is_none() {
-			tokio::spawn(async move {
-				let res = INTERNAL_CACHE.set(cache_copy);
-				match res {
-					Ok(a) => a,
-					Err(_) => {
-						eprintln!(
-							"failed to cache Textures; most likely another instance has beed cached before"
-						);
-					}
-				}
-			});
-		}
+		tokio::spawn(async move {
+			let mut res = INTERNAL_CACHE.lock().await;
+			*res = Some(cache_copy);
+
+			let _ = INTERNAL_CACHE_STATUS.set(());
+		});
 	}
 
 	/// loads all textures synchronously \

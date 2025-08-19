@@ -68,4 +68,9 @@ pub async fn start() {
 	let mut ctx = sui_runner::Context::new(stage, rl, thread);
 
 	ctx.start();
+
+	if let Some(textures) = textures::clear_cache().await {
+		std::mem::drop(textures);
+	};
+	println!("bye");
 }
