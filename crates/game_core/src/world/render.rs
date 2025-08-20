@@ -76,6 +76,12 @@ pub fn draw_buildings(
 	let render_size = TILE_RENDER_SIZE as f32 * scale;
 	let render_size_i32 = render_size as i32;
 
+	let screen_det = Details {
+		aw: d.get_render_width(),
+		ah: d.get_render_height(),
+		..Default::default()
+	};
+
 	const DEBUG: bool = true;
 
 	let mut tooltip = Option::<((i32, i32), Cow<'static, str>)>::None;
@@ -87,18 +93,23 @@ pub fn draw_buildings(
 			let (draw_x, draw_y) = (draw_x - 1, draw_y - 1);
 			let render_size_i32 = render_size_i32 + 1;
 
+			let l_det = Details {
+				x: draw_x,
+				y: draw_y,
+				aw: render_size_i32,
+				ah: render_size_i32,
+			};
+			if !screen_det.intersects(&l_det) {
+				// skip rendering if it wouldn't make it onto the screen anyway
+				continue;
+			}
+
 			let building = buildings
 				.at((x as _, y as _))
 				.expect("we tried rendering a building that doesn't exist");
 
 			if building.texture_id() != TextureID::Transparent {
 				let render = building.render(textures);
-				let l_det = Details {
-					x: draw_x,
-					y: draw_y,
-					aw: render_size_i32,
-					ah: render_size_i32,
-				};
 				render.render(d, l_det, 1.0);
 
 				if DEBUG {
