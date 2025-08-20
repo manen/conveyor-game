@@ -23,7 +23,6 @@ rfd.workspace = true
 serde.workspace = true
 
 reqwest = "0.12.22"
-glissade = "0.2.6"
 include_dir = "0.7.4"
 heapless = { git = "https://github.com/rust-embedded/heapless", features = ["serde"] }
 tokio-util = { version = "0.7.15", features = ["compat", "io-util"] }
