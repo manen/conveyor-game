@@ -1,3 +1,8 @@
+use std::{
+	fmt::{Debug, Display},
+	io::{Read, Seek, Write},
+};
+
 use anyhow::{Context, anyhow};
 
 use crate::{
@@ -73,7 +78,6 @@ impl GameDataSave {
 
 		Ok(Self(save))
 	}
-
 	pub fn take(self) -> anyhow::Result<GameData> {
 		let (w, h) = (
 			self.0.len(),
@@ -103,5 +107,57 @@ impl GameDataSave {
 		}
 
 		Ok(GameData::new(tilemap, buildings))
+	}
+
+	pub fn save<W: Write>(&self, write: &mut W) -> anyhow::Result<()> {
+		serde_cbor::to_writer(write, self)
+			.with_context(|| format!("while serializing save file"))?;
+		Ok(())
+	}
+
+	pub fn load<R: Read>(read: &mut R) -> anyhow::Result<Self> {
+		let deser = serde_cbor::from_reader(read)
+			.with_context(|| format!("while deserializing cbor save file"))?;
+		Ok(deser)
+	}
+	pub fn load_bincode<R: Read>(read: &mut R) -> anyhow::Result<Self> {
+		let decoded: GameDataSave =
+			bincode::serde::decode_from_std_read(read, bincode::config::standard())
+				.with_context(|| format!("while deserializing bincode save file"))?;
+		Ok(decoded)
+	}
+	pub fn load_as_either<R: Read + Seek>(read: &mut R) -> anyhow::Result<Self> {
+		struct BothFailedError {
+			cbor: anyhow::Error,
+			bincode: anyhow::Error,
+		}
+		impl Display for BothFailedError {
+			fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+				write!(f, "failed to load save file in either format")
+			}
+		}
+		impl Debug for BothFailedError {
+			fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+				writeln!(f, "cbor error: {:?}\n", self.cbor)?;
+				writeln!(f, " -- \n")?;
+				writeln!(f, "bincode error: {:?}\n", self.bincode)
+			}
+		}
+		impl std::error::Error for BothFailedError {}
+
+		let decoded = match GameDataSave::load(read) {
+			Ok(cbor) => Ok(cbor),
+			Err(cbor_err) => {
+				read.seek(std::io::SeekFrom::Start(0))?;
+				match GameDataSave::load_bincode(read) {
+					Ok(bincode) => Ok(bincode),
+					Err(bincode_err) => Err(BothFailedError {
+						cbor: cbor_err,
+						bincode: bincode_err,
+					}),
+				}
+			}
+		}?;
+		Ok(decoded)
 	}
 }

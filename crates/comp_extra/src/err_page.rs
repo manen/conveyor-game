@@ -8,10 +8,10 @@ pub fn err_page_customizable<E: Debug + Display>(
 	mut return_to_menu: Option<StageChange<'static>>,
 ) -> impl Layable + Debug + 'static {
 	let display = format!("{err}");
-	let debug = format!("{err:?}");
+	let debug = format!("{err:#?}");
 
 	let err_info = sui::div([
-		sui::custom(sui::text(display, 32).centered()),
+		sui::custom(sui::text(display, 32).margin(16).centered()),
 		sui::custom(sui::text(debug, 24)),
 	]);
 

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::Deref, path::PathBuf, sync::Arc};
+use std::{fmt::Debug, io::Seek, ops::Deref, path::PathBuf, sync::Arc};
 
 use anyhow::Context;
 use asset_provider::Assets;
@@ -122,8 +122,9 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 		tokio::task::spawn(async move {
 			let f = || {
 				let save = GameDataSave::new(&game_data)?;
-				let save = bincode::serde::encode_to_vec(&save, bincode::config::standard())?;
-				anyhow::Ok(save)
+				let mut buf = Vec::new();
+				save.save(&mut buf)?;
+				anyhow::Ok(buf)
 			};
 			let save = f();
 			let res = tx.send(save);
@@ -215,11 +216,9 @@ fn freeplay_loader() -> ReturnEvent {
 			.with_context(|| format!("while opening save file at {}", path.display()))?;
 		let mut file = file.into_std().await;
 
-		let decoded: GameDataSave =
-			bincode::serde::decode_from_std_read(&mut file, bincode::config::standard())
-				.with_context(|| format!("while deserializing save file at {}", path.display()))?;
-
+		let decoded = GameDataSave::load_as_either(&mut file)?;
 		let game_data = decoded.take()?;
+
 		anyhow::Ok(game_data)
 	};
 	let post_process = move |res| match res {
