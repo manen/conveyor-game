@@ -22,6 +22,13 @@ fn fuel(resource: &EResource) -> Option<Duration> {
 
 pub const MAX_FUEL: Duration = Duration::from_secs(10);
 
+#[derive(Copy, Clone, Debug)]
+enum StartSmeltingError {
+	AlreadySmelting,
+	NotEnoughFuel,
+	NonSmeltable,
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Smelter {
 	fuel: Duration,
@@ -50,14 +57,15 @@ impl Smelter {
 		smelting_free + queue_free
 	}
 
-	fn start_smelting(&mut self, resource: EResource) -> Result<(), ()> {
+	fn start_smelting(&mut self, resource: EResource) -> Result<(), StartSmeltingError> {
 		if self.smelting.is_some() {
-			return Err(());
+			return Err(StartSmeltingError::AlreadySmelting);
 		}
 
-		let (out_resource, smelt_duration) = smelt(&resource).ok_or(())?;
+		let (out_resource, smelt_duration) =
+			smelt(&resource).ok_or(StartSmeltingError::NonSmeltable)?;
 		if smelt_duration > self.fuel {
-			return Err(());
+			return Err(StartSmeltingError::NotEnoughFuel);
 		}
 
 		let smelt_data = SmeltData {
@@ -72,13 +80,17 @@ impl Smelter {
 	}
 	fn receive_resource(&mut self, resource: EResource) -> Result<(), ()> {
 		if self.smelting.is_none() {
-			self.start_smelting(resource)
-		} else {
-			let res = self.resource_queue.push_back(resource);
-			res.map_err(|_| ())
+			match self.start_smelting(resource.clone()) {
+				Err(StartSmeltingError::NotEnoughFuel) => {}
+				_ => return Ok(()),
+			}
 		}
+
+		let res = self.resource_queue.push_back(resource);
+		res.map_err(|_| ())
 	}
 }
+
 impl Building for Smelter {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
 		"smelter".into()
@@ -91,7 +103,11 @@ impl Building for Smelter {
 		&'a self,
 		textures: &'a textures::Textures,
 	) -> impl sui::Layable + Clone + std::fmt::Debug + 'a {
-		let tid = if self.smelting.is_some() {
+		let actively_smelting = match &self.smelting {
+			Some(smelt_data) => smelt_data.end_time > Instant::now(),
+			None => false,
+		};
+		let tid = if actively_smelting {
 			TextureID::FurnaceOn
 		} else {
 			TextureID::Furnace
@@ -107,7 +123,7 @@ impl Building for Smelter {
 		let is_smeltable = smelt(resource).is_some();
 		if is_smeltable {
 			let resources_free = self.resources_free(resource);
-			return dbg!(resources_free);
+			return resources_free;
 		}
 
 		let fuel = fuel(resource);
@@ -128,8 +144,7 @@ impl Building for Smelter {
 		}
 	}
 	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
-		let is_smelting = self.smelting.is_some(); // <- filter raw resources if we're already smelting
-		if !is_smelting && smelt(&resource).is_some() {
+		if smelt(&resource).is_some() && self.resources_free(&resource) > 0 {
 			let _ = self.receive_resource(resource);
 			return;
 		}
