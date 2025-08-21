@@ -24,8 +24,8 @@ impl WorldGenerator {
 	pub fn generate_seed(&self, width: usize, height: usize, seed: u64) -> anyhow::Result<Tilemap> {
 		let mut world = GeneratingWorld::new(width, height, seed);
 
-		world.segment_in_corner(&self.segments);
-		world.segment_in_corner(&self.segments);
+		world.segments_in_corner(&self.segments, 2);
+
 		world.segment_at_farthest(&self.segments);
 		world.segment_at_farthest(&self.segments);
 		world.segment_at_farthest(&self.segments);
@@ -67,45 +67,50 @@ impl<'a> GeneratingWorld<'a> {
 		let i = self.rng.random_range(0..len);
 		segments.iter().nth(i)
 	}
-	pub fn segment_in_corner(&mut self, segments: &'a [Segment]) -> Option<()> {
-		let segment = self.random_segment(segments)?;
+	pub fn segments_in_corner(&mut self, segments: &'a [Segment], count: i32) -> Option<()> {
+		let counter = std::iter::repeat([0, 1, 2, 3]).flatten();
+		let offset = self.rng.random_range(0..=3);
+		let mut counter = counter.skip(offset as _);
 
-		let (w, h) = segment.tiles.size();
-		let (w, h) = (w as i32, h as i32);
+		for _ in 0..count {
+			let segment = self.random_segment(segments)?;
+			let (w, h) = segment.tiles.size();
+			let (w, h) = (w as i32, h as i32);
 
-		let corner = self.rng.random_range(0..=3);
-		println!("chose corner {corner}");
-		let start_pos = match corner {
-			0 => {
-				// top left
-				let (x, y) = (w / 2 + 1, h / 2 + 1);
-				(x, y)
-			}
-			1 => {
-				// top right
-				let (x, y) = (self.width as i32 - w / 2 - 1, h / 2 + 1);
-				(x, y)
-			}
-			2 => {
-				// bottom right
-				let (x, y) = (
-					self.width as i32 - w / 2 - 1,
-					self.height as i32 - h / 2 - 1,
-				);
-				(x, y)
-			}
-			3 => {
-				// bottom left
-				let (x, y) = (w / 2 + 1, self.height as i32 - h / 2 - 1);
-				(x, y)
-			}
-			_ => {
-				eprintln!("world generator generated a number it shouldn't have");
-				return None;
-			}
-		};
+			let corner = counter.next()?;
+			println!("chose corner {corner}");
+			let start_pos = match corner {
+				0 => {
+					// top left
+					let (x, y) = (w / 2 + 1, h / 2 + 1);
+					(x, y)
+				}
+				1 => {
+					// top right
+					let (x, y) = (self.width as i32 - w / 2 - 1, h / 2 + 1);
+					(x, y)
+				}
+				2 => {
+					// bottom right
+					let (x, y) = (
+						self.width as i32 - w / 2 - 1,
+						self.height as i32 - h / 2 - 1,
+					);
+					(x, y)
+				}
+				3 => {
+					// bottom left
+					let (x, y) = (w / 2 + 1, self.height as i32 - h / 2 - 1);
+					(x, y)
+				}
+				_ => {
+					eprintln!("world generator generated a number it shouldn't have");
+					return None;
+				}
+			};
 
-		self.members.push((start_pos, segment));
+			self.members.push((start_pos, segment));
+		}
 		Some(())
 	}
 
