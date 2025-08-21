@@ -93,10 +93,12 @@ impl BuildingsMap {
 			}
 
 			let building = self.at_mut(source_pos).unwrap();
-			let relatives = building.pass_relatives();
+			let relatives = building.pass_directions();
 
-			let target_poss = relatives.iter().cloned().filter_map(|(rx, ry)| {
-				let dir = Direction::from_rel((rx, ry));
+			let target_poss = relatives.iter().cloned().filter_map(|dir| {
+				let (rx, ry) = dir.rel();
+				let dir = Some(dir);
+
 				let target_pos = (source_pos.0 + rx, source_pos.1 + ry);
 				let can_receive = {
 					let target = self.at(target_pos)?;
@@ -138,22 +140,6 @@ impl BuildingsMap {
 			}
 		}
 
-		// sort incoming resources by the target building's preferences
-		for (target_pos, source_poss) in moves_queue.iter_mut().filter(|(_, v)| !v.is_empty()) {
-			let mut f = || {
-				let target = self.at(*target_pos)?;
-
-				source_poss.sort_by_key(|source_pos| {
-					let rel_pos = (target_pos.0 - source_pos.0, target_pos.1 - source_pos.1);
-					-target.rank_pass_source(rel_pos)
-				});
-				Some(1)
-			};
-			match f() {
-				Some(_) => (),
-				None => source_poss.clear(),
-			}
-		}
 		self.moves_queue = moves_queue;
 	}
 

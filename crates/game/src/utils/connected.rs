@@ -88,11 +88,12 @@ impl CheckConnection for GameData {
 					})?;
 			cache.push(source);
 
-			let relatives = checking.pass_relatives();
+			let relatives = checking.pass_directions();
 			match relatives.len() {
 				0 => return Ok(false),
 				1 => {
-					let rel = relatives[0];
+					let dir = relatives[0];
+					let rel = dir.rel();
 					let pos = (source.0 + rel.0, source.1 + rel.1);
 					source = pos;
 					// println!("single direction building passing to {pos:?}");
@@ -101,7 +102,8 @@ impl CheckConnection for GameData {
 				}
 				_ => {
 					// we have to do recursion
-					for pos in relatives.iter().copied() {
+					for dir in relatives.iter().copied() {
+						let pos = dir.rel();
 						let pos = (source.0 + pos.0, source.1 + pos.1);
 						// println!("multireturn building passing to {pos:?}");
 

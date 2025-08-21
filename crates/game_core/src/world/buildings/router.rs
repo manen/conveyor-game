@@ -142,7 +142,7 @@ impl Building for Router {
 		// available_directions.collect()
 	}
 
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
 		// let unique_in_holding = self.unique_directions_in_holding();
 		// let to_exclude_dir = match unique_in_holding {
 		// 	0 => return heapless::Vec::new(),
@@ -159,6 +159,6 @@ impl Building for Router {
 		// 	.map(|dir| dir.rel())
 		// 	.collect()
 
-		Direction::all_rel().collect()
+		Direction::all().collect()
 	}
 }

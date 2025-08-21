@@ -86,11 +86,11 @@ impl Building for Junction {
 			None => None,
 		}
 	}
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
 		Direction::all()
 			.map(|dir| (dir, self.queue_for(dir)))
 			.filter(|(_, queue)| !queue.is_empty())
-			.map(|(dir, _)| dir.reverse().rel())
+			.map(|(dir, _)| dir.reverse())
 			.collect()
 	}
 }

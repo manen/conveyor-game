@@ -199,19 +199,7 @@ impl Building for Conveyor {
 		self.holding.pop_front()
 	}
 
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
-		let directions = self.dir.rel();
-		std::iter::once(directions).collect()
-	}
-	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
-		let from_dir = match Direction::from_rel(relative_pos) {
-			Some(a) => a,
-			None => return 0,
-		};
-		match (self.dir, from_dir) {
-			(a, b) if a == b => 15,
-			(a, b) if a.reverse() == b => 10, // same direction
-			_ => 5,
-		}
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
+		std::iter::once(self.dir).collect()
 	}
 }

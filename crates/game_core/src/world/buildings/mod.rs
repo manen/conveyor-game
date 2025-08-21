@@ -95,17 +95,10 @@ pub trait Building {
 		None
 	}
 
-	/// higher is better/more favorable
-	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
-		1
-	}
-
 	/// even though this can return any number as a relative, if it's not a direction it will not go through by
 	/// the current implementation
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
-		let all_directions = Direction::all().map(|dir| dir.rel());
-		all_directions.into_iter().collect()
-		// &[]
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
+		Direction::all().collect()
 	}
 	/// lets the building pick which target candidate it'd like to pass resources to
 	fn confirm_pass_relatives(
@@ -298,16 +291,16 @@ impl Building for EBuilding {
 		}
 	}
 
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
 		match self {
-			Self::Nothing(a) => a.pass_relatives(),
-			Self::SmallExtractor(a) => a.pass_relatives(),
-			Self::DebugConsumer(a) => a.pass_relatives(),
-			Self::ChannelConsumer(a) => a.pass_relatives(),
-			Self::Conveyor(a) => a.pass_relatives(),
-			Self::Junction(a) => a.pass_relatives(),
-			Self::Router(a) => a.pass_relatives(),
-			Self::Smelter(a) => a.pass_relatives(),
+			Self::Nothing(a) => a.pass_directions(),
+			Self::SmallExtractor(a) => a.pass_directions(),
+			Self::DebugConsumer(a) => a.pass_directions(),
+			Self::ChannelConsumer(a) => a.pass_directions(),
+			Self::Conveyor(a) => a.pass_directions(),
+			Self::Junction(a) => a.pass_directions(),
+			Self::Router(a) => a.pass_directions(),
+			Self::Smelter(a) => a.pass_directions(),
 		}
 	}
 	fn confirm_pass_relatives(
@@ -323,18 +316,6 @@ impl Building for EBuilding {
 			Self::Junction(a) => a.confirm_pass_relatives(available_directions),
 			Self::Router(a) => a.confirm_pass_relatives(available_directions),
 			Self::Smelter(a) => a.confirm_pass_relatives(available_directions),
-		}
-	}
-	fn rank_pass_source(&self, relative_pos: (i32, i32)) -> i32 {
-		match self {
-			Self::Nothing(a) => a.rank_pass_source(relative_pos),
-			Self::SmallExtractor(a) => a.rank_pass_source(relative_pos),
-			Self::DebugConsumer(a) => a.rank_pass_source(relative_pos),
-			Self::ChannelConsumer(a) => a.rank_pass_source(relative_pos),
-			Self::Conveyor(a) => a.rank_pass_source(relative_pos),
-			Self::Junction(a) => a.rank_pass_source(relative_pos),
-			Self::Router(a) => a.rank_pass_source(relative_pos),
-			Self::Smelter(a) => a.rank_pass_source(relative_pos),
 		}
 	}
 
@@ -382,7 +363,7 @@ impl Building for Nothing {
 		textures.texture_for(TextureID::Eraser).cloned()
 	}
 
-	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
+	fn pass_directions(&self) -> heapless::Vec<Direction, 4> {
 		Default::default()
 	}
 }
