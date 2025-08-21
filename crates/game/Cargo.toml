@@ -42,3 +42,4 @@ game_core.workspace = true
 utils.workspace = true
 game_multithread.workspace = true
 console-subscriber = "0.4.1"
+game_worldgen = { version = "0.1.0", path = "../game_worldgen" }

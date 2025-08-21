@@ -1,6 +1,6 @@
 use sui::Layable;
 
-use crate::{ETile, render::TILE_RENDER_SIZE, worldgen};
+use crate::{ETile, render::TILE_RENDER_SIZE};
 use textures::Textures;
 
 /// world size in tiles
@@ -9,7 +9,6 @@ pub const SIZE: usize = 32;
 pub type Tilemap = super::Map<ETile>;
 
 pub trait TilemapExt {
-	fn new_worldgen(width: usize, height: usize) -> Self;
 	fn stone(width: usize, height: usize) -> Self;
 	fn from_tiles<const SIZE: usize>(tiles: [[ETile; SIZE]; SIZE]) -> Self;
 
@@ -17,10 +16,6 @@ pub trait TilemapExt {
 }
 
 impl TilemapExt for Tilemap {
-	fn new_worldgen(width: usize, height: usize) -> Self {
-		Self::from_vec(worldgen::gen_tiles(width, height))
-			.expect("this shouldn't be possible TilemapExt::new")
-	}
 	fn stone(width: usize, height: usize) -> Self {
 		let map = (0..width)
 			.map(|_| (0..height).map(|_| ETile::stone()).collect())

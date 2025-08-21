@@ -973,6 +973,7 @@ dependencies = [
  "futures",
  "game_core",
  "game_multithread",
+ "game_worldgen",
  "heapless",
  "include_dir",
  "opener",
@@ -1000,7 +1001,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "fastnoise-lite",
  "heapless",
  "serde",
  "serde_cbor",
@@ -1018,6 +1018,14 @@ dependencies = [
  "arc-swap",
  "game_core",
  "tokio",
+]
+
+[[package]]
+name = "game_worldgen"
+version = "0.1.0"
+dependencies = [
+ "fastnoise-lite",
+ "game_core",
 ]
 
 [[package]]
