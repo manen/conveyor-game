@@ -1,5 +1,17 @@
 [iron_1]
 min_distance = 20
 
+[iron_2]
+min_distance = 10
+
+[iron_3]
+min_distance = 10
+
 [coal_1]
+min_distance = 10
+
+[coal_2]
+min_distance = 10
+
+[nuggets]
 min_distance = 10
