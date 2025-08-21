@@ -72,7 +72,14 @@ pub fn free_play(game_data: Option<GameData>) -> StageChange<'static> {
 		};
 		let mut game = match game {
 			Some(data) => Game::new_multithread(tex, data),
-			None => Game::new_multithread_worldgen(tex),
+			None => match Game::new_multithread_worldgen(tex) {
+				Ok(a) => a,
+				Err(err) => {
+					eprintln!("{err}");
+					let err_page = err_page(err);
+					return sui::custom_only_debug(err_page);
+				}
+			},
 		};
 		game.enable_save_handler(save_handler());
 

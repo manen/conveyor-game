@@ -64,6 +64,10 @@ pub async fn start() {
 				.await
 				.expect("failed to font");
 
+		game_worldgen::init_worldgen(&assets)
+			.await
+			.expect("failed to initialize global WorldGenerator");
+
 		font.set_as_global();
 	};
 

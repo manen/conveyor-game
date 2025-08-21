@@ -8,9 +8,9 @@ use game_core::maps::Tilemap;
 #[derive(Clone, Debug)]
 /// describes a patch of a resource
 pub struct Segment {
-	name: Arc<str>,
-	tiles: Tilemap,
-	min_distance: i32,
+	pub(crate) name: Arc<str>,
+	pub(crate) tiles: Tilemap,
+	pub(crate) min_distance: i32,
 }
 impl Segment {}
 
