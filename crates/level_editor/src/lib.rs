@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use anyhow::Context;
-use game::{assets::GameAssets, textures};
+use game::{assets::GameAssets, textures, world::maps::Tilemap};
 
 pub mod level_editor;
 use level_editor::LevelEditor;
@@ -78,7 +78,6 @@ fn open_screen() -> StageChange<'static> {
 	let loading = Loader::new_overlay(
 		sui::text("select save on file picker", 32).centered(),
 		async {
-			use game::levels::Level;
 			use rfd::AsyncFileDialog;
 
 			let picker = AsyncFileDialog::new()
@@ -90,9 +89,17 @@ fn open_screen() -> StageChange<'static> {
 			let file = picker
 				.with_context(|| format!("AsyncFileDialog didn't return a file handle"))
 				.with_context(|| format!("failed to open file"))?;
-			let save = Level::load(std::path::PathBuf::from(file.path())).await?;
 
-			save.into_tilemap()
+			let file = tokio::fs::OpenOptions::new()
+				.read(true)
+				.open(file.path())
+				.await?;
+			let mut file = file.into_std().await;
+
+			let tilemap: Tilemap =
+				bincode::serde::decode_from_std_read(&mut file, bincode::config::standard())?;
+
+			anyhow::Ok(tilemap)
 		},
 		|p| match p {
 			Ok(tilemap) => textures::load_as_scene(GameAssets::default(), move |tex| match tex {

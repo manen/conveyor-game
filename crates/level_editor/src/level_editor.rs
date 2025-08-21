@@ -1,7 +1,6 @@
 use anyhow::{Context, anyhow};
 use arc_swap::ArcSwap;
 use game::{
-	levels::Level,
 	textures::Textures,
 	utils::ReturnEvents,
 	world::{
@@ -271,7 +270,7 @@ impl Layable for LevelEditor {
 				.map(|h| h.is_finished())
 				.unwrap_or(true)
 			{
-				let level = Level::from_tilemap(&self.tilemap);
+				let tilemap = self.tilemap.clone();
 				let current_hash = self.hash_get();
 				let save_hash = self.last_save_hash.clone();
 
@@ -287,7 +286,19 @@ impl Layable for LevelEditor {
 					if let Some(files) = files {
 						let path = PathBuf::from(files.path());
 						println!("saving to {path:?}");
-						level.save(path).await?;
+
+						let file = tokio::fs::OpenOptions::new()
+							.write(true)
+							.create(true)
+							.open(&path)
+							.await?;
+						let mut file = file.into_std().await;
+
+						bincode::serde::encode_into_std_write(
+							&tilemap,
+							&mut file,
+							bincode::config::standard(),
+						)?;
 
 						save_hash.swap(Arc::new(current_hash));
 					} else {
