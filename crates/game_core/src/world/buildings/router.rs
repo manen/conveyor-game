@@ -25,25 +25,14 @@ impl Router {
 	}
 	fn count_included(
 		&mut self,
-		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
+		available_directions: impl Iterator<Item = Direction> + Clone,
 	) -> Option<Direction> {
-		let actual_directions = available_directions
-			.clone()
-			.map(Direction::from_rel)
-			.filter(|a| a.is_some())
-			.count();
-		// println!("{actual_directions:?}");
-		if actual_directions == 0 {
-			return None;
-		}
-
 		for _ in 0..5 {
 			let dir = self.count();
-			let rel = dir.rel();
 
 			let contained = available_directions
 				.clone()
-				.find(|available_rel| *available_rel == rel);
+				.find(|available_rel| *available_rel == dir);
 			if contained.is_some() {
 				// println!("next direction is {dir:?}");
 				return Some(dir);
@@ -114,10 +103,10 @@ impl Building for Router {
 	// 	self.pass_to = self.pass_to.rotate_r();
 	// 	array
 	// }
-	fn confirm_pass_relatives(
+	fn confirm_pass_directions(
 		&mut self,
-		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
-	) -> heapless::Vec<(i32, i32), 4> {
+		available_directions: impl Iterator<Item = Direction> + Clone,
+	) -> heapless::Vec<Direction, 4> {
 		// let ad_buf = available_directions.clone().collect::<Vec<_>>();
 		// println!("{ad_buf:?}");
 
@@ -132,8 +121,7 @@ impl Building for Router {
 			let next_included = self.count_included(available_directions.clone());
 			// dbg!(next_included);
 			if let Some(dir) = next_included {
-				let rel = dir.rel();
-				let _ = buf.push(rel);
+				let _ = buf.push(dir);
 			}
 		}
 		// println!("confirmed: {buf:?}");

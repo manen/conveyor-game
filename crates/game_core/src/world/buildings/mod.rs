@@ -101,10 +101,10 @@ pub trait Building {
 		Direction::all().collect()
 	}
 	/// lets the building pick which target candidate it'd like to pass resources to
-	fn confirm_pass_relatives(
+	fn confirm_pass_directions(
 		&mut self,
-		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
-	) -> heapless::Vec<(i32, i32), 4> {
+		available_directions: impl Iterator<Item = Direction> + Clone,
+	) -> heapless::Vec<Direction, 4> {
 		available_directions.last().into_iter().collect()
 	}
 
@@ -303,19 +303,19 @@ impl Building for EBuilding {
 			Self::Smelter(a) => a.pass_directions(),
 		}
 	}
-	fn confirm_pass_relatives(
+	fn confirm_pass_directions(
 		&mut self,
-		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
-	) -> heapless::Vec<(i32, i32), 4> {
+		available_directions: impl Iterator<Item = Direction> + Clone,
+	) -> heapless::Vec<Direction, 4> {
 		match self {
-			Self::Nothing(a) => a.confirm_pass_relatives(available_directions),
-			Self::SmallExtractor(a) => a.confirm_pass_relatives(available_directions),
-			Self::DebugConsumer(a) => a.confirm_pass_relatives(available_directions),
-			Self::ChannelConsumer(a) => a.confirm_pass_relatives(available_directions),
-			Self::Conveyor(a) => a.confirm_pass_relatives(available_directions),
-			Self::Junction(a) => a.confirm_pass_relatives(available_directions),
-			Self::Router(a) => a.confirm_pass_relatives(available_directions),
-			Self::Smelter(a) => a.confirm_pass_relatives(available_directions),
+			Self::Nothing(a) => a.confirm_pass_directions(available_directions),
+			Self::SmallExtractor(a) => a.confirm_pass_directions(available_directions),
+			Self::DebugConsumer(a) => a.confirm_pass_directions(available_directions),
+			Self::ChannelConsumer(a) => a.confirm_pass_directions(available_directions),
+			Self::Conveyor(a) => a.confirm_pass_directions(available_directions),
+			Self::Junction(a) => a.confirm_pass_directions(available_directions),
+			Self::Router(a) => a.confirm_pass_directions(available_directions),
+			Self::Smelter(a) => a.confirm_pass_directions(available_directions),
 		}
 	}
 
@@ -357,6 +357,13 @@ impl Building for Nothing {
 	}
 	fn render<'a>(&'a self, _textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
 		sui::comp::Space::new(0, 0)
+	}
+
+	fn can_receive(&self, _from: Option<Direction>) -> bool {
+		false
+	}
+	fn needs_poll(&self) -> bool {
+		false
 	}
 
 	fn tool_icon_render(&self, textures: &Textures) -> impl Layable + Clone + Debug + 'static {

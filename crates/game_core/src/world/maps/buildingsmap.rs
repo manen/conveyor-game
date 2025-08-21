@@ -117,11 +117,14 @@ impl BuildingsMap {
 				let available_rels = target_poss_buf
 					.iter()
 					.copied()
-					.map(|(target_x, target_y)| (target_x - source_pos.0, target_y - source_pos.1));
-				let selected_rel = source.confirm_pass_relatives(available_rels);
+					.map(|(target_x, target_y)| (target_x - source_pos.0, target_y - source_pos.1))
+					.filter_map(Direction::from_rel);
+
+				let selected_rel = source.confirm_pass_directions(available_rels);
 
 				selected_rel
 					.into_iter()
+					.map(Direction::rel)
 					.map(|(rel_x, rel_y)| (rel_x + source_pos.0, rel_y + source_pos.1))
 					.collect::<heapless::Vec<_, 4>>()
 			};
