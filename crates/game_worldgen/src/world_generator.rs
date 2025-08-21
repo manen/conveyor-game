@@ -23,7 +23,14 @@ impl WorldGenerator {
 
 	pub fn generate_seed(&self, width: usize, height: usize, seed: u64) -> anyhow::Result<Tilemap> {
 		let mut world = GeneratingWorld::new(width, height, seed);
+
 		world.segment_in_corner(&self.segments);
+		world.segment_in_corner(&self.segments);
+		world.segment_at_farthest(&self.segments);
+		world.segment_at_farthest(&self.segments);
+		world.segment_at_farthest(&self.segments);
+		world.segment_at_farthest(&self.segments);
+		world.segment_at_farthest(&self.segments);
 
 		let tilemap = world.into_tilemap();
 		Ok(tilemap)
@@ -67,6 +74,7 @@ impl<'a> GeneratingWorld<'a> {
 		let (w, h) = (w as i32, h as i32);
 
 		let corner = self.rng.random_range(0..=3);
+		println!("chose corner {corner}");
 		let start_pos = match corner {
 			0 => {
 				// top left
@@ -101,6 +109,58 @@ impl<'a> GeneratingWorld<'a> {
 		Some(())
 	}
 
+	/// returns the coordinate farthest from any segment \
+	/// returns (distance from closest segment, coords)
+	pub fn farthest_coordinate(&self) -> (f32, (i32, i32)) {
+		if self.members.len() <= 0 {
+			return (0.0, (0, 0));
+		}
+
+		let mut highest_yet = (0.0, (0, 0));
+
+		// i'd rather not calculate the big o notation for this
+		for x in 0..(self.width as i32) {
+			for y in 0..(self.height as i32) {
+				let mut local_lowest = f32::MAX;
+
+				for (segment_pos, _) in self.members.iter() {
+					let dst = dst((x, y), *segment_pos);
+					local_lowest = local_lowest.min(dst);
+				}
+
+				if local_lowest > highest_yet.0 {
+					highest_yet = (local_lowest, (x, y))
+				}
+			}
+		}
+
+		highest_yet
+	}
+	pub fn farthers_to_fit(&self, s_width: usize, s_height: usize) -> (i32, i32) {
+		let (_, (x, y)) = self.farthest_coordinate();
+
+		let smallest_x = s_width as i32 / 2 + 1;
+		let smallest_y = s_height as i32 / 2 + 1;
+		let biggest_x = self.width as i32 - smallest_x;
+		let biggest_y = self.height as i32 - smallest_y;
+
+		let x = x.max(smallest_x).min(biggest_x);
+		let y = y.max(smallest_y).min(biggest_y);
+
+		(x, y)
+	}
+	pub fn segment_at_farthest(&mut self, segments: &'a [Segment]) -> Option<()> {
+		let segment = self.random_segment(segments)?;
+		let (w, h) = segment.tiles.size();
+
+		let farthest = self.farthers_to_fit(w, h);
+		println!("farthest: {farthest:?}");
+
+		self.members.push((farthest, segment));
+
+		Some(())
+	}
+
 	pub fn into_tilemap(&self) -> Tilemap {
 		let mut tilemap = Tilemap::stone(self.width, self.height);
 		for (center_pos, segment) in &self.members {
@@ -131,4 +191,11 @@ impl<'a> GeneratingWorld<'a> {
 		}
 		tilemap
 	}
+}
+
+fn dst((a_x, a_y): (i32, i32), (b_x, b_y): (i32, i32)) -> f32 {
+	let x_diff = (a_x - b_x) as f32;
+	let y_diff = (a_y - b_y) as f32;
+
+	(x_diff * x_diff + y_diff * y_diff).sqrt()
 }
