@@ -558,7 +558,7 @@ impl<G: GameProvider> Layable for Game<G> {
 					}
 				}
 
-				Event::KeyboardEvent(_, KeyboardEvent::CharPressed('r')) => {
+				Event::KeyboardEvent(_, KeyboardEvent::KeyDown(KeyboardKey::KEY_ESCAPE)) => {
 					// *self.tilemap.tiles_mut() = worldgen::gen_tiles();
 					// TODO reimplement
 
