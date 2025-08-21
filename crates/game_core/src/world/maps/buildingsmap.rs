@@ -111,7 +111,17 @@ impl BuildingsMap {
 				let source = self.at_mut(source_pos).expect(
 					"if you check to see where source_pos is generated it's guaranteed to exist",
 				);
-				source.confirm_pass_relatives(&target_poss_buf)
+
+				let available_rels = target_poss_buf
+					.iter()
+					.copied()
+					.map(|(target_x, target_y)| (target_x - source_pos.0, target_y - source_pos.1));
+				let selected_rel = source.confirm_pass_relatives(available_rels);
+
+				selected_rel
+					.into_iter()
+					.map(|(rel_x, rel_y)| (rel_x + source_pos.0, rel_y + source_pos.1))
+					.collect::<heapless::Vec<_, 4>>()
 			};
 
 			for target_pos in selected_target.into_iter() {

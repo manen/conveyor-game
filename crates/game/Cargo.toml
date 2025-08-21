@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 default-run = "game"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable)'] }
+
 [dependencies]
 sui.workspace = true
 sui_runner.workspace = true
@@ -38,3 +41,4 @@ textures.workspace = true
 game_core.workspace = true
 utils.workspace = true
 game_multithread.workspace = true
+console-subscriber = "0.4.1"

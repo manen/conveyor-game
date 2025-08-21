@@ -10,48 +10,62 @@ pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Router {
 	// (received_from, resource)
-	holding: heapless::Deque<(Direction, EResource), ROUTER_CAPACITY>,
+	holding: heapless::Deque<EResource, ROUTER_CAPACITY>,
 
 	#[serde(default)]
 	pass_dir: Direction,
 }
 impl Router {
-	/// returns index in self.holding
-	fn get_available_i_for(&self, to: Direction) -> Option<usize> {
-		let mut selected_i = None;
-		for i in 0..self.holding.len() {
-			match self.holding.iter().nth(i) {
-				Some((dir, _)) => {
-					if *dir == to {
-						// we won't pass to where we got the resource
-						continue;
-					} else {
-						selected_i = Some(i);
-						break;
-					}
-				}
-				None => continue,
-			}
-		}
-		selected_i
-	}
-
 	fn count(&mut self) -> Direction {
 		let dir = self.pass_dir;
+		// println!("router cycling over {dir:?}");
+
 		self.pass_dir = self.pass_dir.rotate_r();
 		dir
 	}
-	fn unique_directions_in_holding(&self) -> usize {
-		let mut directions: heapless::Vec<Direction, 4> = Default::default();
+	fn count_included(
+		&mut self,
+		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
+	) -> Option<Direction> {
+		let actual_directions = available_directions
+			.clone()
+			.map(Direction::from_rel)
+			.filter(|a| a.is_some())
+			.count();
+		// println!("{actual_directions:?}");
+		if actual_directions == 0 {
+			return None;
+		}
 
-		for (dir, _) in self.holding.iter() {
-			if directions.contains(dir) {
+		for _ in 0..5 {
+			let dir = self.count();
+			let rel = dir.rel();
+
+			let contained = available_directions
+				.clone()
+				.find(|available_rel| *available_rel == rel);
+			if contained.is_some() {
+				// println!("next direction is {dir:?}");
+				return Some(dir);
+			} else {
+				// println!("{dir:?} nope");
 				continue;
 			}
-			let _ = directions.push(*dir);
 		}
-		directions.len()
+		None
 	}
+
+	// fn unique_directions_in_holding(&self) -> usize {
+	// 	let mut directions: heapless::Vec<Direction, 4> = Default::default();
+
+	// 	for (dir, _) in self.holding.iter() {
+	// 		if directions.contains(dir) {
+	// 			continue;
+	// 		}
+	// 		let _ = directions.push(*dir);
+	// 	}
+	// 	directions.len()
+	// }
 }
 impl Building for Router {
 	fn name(&self) -> std::borrow::Cow<'static, str> {
@@ -73,13 +87,8 @@ impl Building for Router {
 		}
 		ROUTER_CAPACITY as i32 - self.holding.len() as i32
 	}
-	fn receive(&mut self, resource: EResource, from: Option<Direction>) {
-		match from {
-			Some(from) => {
-				let _ = self.holding.push_back((from, resource));
-			}
-			None => {}
-		}
+	fn receive(&mut self, resource: EResource, _from: Option<Direction>) {
+		let _ = self.holding.push_back(resource);
 	}
 
 	fn needs_poll(&self) -> bool {
@@ -88,24 +97,16 @@ impl Building for Router {
 	fn resource_sample(
 		&self,
 		_tile_resource: Option<EResource>,
-		to: Option<Direction>,
+		_to: Option<Direction>,
 	) -> Option<EResource> {
-		let to = to?;
-		let selected_i = self.get_available_i_for(to)?;
-
-		let (_, res) = self.holding.iter().nth(selected_i)?;
-		Some(res.clone())
+		self.holding.iter().next().cloned()
 	}
 	fn poll_resource(
 		&mut self,
 		_tile_resource: Option<EResource>,
-		to: Option<Direction>,
+		_to: Option<Direction>,
 	) -> Option<EResource> {
-		let to = to?;
-		let selected_i = self.get_available_i_for(to)?;
-
-		let (_, res) = self.holding.swap_remove_back(selected_i)?;
-		Some(res)
+		self.holding.pop_front()
 	}
 
 	// fn pass_relatives(&mut self) -> &'static [(i32, i32)] {
@@ -115,55 +116,49 @@ impl Building for Router {
 	// }
 	fn confirm_pass_relatives(
 		&mut self,
-		available_directions: &[(i32, i32)],
+		available_directions: impl Iterator<Item = (i32, i32)> + Clone,
 	) -> heapless::Vec<(i32, i32), 4> {
-		if available_directions.is_empty() {
+		// let ad_buf = available_directions.clone().collect::<Vec<_>>();
+		// println!("{ad_buf:?}");
+
+		if available_directions.clone().count() == 0 {
 			return heapless::Vec::new();
 		}
+		let mut buf = heapless::Vec::new();
 
-		// // available directions index (the i we went up to last time)
-		// let mut last_i = 0;
-		// let next_included = || {
-		// 	let mut remaining = available_directions
-		// 		.into_iter()
-		// 		.copied()
-		// 		.enumerate()
-		// 		.skip(last_i);
+		let pass_count = available_directions.clone().count().min(self.holding.len());
+		// println!("pass_count: {pass_count}");
+		for _ in 0..pass_count {
+			let next_included = self.count_included(available_directions.clone());
+			// dbg!(next_included);
+			if let Some(dir) = next_included {
+				let rel = dir.rel();
+				let _ = buf.push(rel);
+			}
+		}
+		// println!("confirmed: {buf:?}");
+		buf
 
-		// 	// this isn't likely to go infinite cause self.count cycles over Direction so 3 cycles at max
-		// 	// unless available_directions is empty
-		// 	loop {
-		// 		if last_i >= available_directions.len() - 1 {
-		// 			break None;
-		// 		}
-
-		// 		let dir = self.count();
-		// 		let rel = dir.rel();
-		// 		if let Some((i, _)) = remaining.find(|(_, available_rel)| rel == *available_rel) {
-		// 			last_i = i;
-		// 			break Some(rel);
-		// 		}
-		// 	}
-		// };
-
-		available_directions.iter().cloned().collect()
+		// available_directions.collect()
 	}
 
 	fn pass_relatives(&self) -> heapless::Vec<(i32, i32), 4> {
-		let unique_in_holding = self.unique_directions_in_holding();
-		let to_exclude_dir = match unique_in_holding {
-			0 => return heapless::Vec::new(),
-			1 => {
-				let (to_exclude_dir, _) = self.holding.iter().next()
-					.expect("if there's at least 1 unique direction in holding then there's at least one element in holding");
-				Some(*to_exclude_dir)
-			}
-			1.. => None,
-		};
+		// let unique_in_holding = self.unique_directions_in_holding();
+		// let to_exclude_dir = match unique_in_holding {
+		// 	0 => return heapless::Vec::new(),
+		// 	1 => {
+		// 		let (to_exclude_dir, _) = self.holding.iter().next()
+		// 			.expect("if there's at least 1 unique direction in holding then there's at least one element in holding");
+		// 		Some(*to_exclude_dir)
+		// 	}
+		// 	1.. => None,
+		// };
 
-		Direction::all()
-			.filter(|dir| Some(*dir) != to_exclude_dir)
-			.map(|dir| dir.rel())
-			.collect()
+		// Direction::all()
+		// 	.filter(|dir| Some(*dir) != to_exclude_dir)
+		// 	.map(|dir| dir.rel())
+		// 	.collect()
+
+		Direction::all_rel().collect()
 	}
 }

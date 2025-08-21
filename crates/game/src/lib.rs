@@ -45,6 +45,9 @@ pub async fn start() {
 
 	// let locale = locale.unwrap_or_else(|| std::env::args().next().unwrap_or_else(|| "en".into()));
 
+	#[cfg(tokio_unstable)]
+	console_subscriber::init();
+
 	let locale = get_locale();
 	println!("using locale {locale}");
 	rust_i18n::set_locale(&locale);
