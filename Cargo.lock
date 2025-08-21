@@ -1024,8 +1024,14 @@ dependencies = [
 name = "game_worldgen"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "asset_provider",
+ "bincode",
  "fastnoise-lite",
+ "futures",
  "game_core",
+ "serde",
+ "toml 0.9.5",
 ]
 
 [[package]]

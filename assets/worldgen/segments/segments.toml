@@ -1,0 +1,5 @@
+[iron_1]
+min_distance = 20
+
+[coal_1]
+min_distance = 10

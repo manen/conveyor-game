@@ -1,5 +1,8 @@
 use std::fmt::Debug;
 
+use anyhow::Context;
+use asset_provider::Assets;
+use game_core::maps::Tilemap;
 use stage_manager::StageChange;
 use stage_manager_loaders::Loader;
 use stage_manager_remote::StageSyncWrap;
@@ -13,7 +16,7 @@ use crate::{
 	assets::GameAssets,
 	comp::handle_result,
 	game::{Game, GameRunner, Goal, goal::ResourceCounter},
-	levels::{Level, Levels},
+	levels::Levels,
 	textures,
 	world::{
 		buildings::{ChannelConsumer, EBuilding},
@@ -45,8 +48,15 @@ pub async fn assemble_tutorial(
 	let assets = GameAssets::default();
 	let levels = Levels::load(&assets).await?;
 
-	let level = Level::load_from_assets(&assets, &levels.campaign.tutorial).await?;
-	let tilemap = level.into_tilemap()?;
+	let key = format!("levels/{}/level.cglf", levels.campaign.tutorial);
+	let level = assets.asset(&key).await?;
+	let level = level.as_slice();
+
+	// let level = Level::load_from_assets(&assets, &levels.campaign.tutorial).await?;
+	let (tilemap, _) = bincode::serde::decode_from_slice(level, bincode::config::standard())
+		.with_context(|| format!("while deserializing level file for tutorial"))?;
+
+	let tilemap: Tilemap = tilemap;
 	let tilemap_size = tilemap.size();
 
 	let mut buildings = BuildingsMap::new(tilemap_size.0, tilemap_size.1);

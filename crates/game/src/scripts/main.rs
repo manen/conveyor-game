@@ -10,7 +10,7 @@ use crate::{
 	assets::GameAssets,
 	comp::{err_page, handle_err, handle_result_dyn},
 	game::{Game, GameData, GameDataSave},
-	levels::{GameState, Level},
+	levels::GameState,
 	scripts::tutorial,
 	textures,
 	world::maps::BuildingsMap,
@@ -22,35 +22,6 @@ pub async fn main() -> DynamicLayable<'static> {
 	let main = main_menu;
 	let main = sui::custom_only_debug(main);
 	main
-}
-
-pub async fn level_by_id<A: Assets + Send + Sync + 'static>(
-	assets: A,
-	id: &str,
-) -> DynamicLayable<'static> {
-	let f = async move || {
-		let level = Level::load_from_assets(&assets, id)
-			.await
-			.with_context(|| format!("while loading level by id"))?;
-
-		let tilemap = level.into_tilemap()?;
-		let buildings = BuildingsMap::new(tilemap.width(), tilemap.height());
-
-		let loader = textures::load_as_layable(assets, move |tex| {
-			let f = || {
-				let tex = tex?;
-
-				let game = Game::from_maps(tex, tilemap.clone(), buildings.clone());
-				anyhow::Ok(game)
-			};
-			handle_err(f)
-		});
-		let loader = sui::custom_only_debug(loader);
-
-		anyhow::Ok(loader)
-	};
-
-	handle_result_dyn(f().await)
 }
 
 pub async fn main_menu() -> impl Layable + Debug {

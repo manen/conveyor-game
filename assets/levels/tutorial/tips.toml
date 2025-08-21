@@ -1,9 +1,0 @@
-[tips.default]
-text = "this is the first text you'll see"
-[tips.default.buttons]
-next = { target = "other", text = "next" }
-
-[tips.other]
-text = "this is the text you see after clicking next"
-[tips.other.buttons]
-back = { target = "default", text = "back" }

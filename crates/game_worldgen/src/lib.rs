@@ -1,6 +1,10 @@
-mod worldgen;
 use game_core::maps::Tilemap;
+
+pub mod worldgen;
 pub use worldgen::*;
+
+pub mod segments;
+pub use segments::*;
 
 pub fn gen_world(width: usize, height: usize) -> Tilemap {
 	let tiles = gen_tiles(width, height);

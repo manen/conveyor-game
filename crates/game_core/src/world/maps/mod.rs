@@ -5,7 +5,7 @@ pub use tilemap::*;
 mod buildingsmap;
 pub use buildingsmap::*;
 
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Debug, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Map<T> {
 	width: usize,
 	height: usize,
