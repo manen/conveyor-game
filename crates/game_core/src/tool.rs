@@ -57,8 +57,8 @@ impl Tool {
 				.try_place(pos, OrIndexed::Item(building.clone())),
 
 			Self::Place2x2(building) => {
-				let indexed = game.buildings.insert_indexed(building.clone());
-				let indexed = OrIndexed::Indexed(indexed);
+				let index = game.buildings.insert_indexed(building.clone());
+				let indexed = OrIndexed::Indexed { index, root: pos };
 
 				let rels = [(0, 0), (1, 0), (0, 1), (1, 1)];
 				let rels = rels.into_iter().map(|(rx, ry)| (pos.0 + rx, pos.1 + ry));

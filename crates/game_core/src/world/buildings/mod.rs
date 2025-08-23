@@ -32,8 +32,7 @@ pub trait Building {
 	fn name(&self) -> Cow<'static, str>;
 	fn texture_id(&self) -> TextureID;
 
-	/// the scale in the returned Layable should be ignored as it's always 1.0 \
-	/// det.aw and det.ah is the tile width&height, go off that
+	/// returns the render component
 	fn render<'a>(&'a self, textures: &'a Textures) -> impl Layable + Clone + Debug + 'a {
 		#[derive(Clone, Debug)]
 		struct DefaultBuildingRender<'a> {
@@ -45,8 +44,9 @@ pub trait Building {
 				(TILE_RENDER_SIZE, TILE_RENDER_SIZE)
 			}
 			/// scale is ignored; send properly sized det
-			fn render(&self, d: &mut sui::Handle, det: sui::Details, _scale: f32) {
-				self.textures.render(d, det, &self.texture_id);
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+				self.textures
+					.render(d, det.mul_size(scale), &self.texture_id);
 			}
 		}
 

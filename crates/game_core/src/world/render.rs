@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
-use sui::{Color, Details, Layable, comp::text::Font, raylib::prelude::RaylibDraw};
+use sui::{Color, Details, Layable, LayableExt, comp::text::Font, raylib::prelude::RaylibDraw};
 
 use crate::{
 	Tile,
 	buildings::{Building, BuildingsMap},
-	maps::Tilemap,
+	maps::{OrIndexed, Tilemap},
 };
 use textures::{TextureID, Textures};
 
@@ -121,31 +121,43 @@ pub fn draw_buildings(
 				continue;
 			}
 
-			let building = buildings
-				.at((x as _, y as _))
+			let pos = (x as i32, y as i32);
+
+			let grid_entry = buildings
+				.grid_at(pos)
 				.expect("we tried rendering a building that doesn't exist");
+			let (scale, is_root) = match grid_entry {
+				OrIndexed::Indexed { root, .. } => (2.0, *root == pos),
+				_ => (1.0, true),
+			};
 
-			if building.texture_id() != TextureID::Transparent {
-				let render = building.render(textures);
-				render.render(d, l_det, 1.0);
+			if is_root {
+				let building = buildings
+					.at(pos)
+					.expect("we tried rendering a building that doesn't exist");
 
-				if DEBUG {
-					let cursor_inside = Details {
-						x: draw_x,
-						y: draw_y,
-						aw: render_size_i32,
-						ah: render_size_i32,
-					}
-					.is_inside(d.get_mouse_x(), d.get_mouse_y());
-					if cursor_inside {
-						tooltip = Some((
-							(draw_x, draw_y),
-							format!(
-								"({x}, {y})\nneeds poll: {}\n{building:#?}",
-								building.needs_poll()
-							)
-							.into(),
-						))
+				if building.texture_id() != TextureID::Transparent {
+					let render = building.render(textures);
+					render.render(d, l_det, scale);
+
+					if DEBUG {
+						let cursor_inside = Details {
+							x: draw_x,
+							y: draw_y,
+							aw: render_size_i32,
+							ah: render_size_i32,
+						}
+						.is_inside(d.get_mouse_x(), d.get_mouse_y());
+						if cursor_inside {
+							tooltip = Some((
+								(draw_x, draw_y),
+								format!(
+									"({x}, {y})\nneeds poll: {}\n{building:#?}",
+									building.needs_poll()
+								)
+								.into(),
+							))
+						}
 					}
 				}
 			}

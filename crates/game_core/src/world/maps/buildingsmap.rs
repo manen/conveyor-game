@@ -13,7 +13,7 @@ use utils::{Direction, MultiMap};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum OrIndexed<T> {
-	Indexed(usize),
+	Indexed { root: (i32, i32), index: usize },
 	Item(T),
 }
 
@@ -159,23 +159,29 @@ impl BuildingsMap {
 		self.moves_queue = moves_queue;
 	}
 
+	pub fn grid_at(&self, pos: (i32, i32)) -> Option<&OrIndexed<EBuilding>> {
+		self.buildings_grid.at(pos)
+	}
+	pub fn indexed(&self, index: usize) -> Option<&EBuilding> {
+		self.external_buildings.iter().nth(index)
+	}
+	pub fn insert_indexed(&mut self, building: EBuilding) -> usize {
+		// doesn't handle removals at all
+		self.external_buildings.push(building);
+		self.external_buildings.len() - 1
+	}
+
 	pub fn at(&self, pos: (i32, i32)) -> Option<&EBuilding> {
 		match self.buildings_grid.at(pos)? {
 			OrIndexed::Item(building) => Some(building),
-			OrIndexed::Indexed(id) => self.external_buildings.iter().nth(*id),
+			OrIndexed::Indexed { index: id, .. } => self.external_buildings.iter().nth(*id),
 		}
 	}
 	pub fn at_mut(&mut self, pos: (i32, i32)) -> Option<&mut EBuilding> {
 		match self.buildings_grid.at_mut(pos)? {
 			OrIndexed::Item(building) => Some(building),
-			OrIndexed::Indexed(id) => self.external_buildings.iter_mut().nth(*id),
+			OrIndexed::Indexed { index: id, .. } => self.external_buildings.iter_mut().nth(*id),
 		}
-	}
-
-	pub fn insert_indexed(&mut self, building: EBuilding) -> usize {
-		// doesn't handle removals at all
-		self.external_buildings.push(building);
-		self.external_buildings.len() - 1
 	}
 
 	/// places the building while respecting building.is_protected
