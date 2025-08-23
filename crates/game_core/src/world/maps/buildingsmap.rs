@@ -184,26 +184,6 @@ impl BuildingsMap {
 		}
 	}
 
-	/// places the building while respecting building.is_protected
-	pub fn try_place(
-		&mut self,
-		pos: (i32, i32),
-		building: OrIndexed<EBuilding>,
-	) -> Result<(), OrIndexed<EBuilding>> {
-		let protected = self.at(pos).map(Building::is_protected).unwrap_or_default();
-		let ptr = match self.buildings_grid.at_mut(pos) {
-			Some(a) => a,
-			None => return Err(building),
-		};
-
-		if protected {
-			Err(building)
-		} else {
-			*ptr = building;
-			Ok(())
-		}
-	}
-
 	pub fn iter<'a>(&'a self) -> impl Iterator<Item = ((i32, i32), &'a EBuilding)> + 'a {
 		self.buildings_grid
 			.iter_coords()
@@ -235,5 +215,73 @@ impl<'a, 'b> Layable for BuildingsRenderer<'a, 'b> {
 	}
 	fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
 		render::draw_buildings(d, &self.buildings, &self.textures, det.x, det.y, scale)
+	}
+}
+
+#[derive(Copy, Clone, Debug)]
+/// what to do when we encounter a part of a larger indexed building
+pub enum PlaceStrategy {
+	Skip,
+	SkipIfNotRoot,
+
+	DeleteAll,
+}
+
+impl BuildingsMap {
+	/// places the building while respecting .is_protected(), and also while dealing
+	/// with mutliple-grid entry buildings with PlaceStrategy
+	pub fn try_place_explicit(
+		&mut self,
+		pos: (i32, i32),
+		building: OrIndexed<EBuilding>,
+		strategy: PlaceStrategy,
+	) -> Result<(), OrIndexed<EBuilding>> {
+		let protected = self.at(pos).map(Building::is_protected).unwrap_or_default();
+		if protected {
+			return Err(building);
+		}
+
+		let ptr = match self.buildings_grid.at(pos) {
+			Some(a) => a,
+			None => return Err(building),
+		};
+
+		// check if it's a bigger building
+		let root = match &*ptr {
+			OrIndexed::Indexed { root, .. } => Some(*root),
+			OrIndexed::Item(_) => None,
+		};
+		if let Some(root) = root {
+			match strategy {
+				PlaceStrategy::Skip => return Err(building),
+				PlaceStrategy::SkipIfNotRoot if root != pos => return Err(building),
+				_ => {
+					let rels = [(0, 0), (1, 0), (0, 1), (1, 1)];
+					let rels = rels.into_iter().map(|(rx, ry)| (root.0 + rx, root.1 + ry));
+					for place_pos in rels {
+						let part_ptr = self.buildings_grid.at_mut(place_pos);
+						if let Some(part_ptr) = part_ptr {
+							*part_ptr = OrIndexed::Item(EBuilding::nothing())
+						}
+					}
+				}
+			}
+		}
+
+		let ptr = match self.buildings_grid.at_mut(pos) {
+			Some(a) => a,
+			None => return Err(building),
+		};
+
+		*ptr = building;
+		Ok(())
+	}
+
+	pub fn try_place(
+		&mut self,
+		pos: (i32, i32),
+		building: OrIndexed<EBuilding>,
+	) -> Result<(), OrIndexed<EBuilding>> {
+		self.try_place_explicit(pos, building, PlaceStrategy::DeleteAll)
 	}
 }
