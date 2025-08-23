@@ -20,7 +20,7 @@ use super::INTERNAL_CACHE;
 
 #[derive(Debug)]
 pub enum TextureLoaderPacket {
-	Image(anyhow::Result<(TextureID, DynamicImage)>),
+	Image(anyhow::Result<(TextureID, (Vec<u8>, (i32, i32)))>),
 	Finished,
 }
 
@@ -64,7 +64,7 @@ mod basic {
 			p: TextureLoaderPacket,
 			d: &mut sui::Handle,
 		) -> bool {
-			let (id, img) = match p {
+			let (id, (pixels, size)) = match p {
 				TextureLoaderPacket::Image(Ok(img)) => img,
 				TextureLoaderPacket::Image(Err(err)) => {
 					*t = Err(err);
@@ -73,7 +73,7 @@ mod basic {
 				TextureLoaderPacket::Finished => return true,
 			};
 
-			let tex = match img.texture(d) {
+			let tex = match Texture::new_from_rgba8(pixels, size, d) {
 				Ok(a) => a,
 				Err(err) => {
 					*t = Err(err)

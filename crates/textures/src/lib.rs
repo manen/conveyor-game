@@ -70,19 +70,31 @@ impl Textures {
 	/// loads the images in parallel, and synchronously converts the images into textures as they come
 	pub fn stream_images<A: asset_provider::Assets + Sync>(
 		assets: &A,
-	) -> impl Stream<Item = anyhow::Result<(TextureID, DynamicImage)>> {
+	) -> impl Stream<Item = anyhow::Result<(TextureID, (Vec<u8>, (i32, i32)))>> {
 		let mut stream = FuturesUnordered::new();
 
 		let resources = all_textures().map(|a| {
 			let resource = a.resource_path();
 			(a, resource)
 		});
-		let images = resources.map(async |(tile_tex, path)| {
-			assets
-				.asset_image(&path)
-				.await
-				.map(|a| (tile_tex, a))
-				.with_context(|| format!("while loading {path}"))
+		let images = resources.map(async |(tex_id, path)| {
+			// load asset, load into DynamicImage, load into Rgba8 then yield
+
+			let asset = assets.asset(path.as_ref()).await?;
+			let asset = asset.to_vec();
+
+			let image = tokio::task::spawn_blocking(move || {
+				let image = asset_provider_image::image::load_from_memory(&asset)?;
+				let image = image.to_rgba8();
+
+				let width = image.width() as i32;
+				let height = image.height() as i32;
+				let pixels = image.into_vec();
+				anyhow::Ok((pixels, (width, height)))
+			})
+			.await??;
+
+			anyhow::Ok((tex_id, image))
 		});
 
 		stream.extend(images);
@@ -94,7 +106,9 @@ impl Textures {
 	/// this has to be run on the main thread \
 	///
 	/// does not cache by default
-	pub fn from_stream<S: Stream<Item = anyhow::Result<(TextureID, DynamicImage)>> + Unpin>(
+	pub fn from_stream<
+		S: Stream<Item = anyhow::Result<(TextureID, (Vec<u8>, (i32, i32)))>> + Unpin,
+	>(
 		stream: S,
 		d: &mut sui::Handle,
 	) -> anyhow::Result<Self> {
@@ -102,9 +116,10 @@ impl Textures {
 
 		let iter = futures::executor::block_on_stream(stream);
 		for result in iter {
-			let (tex, img) = result?;
+			let (tex, (pixels, size)) = result?;
 
-			let texture = img.texture(d)?;
+			let texture = Texture::new_from_rgba8(pixels, size, d)
+				.with_context(|| format!("failed to load texture {tex:?}"))?;
 			map.insert(tex, texture);
 		}
 		Ok(Self::new(map))
