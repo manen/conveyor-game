@@ -107,3 +107,18 @@ impl<T> Map<T> {
 		self.iter_coords_usize().map(|(x, y)| (x as _, y as _))
 	}
 }
+impl<TFrom> Map<TFrom> {
+	/// maps every cell in the grid to something else (returned by f)
+	pub fn map<TTo, F: FnMut(TFrom) -> TTo>(self, mut f: F) -> Map<TTo> {
+		let width = self.width;
+		let height = self.height;
+
+		let map = self
+			.map
+			.into_iter()
+			.map(|col| col.into_iter().map(|from| f(from)).collect())
+			.collect();
+
+		Map { width, height, map }
+	}
+}

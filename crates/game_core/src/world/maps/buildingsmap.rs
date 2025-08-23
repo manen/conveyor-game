@@ -11,32 +11,45 @@ use crate::{
 use textures::Textures;
 use utils::{Direction, MultiMap};
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum OrIndexed<T> {
+	Indexed(usize),
+	Item(T),
+}
+
 #[derive(Clone, Debug)]
 /// BuildingsMap isn't just a type and an Ext type, but can be taken with [Self::take]
 pub struct BuildingsMap {
-	buildings: Map<EBuilding>,
+	buildings_grid: Map<OrIndexed<EBuilding>>,
+
+	/// external_buildings contains buildings, not on a grid, but indexed. \
+	/// useful to share building implementations between different 1x1 grid buildings
+	external_buildings: Vec<EBuilding>,
+
 	/// HashMap<target_position, Vec<source positions>>
 	moves_queue: HashMap<(i32, i32), Vec<(i32, i32)>>,
 }
 impl BuildingsMap {
-	pub fn new(width: usize, height: usize) -> Self {
-		Self::from_map(Map::new_default(width, height))
+	pub fn new_default(width: usize, height: usize) -> Self {
+		Self::from_grid(Map::new_default(width, height))
 	}
-	pub fn from_map(map: Map<EBuilding>) -> Self {
+	pub fn from_grid(buildings_grid: Map<EBuilding>) -> Self {
+		let map = buildings_grid.map(OrIndexed::Item);
 		Self {
-			buildings: map,
-			moves_queue: HashMap::new(),
+			buildings_grid: map,
+			external_buildings: Default::default(),
+			moves_queue: Default::default(),
 		}
 	}
 
 	pub fn width(&self) -> usize {
-		self.buildings.width()
+		self.buildings_grid.width()
 	}
 	pub fn height(&self) -> usize {
-		self.buildings.height()
+		self.buildings_grid.height()
 	}
 	pub fn size(&self) -> (usize, usize) {
-		self.buildings.size()
+		self.buildings_grid.size()
 	}
 
 	pub fn tick(
@@ -83,7 +96,7 @@ impl BuildingsMap {
 		}
 
 		// check for buildings that need polling and list
-		for source_pos in self.buildings.iter_coords() {
+		for source_pos in self.buildings_grid.iter_coords() {
 			if !self
 				.at(source_pos)
 				.map(Building::needs_poll)
@@ -147,18 +160,48 @@ impl BuildingsMap {
 	}
 
 	pub fn at(&self, pos: (i32, i32)) -> Option<&EBuilding> {
-		self.buildings.at(pos)
+		match self.buildings_grid.at(pos)? {
+			OrIndexed::Item(building) => Some(building),
+			OrIndexed::Indexed(id) => self.external_buildings.iter().nth(*id),
+		}
 	}
 	pub fn at_mut(&mut self, pos: (i32, i32)) -> Option<&mut EBuilding> {
-		self.buildings.at_mut(pos)
+		match self.buildings_grid.at_mut(pos)? {
+			OrIndexed::Item(building) => Some(building),
+			OrIndexed::Indexed(id) => self.external_buildings.iter_mut().nth(*id),
+		}
+	}
+
+	pub fn insert_indexed(&mut self, building: EBuilding) -> usize {
+		// doesn't handle removals at all
+		self.external_buildings.push(building);
+		self.external_buildings.len() - 1
+	}
+
+	/// places the building while respecting building.is_protected
+	pub fn try_place(
+		&mut self,
+		pos: (i32, i32),
+		building: OrIndexed<EBuilding>,
+	) -> Result<(), OrIndexed<EBuilding>> {
+		let protected = self.at(pos).map(Building::is_protected).unwrap_or_default();
+		let ptr = match self.buildings_grid.at_mut(pos) {
+			Some(a) => a,
+			None => return Err(building),
+		};
+
+		if protected {
+			Err(building)
+		} else {
+			*ptr = building;
+			Ok(())
+		}
 	}
 
 	pub fn iter<'a>(&'a self) -> impl Iterator<Item = ((i32, i32), &'a EBuilding)> + 'a {
-		self.buildings.iter()
-	}
-
-	pub fn take(self) -> Map<EBuilding> {
-		self.buildings
+		self.buildings_grid
+			.iter_coords()
+			.map(|pos| (pos, self.at(pos).unwrap()))
 	}
 
 	pub fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> BuildingsRenderer<'a, 'b> {

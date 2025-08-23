@@ -85,7 +85,7 @@ impl GameDataSave {
 		);
 
 		let mut tilemap = Tilemap::stone(w, h);
-		let mut buildings = BuildingsMap::new(w, h);
+		let mut buildings = BuildingsMap::new_default(w, h);
 
 		for (x, entry) in self.0.into_iter().enumerate() {
 			for (y, (tile, building)) in entry.into_iter().enumerate() {

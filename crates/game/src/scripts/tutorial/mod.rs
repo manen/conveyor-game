@@ -59,7 +59,7 @@ pub async fn assemble_tutorial(
 	let tilemap: Tilemap = tilemap;
 	let tilemap_size = tilemap.size();
 
-	let mut buildings = BuildingsMap::new(tilemap_size.0, tilemap_size.1);
+	let mut buildings = BuildingsMap::new_default(tilemap_size.0, tilemap_size.1);
 
 	let (master_tx, master_rx) = mpsc::channel(5);
 

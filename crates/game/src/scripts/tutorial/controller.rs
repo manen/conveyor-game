@@ -490,7 +490,8 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 	{
 		// this block contains the code used to check if the miner's connected to the center building or nah
 
-		let mut test_buildmap = BuildingsMap::new(channels.stage_size.0, channels.stage_size.1);
+		let mut test_buildmap =
+			BuildingsMap::new_default(channels.stage_size.0, channels.stage_size.1);
 		super::place_at_center(&mut test_buildmap, EBuilding::debug_consumer());
 
 		let targets = test_buildmap
