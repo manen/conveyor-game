@@ -138,7 +138,7 @@ pub fn draw_buildings(
 
 				if building.texture_id() != TextureID::Transparent {
 					let render = building.render(textures);
-					render.render(d, l_det, scale);
+					render.render(d, l_det.mul_size(scale), 1.0);
 
 					if DEBUG {
 						let cursor_inside = Details {

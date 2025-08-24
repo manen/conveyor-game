@@ -44,9 +44,8 @@ pub trait Building {
 				(TILE_RENDER_SIZE, TILE_RENDER_SIZE)
 			}
 			/// scale is ignored; send properly sized det
-			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
-				self.textures
-					.render(d, det.mul_size(scale), &self.texture_id);
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, _scale: f32) {
+				self.textures.render(d, det, &self.texture_id);
 			}
 		}
 

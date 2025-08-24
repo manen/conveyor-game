@@ -1,11 +1,13 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Debug};
 
 use crate::{
 	GameData,
 	buildings::{Building, EBuilding, Nothing},
 	maps::OrIndexed,
+	render::TILE_RENDER_SIZE,
 };
-use textures::TextureID;
+use sui::{Details, Layable, LayableExt};
+use textures::{TextureID, Textures};
 use utils::Direction;
 
 pub fn tools() -> impl Iterator<Item = Tool> {
@@ -79,4 +81,70 @@ impl Tool {
 	}
 	// pub fn held(&self, game: &mut GameData, pos: (i32, i32)) {}
 	// pub fn release(&mut self, game: &mut GameData, pos: (i32, i32)) {}
+}
+
+impl Tool {
+	pub fn render_preview<'a>(
+		&'a self,
+		textures: &'a Textures,
+		world_size: (usize, usize),
+		hovering_over: (i32, i32),
+	) -> impl Layable + Debug + Clone + 'a {
+		#[derive(Clone, Debug)]
+		pub struct RenderPreview<'a> {
+			textures: &'a Textures,
+			world_size: (usize, usize),
+			hovering_over: (i32, i32),
+
+			tool: &'a Tool,
+		}
+		impl<'a> Layable for RenderPreview<'a> {
+			fn size(&self) -> (i32, i32) {
+				(
+					self.world_size.0 as i32 * TILE_RENDER_SIZE,
+					self.world_size.1 as i32 * TILE_RENDER_SIZE,
+				)
+			}
+			fn render(&self, d: &mut sui::Handle, det: sui::Details, scale: f32) {
+				let render_size = TILE_RENDER_SIZE as f32 * scale;
+				let render_size_i32 = render_size as i32;
+
+				let det_for_coord = |(x, y)| {
+					let draw_x = det.x + (x as f32 * render_size) as i32;
+					let draw_y = det.y + (y as f32 * render_size) as i32;
+
+					let (draw_x, draw_y) = (draw_x - 1, draw_y - 1);
+					let render_size_i32 = render_size_i32 + 1;
+
+					let l_det = Details {
+						x: draw_x,
+						y: draw_y,
+						aw: render_size_i32,
+						ah: render_size_i32,
+					};
+					l_det
+				};
+				let l_det = det_for_coord(self.hovering_over);
+
+				match self.tool {
+					Tool::PlaceBuilding(building) => {
+						building.render(self.textures).render(d, l_det, scale);
+					}
+					Tool::Place2x2(building) => {
+						building
+							.render(self.textures)
+							.render(d, l_det.mul_size(2.0), scale);
+					}
+				}
+			}
+		}
+
+		RenderPreview {
+			textures,
+			tool: self,
+
+			world_size,
+			hovering_over,
+		}
+	}
 }
