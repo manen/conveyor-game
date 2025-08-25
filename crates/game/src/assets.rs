@@ -23,9 +23,9 @@ impl Default for GameAssets {
 impl Assets for GameAssets {
 	async fn asset(&self, key: &str) -> anyhow::Result<Asset> {
 		let baked_in = || {
-			let res = ASSETS
-				.get_file(key)
-				.ok_or_else(|| anyhow!("couldn't retreive {key} from baked-in asset storage"))?;
+			let res = ASSETS.get_file(key).ok_or_else(|| {
+				mklogger::anyhow!("couldn't retreive {key} from baked-in asset storage")
+			})?;
 
 			anyhow::Ok(Asset::new(res.contents()))
 		};
@@ -56,7 +56,7 @@ impl Assets for GameAssets {
 				Err(fs_err) => match baked_in() {
 					Ok(a) => Ok(a),
 					Err(baked_in_err) => {
-						return Err(anyhow!(
+						return Err(mklogger::anyhow!(
 							"couldn't retreive asset {key}\nfilesystem error: {fs_err}\nbaked-in storage error: {baked_in_err}"
 						));
 					}

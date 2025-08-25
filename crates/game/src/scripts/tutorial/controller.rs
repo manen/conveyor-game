@@ -64,7 +64,7 @@ impl Channels {
 		self.stage_tx
 			.send(stage_change)
 			.await
-			.map_err(|err| anyhow!("error while sending stage change:\n{err}"))
+			.map_err(|err| mklogger::anyhow!("error while sending stage change:\n{err}"))
 	}
 
 	pub async fn receive_stage_event(&mut self) -> anyhow::Result<TooltipPage> {
@@ -72,7 +72,7 @@ impl Channels {
 		self.stage_rx
 			.recv()
 			.await
-			.ok_or_else(|| anyhow!("expected to receive TooltipPage from stage_rx"))
+			.ok_or_else(|| mklogger::anyhow!("expected to receive TooltipPage from stage_rx"))
 	}
 
 	/// displays a simple page with a single action: continue
@@ -93,12 +93,16 @@ impl Channels {
 			[action(continue_name, TooltipPage::Continue)],
 		))
 		.await
-		.map_err(|err| anyhow!("{err}"))?;
+		.map_err(|err| mklogger::anyhow!("{err}"))?;
 
 		let event = self.receive_stage_event().await?;
 		match event {
 			TooltipPage::Continue => {}
-			_ => return Err(anyhow!("invalid tooltippage received in mined: {event:?}")),
+			_ => {
+				return Err(mklogger::anyhow!(
+					"invalid tooltippage received in mined: {event:?}"
+				));
+			}
 		}
 		Ok(())
 	}
@@ -120,12 +124,16 @@ impl Channels {
 			[action(continue_name, TooltipPage::Continue)],
 		))
 		.await
-		.map_err(|err| anyhow!("{err}"))?;
+		.map_err(|err| mklogger::anyhow!("{err}"))?;
 
 		let event = self.receive_stage_event().await?;
 		match event {
 			TooltipPage::Continue => {}
-			_ => return Err(anyhow!("invalid tooltippage received in mined: {event:?}")),
+			_ => {
+				return Err(mklogger::anyhow!(
+					"invalid tooltippage received in mined: {event:?}"
+				));
+			}
 		}
 		Ok(())
 	}
@@ -139,7 +147,7 @@ impl Channels {
 		self.game_tx
 			.send(command)
 			.await
-			.map_err(|err| anyhow!("channel.game failed: {err}"))?;
+			.map_err(|err| mklogger::anyhow!("channel.game failed:\n{err}"))?;
 		Ok(())
 	}
 	/// waits for the GameRunner to actually execute the Fn sent
@@ -154,7 +162,7 @@ impl Channels {
 		self.game_tx
 			.send(command)
 			.await
-			.map_err(|err| anyhow!("channel.game_with_return failed: {err}"))?;
+			.map_err(|err| mklogger::anyhow!("channel.game_with_return failed:\n{err}"))?;
 
 		let ret = rx.await?;
 		Ok(ret)
@@ -183,7 +191,7 @@ pub async fn controller(mut channels: Channels) {
 		match welcome(&mut channels).await {
 			Ok(a) => a,
 			Err(err) => {
-				mklogger::eprintln!("tooltip thread caught an error: {err}")
+				mklogger::eprintln!("tooltip thread caught an error:\n{err}")
 			}
 		}
 	}
@@ -210,16 +218,14 @@ pub async fn controller(mut channels: Channels) {
 
 pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 	channels
-		.stage_tx
-		.send(text_with_actions_fullscreen(
+		.send_stage_change(text_with_actions_fullscreen(
 			t!("tutorial.welcome-to-conveyor-game"),
 			[
 				action(t!("tutorial.what-is-this"), TooltipPage::WhatIsThis),
 				action(t!("tutorial.lets-get-started"), TooltipPage::GetStarted),
 			],
 		))
-		.await
-		.map_err(|err| anyhow!("{err}"))?;
+		.await?;
 
 	let event = channels
 		.stage_rx
@@ -231,7 +237,7 @@ pub async fn welcome(channels: &mut Channels) -> anyhow::Result<()> {
 		TooltipPage::WhatIsThis => what_is_this(channels).await?,
 		TooltipPage::GetStarted => get_started(channels).await?,
 		_ => {
-			return Err(anyhow!(
+			return Err(mklogger::anyhow!(
 				"unexpected page {event:?} received in what_is_this"
 			));
 		}
@@ -255,7 +261,7 @@ pub async fn what_is_this(channels: &mut Channels) -> anyhow::Result<()> {
 
 	match event {
 		TooltipPage::Continue => Ok(()),
-		_ => Err(anyhow!(
+		_ => Err(mklogger::anyhow!(
 			"unexpected page {event:?} received in what_is_this"
 		)),
 	}
@@ -277,7 +283,7 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 
 	match event {
 		TooltipPage::Reset => Ok(()),
-		_ => Err(anyhow!(
+		_ => Err(mklogger::anyhow!(
 			"unexpected page {event:?} received in what_is_this"
 		)),
 	}?;
@@ -292,7 +298,7 @@ pub async fn get_started(channels: &mut Channels) -> anyhow::Result<()> {
 	let event = channels.receive_stage_event().await?;
 	match event {
 		TooltipPage::Continue => {}
-		_ => return Err(anyhow!("incorrect tooltippage received")),
+		_ => return Err(mklogger::anyhow!("incorrect tooltippage received")),
 	}
 
 	channels
@@ -399,11 +405,13 @@ pub async fn start_extracting(channels: &mut Channels) -> anyhow::Result<()> {
 			}
 
 			Either::Left(invalid) => {
-				return Err(anyhow!(
+				return Err(mklogger::anyhow!(
 					"invalid return value {invalid} received from back_pressed"
 				));
 			}
-			Either::Right(None) => return Err(anyhow!("building place channel is broken")),
+			Either::Right(None) => {
+				return Err(mklogger::anyhow!("building place channel is broken"));
+			}
 		}
 	}
 }
@@ -606,7 +614,7 @@ async fn smelting_start(
 		EResource::RawIron(_) => (t!("tutorial.we-need-coal"), EResource::coal()),
 		EResource::Coal(_) => (t!("tutorial.we-need-iron"), EResource::raw_iron()),
 		_ => {
-			return Err(anyhow!(
+			return Err(mklogger::anyhow!(
 				"in this part of the tutorial you're only supposed to be able to mine raw iron and coal but the user mined {already_mined_tile_resource:?}"
 			));
 		}
@@ -717,7 +725,7 @@ async fn won(channels: &mut Channels) -> anyhow::Result<()> {
 		.master_tx
 		.send(RemoteStageChange::simple_only_debug(menu))
 		.await
-		.map_err(|err| anyhow!("{err}"))?;
+		.map_err(|err| mklogger::anyhow!("{err}"))?;
 	Ok(())
 }
 

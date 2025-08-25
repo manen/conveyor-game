@@ -131,7 +131,7 @@ impl ResourceCounter {
 					.display_tx
 					.send(RemoteStageChange::simple(progress_component))
 					.await
-					.map_err(|err| anyhow!("{err}"))?;
+					.map_err(|err| mklogger::anyhow!("{err}"))?;
 				Ok(())
 			}
 			None => return Ok(()),
@@ -159,7 +159,7 @@ impl ResourceCounter {
 				}
 				Err(TryRecvError::Empty) => break,
 				Err(TryRecvError::Disconnected) => {
-					return Err(anyhow!(
+					return Err(mklogger::anyhow!(
 						"ResourceCounter's receiver disconnected: ChannelConsumer buildings destroyed or game got dropped"
 					));
 				}
@@ -172,7 +172,7 @@ impl ResourceCounter {
 			.resource_rx
 			.recv()
 			.await
-			.ok_or_else(|| anyhow!("resource sender probably got dropped"))?;
+			.ok_or_else(|| mklogger::anyhow!("resource sender probably got dropped"))?;
 
 		let count = self.resources.get(&next).copied().unwrap_or_default();
 		self.resources.insert(next, count + 1);

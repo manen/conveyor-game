@@ -24,3 +24,17 @@ macro_rules! eprintln {
 		std::eprintln!("{}:{}:{} | {}", std::file!(), std::line!(), std::column!(), args)
 	}};
 }
+
+#[cfg(feature = "anyhow")]
+mod anyhow {
+	#[macro_export]
+	macro_rules! anyhow {
+		($($arg:tt)*) => {{
+			let args: std::fmt::Arguments<'_> = std::format_args!($($arg)*);
+			anyhow::anyhow!("{}:{}:{} | {}", std::file!(), std::line!(), std::column!(), args)
+		}};
+	}
+}
+#[cfg(feature = "anyhow")]
+#[allow(unused)]
+pub use anyhow::*;

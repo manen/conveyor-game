@@ -25,7 +25,7 @@ pub async fn init_worldgen<A: Assets + Clone>(assets: A) -> anyhow::Result<()> {
 
 	let res = SHARED_WORLDGEN.set(generator);
 	let res = res.map_err(|worldgen| {
-		anyhow!("global WorldGenerator has already been initialized\n{worldgen:?}")
+		mklogger::anyhow!("global WorldGenerator has already been initialized\n{worldgen:?}")
 	});
 	res
 }
@@ -33,7 +33,7 @@ pub async fn init_worldgen<A: Assets + Clone>(assets: A) -> anyhow::Result<()> {
 pub fn gen_world(width: usize, height: usize) -> anyhow::Result<Tilemap> {
 	let worldgen = SHARED_WORLDGEN
 		.get()
-		.ok_or_else(|| anyhow!("global WorldGenerator hasn't been initialized"))?;
+		.ok_or_else(|| mklogger::anyhow!("global WorldGenerator hasn't been initialized"))?;
 
 	worldgen.generate(width, height)
 }

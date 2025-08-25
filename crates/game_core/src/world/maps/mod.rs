@@ -28,7 +28,7 @@ impl<T> Map<T> {
 		for (i, inner) in map.iter().enumerate() {
 			if let Some(height) = height {
 				if inner.len() != height {
-					return Err(anyhow!(
+					return Err(mklogger::anyhow!(
 						"couldn't build a Map<T> from a Vec<Vec<T>>: array number {i} differs in size (expected: {height:?}, got: {})",
 						inner.len()
 					));
@@ -41,7 +41,7 @@ impl<T> Map<T> {
 		if let Some(height) = height {
 			Ok(Self { width, height, map })
 		} else {
-			Err(anyhow!("attempted to create Map<T> from empty array"))
+			Err(mklogger::anyhow!("attempted to create Map<T> from empty array"))
 		}
 	}
 

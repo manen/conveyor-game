@@ -571,18 +571,18 @@ impl<G: GameProvider> Game<G> {
 			let mut world = self.wrap_as_world(ReturnEvents, det);
 
 			let (x, y) = cursor;
-			let ret = world.pass_events_simple(std::iter::once(Event::MouseEvent(MouseEvent::MouseClick { x, y })), det, 1.0).into_iter().next().ok_or_else(|| anyhow!(
+			let ret = world.pass_events_simple(std::iter::once(Event::MouseEvent(MouseEvent::MouseClick { x, y })), det, 1.0).into_iter().next().ok_or_else(|| mklogger::anyhow!(
 				"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
 
 			let ret: Event = ret
 				.take()
-				.ok_or_else(|| anyhow!("ReturnEvents didn't return a sui::core::Event"))?;
+				.ok_or_else(|| mklogger::anyhow!("ReturnEvents didn't return a sui::core::Event"))?;
 
 			match ret {
 				Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
 					Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
 				}
-				_ => Err(anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
+				_ => Err(mklogger::anyhow!("expected MouseEvent::MouseClick, got {ret:?}")),
 			}
 		};
 

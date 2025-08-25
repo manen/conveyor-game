@@ -116,7 +116,7 @@ impl GameDataSave {
 		for (i, col) in self.grid.iter().enumerate() {
 			let len = col.len();
 			if len != h {
-				return Err(anyhow!(
+				return Err(mklogger::anyhow!(
 					"column {i} differs in length from the detected default: {len} instead of {h}"
 				));
 			}
@@ -140,14 +140,14 @@ impl GameDataSave {
 				if let Some(tile_location) = tilemap.at_mut_usize((x, y)) {
 					*tile_location = tile;
 				} else {
-					return Err(anyhow!(
+					return Err(mklogger::anyhow!(
 						"the tilemap we just created doesn't work: {x}, {y}"
 					));
 				};
 				if let Some(building_location) = buildings.grid_at_mut((x as _, y as _)) {
 					*building_location = building;
 				} else {
-					return Err(anyhow!(
+					return Err(mklogger::anyhow!(
 						"the buildingsmap we just created doesn't work: {x}, {y}"
 					));
 				}
