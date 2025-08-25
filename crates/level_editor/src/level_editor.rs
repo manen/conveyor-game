@@ -16,6 +16,7 @@ use std::{
 	ops::Deref,
 	path::PathBuf,
 	sync::Arc,
+	time::Instant,
 };
 use sui::{
 	Details, DynamicLayable, Layable, LayableExt,
@@ -41,6 +42,7 @@ pub struct LevelEditor {
 	camera_velocity: (f32, f32),
 	scale: f32,
 	scale_velocity: f32,
+	last_tick: Instant,
 }
 impl LevelEditor {
 	pub fn new(width: usize, height: usize, textures: Textures) -> Self {
@@ -61,6 +63,7 @@ impl LevelEditor {
 			camera_velocity: (0.0, 0.0),
 			scale: 1.0,
 			scale_velocity: 0.0,
+			last_tick: Instant::now(),
 		};
 		level_editor.hash_tiles();
 		level_editor
@@ -103,6 +106,7 @@ impl Layable for LevelEditor {
 	}
 
 	fn tick(&mut self) {
+		let delta = self.last_tick.elapsed().as_secs_f32();
 		let tile_render_size = TILE_RENDER_SIZE as f32 * self.real_scale();
 
 		// world coords
@@ -113,6 +117,9 @@ impl Layable for LevelEditor {
 
 		let move_amount_x = self.camera_velocity.0 * 0.85 * move_amount_x;
 		let move_amount_y = self.camera_velocity.1 * 0.85 * move_amount_y;
+
+		let move_amount_x = move_amount_x * 60.0 * delta;
+		let move_amount_y = move_amount_y * 60.0 * delta;
 
 		// ...except if it'd move too many tiles away
 		let move_limit = 0.2;
@@ -130,11 +137,13 @@ impl Layable for LevelEditor {
 			self.camera_velocity = (0.0, 0.0);
 		}
 
-		self.scale += self.scale_velocity;
+		let scale_taken = self.scale_velocity * delta * 120.0;
+		self.scale += scale_taken;
 		self.scale = self.scale.max(-40.0).min(60.0);
 
-		self.scale_velocity *= 0.95;
-		if self.scale_velocity.abs() < 0.005 {
+		let scale_reduce = self.scale_velocity * 18.0 * delta;
+		self.scale_velocity = self.scale_velocity - scale_reduce;
+		if self.scale_velocity.abs() < 0.05 {
 			self.scale_velocity = 0.0;
 		}
 
@@ -144,6 +153,7 @@ impl Layable for LevelEditor {
 				self.saving_handle = None;
 			}
 		}
+		self.last_tick = Instant::now();
 	}
 
 	fn pass_events(
@@ -159,7 +169,7 @@ impl Layable for LevelEditor {
 		for event in events {
 			match event {
 				Event::MouseEvent(MouseEvent::Scroll { amount, .. }) => {
-					self.scale_velocity += amount / 6.0
+					self.scale_velocity += amount / 2.0
 				}
 				Event::MouseEvent(MouseEvent::MouseClick { y, .. }) => {
 					let (_, toolbar_h) = self.toolbar.size();

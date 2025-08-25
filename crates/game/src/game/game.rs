@@ -427,34 +427,6 @@ impl<G: GameProvider> Layable for Game<G> {
 		scale: f32,
 		ret_events: &mut Vec<ReturnEvent>,
 	) {
-		// macro_rules! world_pos {
-		// 	($m_event:expr, $err_msg:expr) => {{
-		// 		let world_pos = || {
-		// 			let mut world = self.wrap_as_world(ReturnEvents, det);
-
-		// 			let (x, y) = $m_event.at();
-		// 			let ret = world.pass_events_simple(std::iter::once(Event::MouseEvent(MouseEvent::MouseClick { x, y })), det, scale).into_iter().next().ok_or_else(|| anyhow!(
-		// 		"ReturnEvents didn't actually return an event\nneeded to calculate world position of mouse click"))?;
-
-		// 			let ret: Event = ret.take().ok_or_else(|| {
-		// 				anyhow!("ReturnEvents didn't return a sui::core::Event")
-		// 			})?;
-
-		// 			match ret {
-		// 				Event::MouseEvent(MouseEvent::MouseClick { x, y }) => {
-		// 					Ok((x / TILE_RENDER_SIZE, y / TILE_RENDER_SIZE))
-		// 				}
-		// 				_ => Err(anyhow!(
-		// 					"expected MouseEvent::MouseClick, got {ret:?}"
-		// 				)),
-		// 			}
-		// 		};
-		// 		let world_pos = world_pos().with_context(|| format!($err_msg));
-
-		// 		world_pos
-		// 	}};
-		// }
-
 		let mut ctrl = false;
 		let mut s = false;
 
