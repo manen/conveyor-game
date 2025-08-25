@@ -18,3 +18,5 @@ stage_manager_loaders.workspace = true
 arc-swap = "1.7.1"
 comp_extra.workspace = true
 mklogger.workspace = true
+game_worldgen.workspace = true
+utils.workspace = true

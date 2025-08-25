@@ -1,7 +1,16 @@
-use std::fmt::{Debug, Display};
+use std::{
+	borrow::Cow,
+	fmt::{Debug, Display},
+	sync::Arc,
+};
 
 use anyhow::Context;
-use game::{assets::GameAssets, textures, world::maps::Tilemap};
+use game::{
+	assets::GameAssets,
+	textures,
+	world::maps::{Tilemap, TilemapExt},
+};
+use utils::SilentUnwrap;
 
 pub mod level_editor;
 use level_editor::LevelEditor;
@@ -13,11 +22,15 @@ pub mod tools;
 
 #[tokio::main]
 pub async fn start_with_rt() {
-	start();
+	start().await;
 }
 
-pub fn start() {
+pub async fn start() {
 	let (rl, thread) = sui_runner::rl();
+
+	game_worldgen::init_worldgen(&GameAssets::default())
+		.await
+		.silent_unwrap();
 
 	let game = creation_screen();
 	let game = stage_manager::Stage::new_only_debug(game);
@@ -47,17 +60,62 @@ fn creation_screen() -> impl Layable + Debug {
 			sui::custom(sui::form::textbox(height_store.clone(), 24)).into_comp(),
 		])),
 		//
-		sui::custom_only_debug(sui::text("create level", 32).clickable(move |_| {
-			let f = || {
-				let width = width_store.with_borrow(|a| a.text.parse())?;
-				let height = height_store.with_borrow(|a| a.text.parse())?;
+		sui::custom_only_debug(
+			sui::div([
+				sui::custom_only_debug(generate_button(
+					"new empty",
+					width_store.clone(),
+					height_store.clone(),
+					|width, height| Ok::<_, String>(Tilemap::stone(width, height)),
+				)),
+				sui::custom_only_debug(generate_button(
+					"generate",
+					width_store,
+					height_store,
+					game_worldgen::gen_world,
+				)),
+			])
+			.margin(4),
+		),
+		sui::custom(sui::text("or", 32).center_y().margin(32)),
+		sui::custom_only_debug(sui::text("load from file", 32).clickable(move |_| open_screen())),
+	])
+	.centered()
+}
+
+fn generate_button<
+	E: Debug + Display + 'static,
+	N: Into<Cow<'static, str>>,
+	F: Fn(usize, usize) -> Result<Tilemap, E> + 'static,
+>(
+	name: N,
+	width: Store<TypableData>,
+	height: Store<TypableData>,
+	gen_tilemap: F,
+) -> impl Layable + Debug + 'static {
+	let gen_tilemap = Arc::new(gen_tilemap);
+
+	sui::text(name, 32)
+		.clickable(move |_| {
+			let width = width.clone();
+			let height = height.clone();
+			let gen_tilemap = gen_tilemap.clone();
+
+			let f = move || {
+				let width = width.with_borrow(|a| a.text.parse())?;
+				let height = height.with_borrow(|a| a.text.parse())?;
 
 				anyhow::Ok(textures::load_as_scene(
 					GameAssets::default(),
 					move |tex| match tex {
-						Ok(tex) => sui::DynamicLayable::new_only_debug(LevelEditor::new(
-							width, height, tex,
-						)),
+						Ok(textures) => {
+							let tilemap = gen_tilemap(width, height);
+							let tilemap = match tilemap {
+								Ok(a) => a,
+								Err(err) => return sui::custom_only_debug(err_page(err)),
+							};
+							sui::custom_only_debug(LevelEditor::from_tilemap(tilemap, textures))
+						}
 						Err(err) => sui::custom_only_debug(err_page(err)),
 					},
 				))
@@ -67,11 +125,8 @@ fn creation_screen() -> impl Layable + Debug {
 				Ok(a) => a,
 				Err(err) => StageChange::simple_only_debug(err_page(err)),
 			}
-		})),
-		sui::custom(sui::text("or", 32).centered().fix_wh(300, 200)),
-		sui::custom_only_debug(sui::text("load from file", 32).clickable(move |_| open_screen())),
-	])
-	.centered()
+		})
+		.margin(3)
 }
 
 fn open_screen() -> StageChange<'static> {
