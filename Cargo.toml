@@ -31,7 +31,6 @@ stage_manager_remote.path = "./sui/stage_manager_remote"
 # game parts
 
 game_core.path = "./crates/game_core"
-utils.path = "./crates/utils"
 textures.path = "./crates/textures"
 game_multithread.path = "./crates/game_multithread"
 game_worldgen.path = "./crates/game_worldgen"
@@ -40,6 +39,9 @@ game.path = "./crates/game"
 level_editor.path = "./crates/level_editor"
 async_texture.path = "./crates/async_texture"
 comp_extra.path = "./crates/comp_extra"
+
+utils.path = "./crates/utils"
+mklogger.path = "./crates/mklogger"
 
 tokio = "1.46.1"
 futures = "0.3.31"

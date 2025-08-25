@@ -7,5 +7,6 @@ edition = "2024"
 anyhow.workspace = true
 asset_provider.workspace = true
 asset_provider_image.workspace = true
+mklogger.workspace = true
 sui.workspace = true
 tokio.workspace = true

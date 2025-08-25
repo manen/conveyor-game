@@ -75,7 +75,7 @@ impl Tool {
 		match f() {
 			Ok(_) => {}
 			Err(err) => {
-				eprintln!("failed to place {err:?}")
+				mklogger::eprintln!("failed to place {err:?}")
 			}
 		}
 	}

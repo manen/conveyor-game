@@ -18,7 +18,7 @@ pub fn gen_tiles_from_seed_iter(
 
 	let f = move |x, y| {
 		let noise = noise.get_noise_2d(x as f32, y as f32);
-		println!("{noise:?}");
+		mklogger::println!("{noise:?}");
 
 		let noise = noise * 10000000.0;
 

@@ -43,3 +43,4 @@ utils.workspace = true
 game_multithread.workspace = true
 console-subscriber = "0.4.1"
 game_worldgen.workspace = true
+mklogger.workspace = true

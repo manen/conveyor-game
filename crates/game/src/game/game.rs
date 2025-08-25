@@ -506,13 +506,13 @@ impl<G: GameProvider> Layable for Game<G> {
 											if toolbar_resp.can_take::<SelectTool>() =>
 										{
 											if let Some(SelectTool(tool)) = toolbar_resp.take() {
-												println!("selected {tool:?}");
+												mklogger::println!("selected {tool:?}");
 												self.tool = tool;
 												continue;
 											}
 										}
 										Some(other_event) => {
-											println!(
+											mklogger::println!(
 												"non-SelectTool ui return event: {other_event:?}"
 											)
 										}
@@ -523,7 +523,7 @@ impl<G: GameProvider> Layable for Game<G> {
 								let world_pos = match self.world_coords(m_event.at(), det) {
 									Ok(a) => a,
 									Err(err) => {
-										eprintln!("{err:?}");
+										mklogger::eprintln!("{err:?}");
 										continue;
 									}
 								};

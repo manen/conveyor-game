@@ -112,7 +112,7 @@ impl CheckConnection for GameData {
 								Ok(a) => a,
 								Err(err) => {
 									if DEBUG {
-										eprintln!(
+										mklogger::eprintln!(
 											"dropping error in CheckConnection branch: {err:?}"
 										)
 									}

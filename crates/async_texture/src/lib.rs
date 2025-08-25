@@ -50,7 +50,7 @@ impl AsyncTextureState {
 		match self.update_self(d) {
 			Ok(_) => {}
 			Err(err) => {
-				eprintln!("failed to load texture in AsyncTexture: {err:?}")
+				mklogger::eprintln!("failed to load texture in AsyncTexture: {err:?}")
 			}
 		}
 	}
@@ -83,7 +83,7 @@ impl AsyncTexture {
 		let mut state = match self.state.try_lock() {
 			Ok(a) => a,
 			Err(err) => {
-				eprintln!("failed to lock AsyncTexture state Mutex: {err:?}");
+				mklogger::eprintln!("failed to lock AsyncTexture state Mutex: {err:?}");
 				return Ok(());
 			}
 		};
@@ -93,7 +93,7 @@ impl AsyncTexture {
 		match self.update_self(d) {
 			Ok(_) => {}
 			Err(err) => {
-				eprintln!("failed to load texture in AsyncTexture: {err:?}")
+				mklogger::eprintln!("failed to load texture in AsyncTexture: {err:?}")
 			}
 		}
 	}

@@ -7,6 +7,7 @@ edition = "2024"
 anyhow.workspace = true
 bincode.workspace = true
 heapless = { git = "https://github.com/rust-embedded/heapless", features = ["serde"] }
+mklogger.workspace = true
 serde.workspace = true
 serde_cbor = "0.11.2"
 strum.workspace = true

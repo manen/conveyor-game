@@ -57,7 +57,7 @@ impl MultithreadedGame {
 					let (tool, pos) = match tool_use_rx.recv().await {
 						Ok(a) => a,
 						Err(broadcast::error::RecvError::Closed) => {
-							eprintln!("MultithreadedGame's tool_use received broke");
+							mklogger::eprintln!("MultithreadedGame's tool_use received broke");
 							break;
 						}
 						Err(_) => continue,
@@ -73,8 +73,8 @@ impl MultithreadedGame {
 		};
 
 		let master_task = async move {
-			let joined = tokio::join!(tick_task, tool_task);
-			println!(
+			let _joined = tokio::join!(tick_task, tool_task);
+			mklogger::println!(
 				"master_task finished execution. you'll probably never see this but if u do then hi"
 			);
 		};

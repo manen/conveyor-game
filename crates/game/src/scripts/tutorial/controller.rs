@@ -165,10 +165,10 @@ impl Channels {
 			if let Some(miner) = game.data_mut().buildings.at_mut(pos) {
 				let protection_res = miner.set_protected(true);
 				if let Err(_) = protection_res {
-					eprintln!("failed to set {miner:?} as protected");
+					mklogger::eprintln!("failed to set {miner:?} as protected");
 				}
 			} else {
-				eprintln!(
+				mklogger::eprintln!(
 					"the miner we just placed actually doesn't exist so this is basically impossible"
 				)
 			}
@@ -183,7 +183,7 @@ pub async fn controller(mut channels: Channels) {
 		match welcome(&mut channels).await {
 			Ok(a) => a,
 			Err(err) => {
-				eprintln!("tooltip thread caught an error: {err}")
+				mklogger::eprintln!("tooltip thread caught an error: {err}")
 			}
 		}
 	}
@@ -517,7 +517,7 @@ async fn mined(channels: &mut Channels, pos: (i32, i32)) -> anyhow::Result<bool>
 			let is_connected = match is_connected {
 				Ok(a) => a,
 				Err(err) => {
-					eprintln!("connection checker error: {err:?}");
+					mklogger::eprintln!("connection checker error: {err:?}");
 					false
 				}
 			};

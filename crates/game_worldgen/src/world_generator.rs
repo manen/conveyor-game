@@ -78,7 +78,7 @@ impl<'a> GeneratingWorld<'a> {
 			let (w, h) = (w as i32, h as i32);
 
 			let corner = counter.next()?;
-			println!("chose corner {corner}");
+			mklogger::println!("chose corner {corner}");
 			let start_pos = match corner {
 				0 => {
 					// top left
@@ -104,7 +104,7 @@ impl<'a> GeneratingWorld<'a> {
 					(x, y)
 				}
 				_ => {
-					eprintln!("world generator generated a number it shouldn't have");
+					mklogger::eprintln!("world generator generated a number it shouldn't have");
 					return None;
 				}
 			};
@@ -159,7 +159,7 @@ impl<'a> GeneratingWorld<'a> {
 		let (w, h) = segment.tiles.size();
 
 		let farthest = self.farthers_to_fit(w, h);
-		println!("farthest: {farthest:?}");
+		mklogger::println!("farthest: {farthest:?}");
 
 		self.members.push((farthest, segment));
 

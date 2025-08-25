@@ -19,6 +19,6 @@ impl Building for DebugConsumer {
 		10
 	}
 	fn receive(&mut self, resource: crate::EResource, _from: Option<Direction>) {
-		println!("debug consumer dropped {resource:?}")
+		mklogger::println!("debug consumer dropped {resource:?}")
 	}
 }

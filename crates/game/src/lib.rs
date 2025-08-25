@@ -21,14 +21,14 @@ fn get_locale() -> String {
 	let from_args = std::env::args().nth(1);
 	match from_args {
 		Some(a) => {
-			println!("using locale from cli args: {a}");
+			mklogger::println!("using locale from cli args: {a}");
 			return a;
 		}
 		None => (),
 	};
 
 	let locale = sys_locale::get_locale();
-	println!("sys-locale reported {locale:?}");
+	mklogger::println!("sys-locale reported {locale:?}");
 
 	let locale = match locale {
 		Some(a) => a.split('-').next().map(String::from),
@@ -49,7 +49,7 @@ pub async fn start() {
 	console_subscriber::init();
 
 	let locale = get_locale();
-	println!("using locale {locale}");
+	mklogger::println!("using locale {locale}");
 	rust_i18n::set_locale(&locale);
 
 	let (mut rl, thread) = sui_runner::rl();
@@ -79,5 +79,5 @@ pub async fn start() {
 	if let Some(textures) = textures::clear_cache().await {
 		std::mem::drop(textures);
 	};
-	println!("bye");
+	mklogger::println!("bye");
 }

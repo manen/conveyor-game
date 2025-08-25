@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 arc-swap = "1.7.1"
 game_core.workspace = true
+mklogger.workspace = true
 tokio = { workspace = true, features = ["sync"] }

@@ -140,7 +140,7 @@ impl Layable for LevelEditor {
 
 		if let Some(handle) = &self.saving_handle {
 			if handle.is_finished() {
-				println!("saving finished");
+				mklogger::println!("saving finished");
 				self.saving_handle = None;
 			}
 		}
@@ -173,13 +173,15 @@ impl Layable for LevelEditor {
 						{
 							Some(toolbar_resp) if toolbar_resp.can_take::<TileChange>() => {
 								if let Some(TileChange(tool)) = toolbar_resp.take() {
-									println!("selected {tool:?}");
+									mklogger::println!("selected {tool:?}");
 									self.placing = tool;
 									continue;
 								}
 							}
 							Some(other_event) => {
-								println!("non-SelectTool ui return event: {other_event:?}")
+								mklogger::println!(
+									"non-SelectTool ui return event: {other_event:?}"
+								)
 							}
 							None => {}
 						}
@@ -211,7 +213,7 @@ impl Layable for LevelEditor {
 					let world_pos = match world_pos {
 						Ok(a) => a,
 						Err(err) => {
-							eprintln!("{err}");
+							mklogger::eprintln!("{err}");
 							continue;
 						}
 					};
@@ -285,7 +287,7 @@ impl Layable for LevelEditor {
 
 					if let Some(files) = files {
 						let path = PathBuf::from(files.path());
-						println!("saving to {path:?}");
+						mklogger::println!("saving to {path:?}");
 
 						let file = tokio::fs::OpenOptions::new()
 							.write(true)
@@ -302,7 +304,7 @@ impl Layable for LevelEditor {
 
 						save_hash.swap(Arc::new(current_hash));
 					} else {
-						eprintln!("file saving dialog didn't return a file handle");
+						mklogger::eprintln!("file saving dialog didn't return a file handle");
 					}
 					Ok(())
 				});

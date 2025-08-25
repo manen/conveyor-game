@@ -42,7 +42,7 @@ impl GameState {
 		match with_error {
 			Ok(a) => a,
 			Err(err) => {
-				eprintln!("failed to load GameState:\n{err}");
+				mklogger::eprintln!("failed to load GameState:\n{err}");
 				Self::default()
 			}
 		}

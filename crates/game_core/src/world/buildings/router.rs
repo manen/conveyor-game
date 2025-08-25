@@ -7,6 +7,8 @@ use utils::Direction;
 
 pub const ROUTER_CAPACITY: usize = CONVEYOR_CAPACITY * 2;
 
+const DEBUG: bool = false;
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct Router {
 	// (received_from, resource)
@@ -18,7 +20,7 @@ pub struct Router {
 impl Router {
 	fn count(&mut self) -> Direction {
 		let dir = self.pass_dir;
-		// println!("router cycling over {dir:?}");
+		mklogger::debug!("router cycling over {dir:?}");
 
 		self.pass_dir = self.pass_dir.rotate_r();
 		dir
@@ -34,10 +36,10 @@ impl Router {
 				.clone()
 				.find(|available_rel| *available_rel == dir);
 			if contained.is_some() {
-				// println!("next direction is {dir:?}");
+				mklogger::debug!("next direction is {dir:?}");
 				return Some(dir);
 			} else {
-				// println!("{dir:?} nope");
+				mklogger::debug!("{dir:?} nope");
 				continue;
 			}
 		}
@@ -116,7 +118,7 @@ impl Building for Router {
 		let mut buf = heapless::Vec::new();
 
 		let pass_count = available_directions.clone().count().min(self.holding.len());
-		// println!("pass_count: {pass_count}");
+		mklogger::debug!("pass_count: {pass_count}");
 		for _ in 0..pass_count {
 			let next_included = self.count_included(available_directions.clone());
 			// dbg!(next_included);
@@ -124,7 +126,7 @@ impl Building for Router {
 				let _ = buf.push(dir);
 			}
 		}
-		// println!("confirmed: {buf:?}");
+		mklogger::debug!("confirmed: {buf:?}");
 		buf
 
 		// available_directions.collect()

@@ -65,7 +65,7 @@ pub fn free_play(game_data: Option<GameData>) -> StageChange<'static> {
 		let game = match game {
 			Ok(a) => a,
 			Err(err) => {
-				eprintln!("{}", recv_msg);
+				mklogger::eprintln!("{}", recv_msg);
 				let err_page = err_page(err);
 				return sui::custom_only_debug(err_page);
 			}
@@ -75,7 +75,7 @@ pub fn free_play(game_data: Option<GameData>) -> StageChange<'static> {
 			None => match Game::new_multithread_worldgen(tex) {
 				Ok(a) => a,
 				Err(err) => {
-					eprintln!("{err}");
+					mklogger::eprintln!("{err}");
 					let err_page = err_page(err);
 					return sui::custom_only_debug(err_page);
 				}
@@ -109,7 +109,7 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 			match res {
 				Ok(_) => {}
 				Err(_) => {
-					eprintln!(
+					mklogger::eprintln!(
 						"failed to push serialized save into oneshot channel (something's broken)"
 					);
 				}
@@ -160,10 +160,11 @@ fn save_handler() -> impl FnMut(GameData) + Send + 'static {
 		let handle = tokio::task::spawn(async move {
 			match future.await {
 				Ok(save_path) => {
-					println!("saved to {}", save_path.display())
+					let display = save_path.display();
+					mklogger::println!("saved to {display}")
 				}
 				Err(err) => {
-					eprintln!("failed to save: {err:?}")
+					mklogger::eprintln!("failed to save: {err:?}")
 				}
 			}
 		});
