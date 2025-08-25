@@ -21,20 +21,36 @@ impl WorldGenerator {
 		Ok(Self { segments })
 	}
 
-	pub fn generate_seed(&self, width: usize, height: usize, seed: u64) -> anyhow::Result<Tilemap> {
+	pub fn generate_explicit(
+		&self,
+		width: usize,
+		height: usize,
+		seed: u64,
+		// iterations / area
+		segment_density: f32,
+	) -> anyhow::Result<Tilemap> {
 		let mut world = GeneratingWorld::new(width, height, seed);
 
 		world.segments_in_corner(&self.segments, 2);
 
-		world.segment_at_farthest(&self.segments);
-		world.segment_at_farthest(&self.segments);
-		world.segment_at_farthest(&self.segments);
-		world.segment_at_farthest(&self.segments);
-		world.segment_at_farthest(&self.segments);
+		let area = width as f32 * height as f32;
+		let iterations = segment_density * area;
+		for _ in 0..iterations as i32 {
+			world.segment_at_farthest(&self.segments);
+		}
 
 		let tilemap = world.into_tilemap();
 		Ok(tilemap)
 	}
+	pub fn generate_seed(&self, width: usize, height: usize, seed: u64) -> anyhow::Result<Tilemap> {
+		const DEFAULT_SEGMENT_DENSITY: f32 = const {
+			let area = 32.0 * 32.0;
+			let iterations = 5.0;
+			iterations / area
+		};
+		Self::generate_explicit(self, width, height, seed, DEFAULT_SEGMENT_DENSITY)
+	}
+
 	pub fn generate(&self, width: usize, height: usize) -> anyhow::Result<Tilemap> {
 		let mut seed = rand::rng();
 		let seed: u64 = seed.random();
