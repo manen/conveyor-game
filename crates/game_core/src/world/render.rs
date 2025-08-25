@@ -132,9 +132,13 @@ pub fn draw_buildings(
 			};
 
 			if is_root {
-				let building = buildings
-					.at(pos)
-					.expect("we tried rendering a building that doesn't exist");
+				let building = match buildings.at(pos) {
+					Some(a) => a,
+					None => {
+						sui::comp::Color::new(sui::Color::BLUEVIOLET).render(d, l_det, 1.0);
+						continue;
+					}
+				};
 
 				if building.texture_id() != TextureID::Transparent {
 					let render = building.render(textures);

@@ -33,6 +33,16 @@ impl BuildingsMap {
 	pub fn new_default(width: usize, height: usize) -> Self {
 		Self::from_grid(Map::new_default(width, height))
 	}
+	pub fn new_from_externals(
+		width: usize,
+		height: usize,
+		external_buildings: Vec<EBuilding>,
+	) -> Self {
+		let mut map = Self::new_default(width, height);
+		map.external_buildings = external_buildings;
+		map
+	}
+
 	pub fn from_grid(buildings_grid: Map<EBuilding>) -> Self {
 		let map = buildings_grid.map(OrIndexed::Item);
 		Self {
@@ -162,6 +172,9 @@ impl BuildingsMap {
 	pub fn grid_at(&self, pos: (i32, i32)) -> Option<&OrIndexed<EBuilding>> {
 		self.buildings_grid.at(pos)
 	}
+	pub fn grid_at_mut(&mut self, pos: (i32, i32)) -> Option<&mut OrIndexed<EBuilding>> {
+		self.buildings_grid.at_mut(pos)
+	}
 	pub fn indexed(&self, index: usize) -> Option<&EBuilding> {
 		self.external_buildings.iter().nth(index)
 	}
@@ -192,6 +205,12 @@ impl BuildingsMap {
 
 	pub fn render<'a, 'b: 'a>(&'a self, textures: &'b Textures) -> BuildingsRenderer<'a, 'b> {
 		BuildingsRenderer::new(self, textures)
+	}
+}
+
+impl BuildingsMap {
+	pub fn external_buildings(&self) -> &Vec<EBuilding> {
+		&self.external_buildings
 	}
 }
 

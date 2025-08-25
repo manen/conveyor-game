@@ -8,7 +8,7 @@ use anyhow::{Context, anyhow};
 use crate::{
 	EResource, ETile, Tile,
 	buildings::EBuilding,
-	maps::{BuildingsMap, Tilemap, TilemapExt},
+	maps::{BuildingsMap, OrIndexed, Tilemap, TilemapExt},
 };
 
 #[derive(Clone, Debug)]
@@ -43,8 +43,13 @@ impl GameData {
 
 // -
 
+// we have big buildings they just can't be saved yet
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct GameDataSave(pub Vec<Vec<(ETile, EBuilding)>>);
+pub struct GameDataSave {
+	pub grid: Vec<Vec<(ETile, OrIndexed<EBuilding>)>>,
+	pub external_buildings: Vec<EBuilding>,
+}
 impl GameDataSave {
 	pub fn new(game_data: &GameData) -> anyhow::Result<Self> {
 		let (w, h) = game_data.tilemap.size();
@@ -65,8 +70,15 @@ impl GameDataSave {
 							format!("buildingsmap is smaller than it reported: {x}, {y}")
 						})?;
 						let building = match building {
-							EBuilding::ChannelConsumer(_) => EBuilding::nothing(),
-							a => a,
+							// filter out building types that can't be serialized
+							EBuilding::ChannelConsumer(_) => OrIndexed::Item(EBuilding::nothing()),
+							_ => {
+								let grid_entry = game_data
+									.buildings
+									.grid_at((x as _, y as _))
+									.with_context(|| format!("impossible"))?;
+								grid_entry.clone()
+							}
 						};
 
 						anyhow::Ok((tile, building))
@@ -74,20 +86,56 @@ impl GameDataSave {
 					.collect::<anyhow::Result<Vec<_>>>()
 			})
 			.collect::<anyhow::Result<Vec<_>>>();
-		let save = save.with_context(|| format!("while building GameDataSave from GameData"))?;
 
-		Ok(Self(save))
+		let grid = save.with_context(|| format!("while building GameDataSave from GameData"))?;
+		let external_buildings: Vec<EBuilding> = game_data.buildings.external_buildings().clone();
+
+		Ok(Self {
+			grid,
+			external_buildings,
+		})
 	}
+
+	pub fn assert_uniform_size(&self) -> anyhow::Result<()> {
+		let w = self.grid.len();
+		let hs = self
+			.grid
+			.iter()
+			.map(Vec::len)
+			.map(|a| format!("{a}"))
+			.collect::<Vec<_>>()
+			.join(" ");
+
+		std::fs::write(
+			"./fuck.txt",
+			format!("{:#?}\n\n---\n\n{w}; {hs}", self.grid),
+		)?;
+
+		let h = self.grid.iter().next().map(Vec::len).unwrap_or_default();
+
+		for (i, col) in self.grid.iter().enumerate() {
+			let len = col.len();
+			if len != h {
+				return Err(anyhow!(
+					"column {i} differs in length from the detected default: {len} instead of {h}"
+				));
+			}
+		}
+		Ok(())
+	}
+
 	pub fn take(self) -> anyhow::Result<GameData> {
+		self.assert_uniform_size()?;
+
 		let (w, h) = (
-			self.0.len(),
-			self.0.iter().nth(0).map(|a| a.len()).unwrap_or_default(),
+			self.grid.len(),
+			self.grid.iter().nth(0).map(|a| a.len()).unwrap_or_default(),
 		);
 
 		let mut tilemap = Tilemap::stone(w, h);
-		let mut buildings = BuildingsMap::new_default(w, h);
+		let mut buildings = BuildingsMap::new_from_externals(w, h, self.external_buildings);
 
-		for (x, entry) in self.0.into_iter().enumerate() {
+		for (x, entry) in self.grid.into_iter().enumerate() {
 			for (y, (tile, building)) in entry.into_iter().enumerate() {
 				if let Some(tile_location) = tilemap.at_mut_usize((x, y)) {
 					*tile_location = tile;
@@ -96,7 +144,7 @@ impl GameDataSave {
 						"the tilemap we just created doesn't work: {x}, {y}"
 					));
 				};
-				if let Some(building_location) = buildings.at_mut((x as _, y as _)) {
+				if let Some(building_location) = buildings.grid_at_mut((x as _, y as _)) {
 					*building_location = building;
 				} else {
 					return Err(anyhow!(
